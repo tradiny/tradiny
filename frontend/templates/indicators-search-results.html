@@ -1,0 +1,34 @@
+<div>
+    <table>
+        <thead>
+            <td>Category</td>
+            <td>Name</td>
+        </thead>
+    {% for (var i=0; i<o.data.length; i++) { %}
+        {% if (o.data[i].details) { %}
+            <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.indicatorWindow('{%=o.data[i].id%}')">
+                <td>
+                    {% if (o.data[i].details.categories) { %}
+
+                    {% for (var j=0; j<o.data[i].details.categories.length; j++) { %}
+                    {%=o.data[i].details.categories[j]%} 
+                    {% } %}
+
+                    {% } else { %}
+
+                    {%=o.data[i].details.library%}
+
+                    {% } %}
+                </td>
+                <td>{%=o.data[i].name%}</td>
+            </tr>
+        {% } %}
+    {% } %}
+    {% if (!o.loading && o.data.length === 100) { %}
+    <tr><td colspan="3" class="info">This list is not complete. Narrow and refine your search criteria.</td></tr>
+    {% } %}
+    {% if (o.data.length === 0) { %}
+    <tr><td colspan="3">No results found</td></tr>
+    {% } %}
+    </table>
+</div>

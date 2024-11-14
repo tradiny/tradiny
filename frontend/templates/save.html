@@ -1,0 +1,34 @@
+<div class="add">
+    <div class="tab">
+      <button class="tablinks active" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-save-chart');setTimeout(() => {%=o.self.chart.id%}.select('input.save-chart').node().focus(), 0)">Chart</button>
+      <button class="tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-save-grid');setTimeout(() => {%=o.self.chart.id%}.select('input.save-grid').node().focus(), 0)">Grid</button>
+      
+    </div>
+
+    <div class="tab-save-chart tabcontent active" style="display:block">
+      
+        <div class="input-group">
+            <input type="text" class="save-chart" placeholder="Chart name">
+        </div>
+
+        <div>
+            <input type="button" onclick="{%=o.self.chart.id%}.saveHandler.saveChart()" value="Save">
+        </div>
+    
+    </div>
+
+    <div class="tab-save-grid tabcontent">
+      
+        <div class="input-group">
+            <input type="text" class="save-grid" placeholder="Grid name">
+        </div>
+
+        <div>
+            <input type="button" onclick="{%=o.self.chart.id%}.saveHandler.saveGrid()" value="Save">
+        </div>
+    
+    </div>
+    
+
+    
+</div>

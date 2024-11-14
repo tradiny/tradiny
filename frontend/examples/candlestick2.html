@@ -1,0 +1,265 @@
+<!--
+This software is licensed under a dual license:
+
+1. Creative Commons Attribution-NonCommercial (CC BY-NC)
+   for individuals and open source projects.
+2. Commercial License for business use.
+
+For commercial inquiries, contact: license@tradiny.com
+
+For more details, refer to the LICENSE file in the root directory of this project.
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tradiny Chart - Candlestick Example</title>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #chart {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="chart" class="tradiny-chart"></div>
+
+    <script src="/node_modules/blueimp-tmpl/js/tmpl.min.js"></script>
+    <script src="/node_modules/d3/dist/d3.min.js"></script>
+    <script src="/node_modules/d3fc/packages/d3fc/build/d3fc.min.js"></script>
+
+    <link rel="stylesheet" href="../tradiny.css" />
+    <script src="../tradiny.js"></script>
+
+    <script>
+      const url = `${window.location.hostname}:8000`,
+        source = "Binance",
+        name = "BTCUSDT",
+        source2 = "Binance",
+        name2 = "ETHUSDT",
+        interval = "5m",
+        bullishColor = "#8be04eff",
+        bearishColor = "#ea5545ff";
+
+      var chart = TradinyChart.initialize({
+        elementId: "chart",
+        grid: "1x1",
+        // features: [],
+        charts: [
+          {
+            dataProvider: {
+              url: url,
+              data: [
+                {
+                  type: "data",
+                  source: source,
+                  name: name,
+                  interval: interval,
+                },
+                {
+                  type: "data",
+                  source: source2,
+                  name: name2,
+                  interval: interval,
+                },
+              ],
+            },
+            gridPosition: "1x1",
+            panes: [
+              {
+                name: "Pane1",
+                height: 3,
+                yAxes: [
+                  {
+                    type: "linear",
+                    key: `${source}-${name}-${interval}-price`,
+                    orient: "right",
+                    dynamic: true,
+                    height: 80,
+                    position: "top",
+                  },
+                  {
+                    type: "linear",
+                    key: `${source}-${name}-${interval}-volume`,
+                    orient: "left",
+                    dynamic: true,
+                    height: 15,
+                    position: "bottom",
+                    tickFormat: "si",
+                  },
+                ],
+                metadata: [
+                  {
+                    type: "candlestick",
+                    legend: [
+                      {
+                        label: {
+                          source: source,
+                          name: name,
+                          interval: interval,
+                        },
+                      },
+                    ],
+                    dataKeys: [
+                      {
+                        dataKey: `${source}-${name}-${interval}-open`,
+                        key: "open",
+                        yAxis: `${source}-${name}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source}-${name}-${interval}-high`,
+                        key: "high",
+                        yAxis: `${source}-${name}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source}-${name}-${interval}-low`,
+                        key: "low",
+                        yAxis: `${source}-${name}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source}-${name}-${interval}-close`,
+                        key: "close",
+                        yAxis: `${source}-${name}-${interval}-price`,
+                        label: true,
+                        labelBg: {
+                          bullish: bullishColor,
+                          bearish: bearishColor,
+                          open: `${source}-${name}-${interval}-open`,
+                          close: `${source}-${name}-${interval}-close`,
+                        },
+                        labelColor: { color: "#000000" },
+                      },
+                    ],
+                    spacingFactor: 0.2,
+                    color: {
+                      bullish: bullishColor,
+                      bearish: bearishColor,
+                      open: `${source}-${name}-${interval}-open`,
+                      close: `${source}-${name}-${interval}-close`,
+                    },
+                  },
+                  {
+                    type: "bar",
+                    dataKeys: [
+                      {
+                        dataKey: `${source}-${name}-${interval}-volume`,
+                        yAxis: `${source}-${name}-${interval}-volume`,
+                      },
+                    ],
+                    spacingFactor: 0.2,
+                    color: {
+                      bullish: bullishColor,
+                      bearish: bearishColor,
+                      open: `${source}-${name}-${interval}-open`,
+                      close: `${source}-${name}-${interval}-close`,
+                    },
+                  },
+                ],
+              },
+
+              {
+                name: "Pane2",
+                height: 1,
+                yAxes: [
+                  {
+                    type: "linear",
+                    key: `${source2}-${name2}-${interval}-price`,
+                    orient: "right",
+                    dynamic: true,
+                    height: 80,
+                    position: "top",
+                  },
+                  {
+                    type: "linear",
+                    key: `${source2}-${name2}-${interval}-volume`,
+                    orient: "left",
+                    dynamic: true,
+                    height: 15,
+                    position: "bottom",
+                    tickFormat: "si",
+                  },
+                ],
+                metadata: [
+                  {
+                    type: "candlestick",
+                    legend: [
+                      {
+                        label: {
+                          source: source2,
+                          name: name2,
+                          interval: interval,
+                        },
+                      },
+                    ],
+                    dataKeys: [
+                      {
+                        dataKey: `${source2}-${name2}-${interval}-open`,
+                        key: "open",
+                        yAxis: `${source2}-${name2}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source2}-${name2}-${interval}-high`,
+                        key: "high",
+                        yAxis: `${source2}-${name2}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source2}-${name2}-${interval}-low`,
+                        key: "low",
+                        yAxis: `${source2}-${name2}-${interval}-price`,
+                      },
+                      {
+                        dataKey: `${source2}-${name2}-${interval}-close`,
+                        key: "close",
+                        yAxis: `${source2}-${name2}-${interval}-price`,
+                        label: true,
+                        labelBg: {
+                          bullish: bullishColor,
+                          bearish: bearishColor,
+                          open: `${source2}-${name2}-${interval}-open`,
+                          close: `${source2}-${name2}-${interval}-close`,
+                        },
+                        labelColor: { color: "#000000" },
+                      },
+                    ],
+                    spacingFactor: 0.2,
+                    color: {
+                      bullish: bullishColor,
+                      bearish: bearishColor,
+                      open: `${source2}-${name2}-${interval}-open`,
+                      close: `${source2}-${name2}-${interval}-close`,
+                    },
+                  },
+                  {
+                    type: "bar",
+                    dataKeys: [
+                      {
+                        dataKey: `${source2}-${name2}-${interval}-volume`,
+                        yAxis: `${source2}-${name2}-${interval}-volume`,
+                      },
+                    ],
+                    spacingFactor: 0.2,
+                    color: {
+                      bullish: bullishColor,
+                      bearish: bearishColor,
+                      open: `${source2}-${name2}-${interval}-open`,
+                      close: `${source2}-${name2}-${interval}-close`,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    </script>
+  </body>
+</html>

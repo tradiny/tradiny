@@ -1,0 +1,104 @@
+<div class="add">
+    <div class="tab">
+        <button class="tablinks active" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-settings')">{%=o.title%}</button>
+        <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-styles')">Styles</button>
+        <!-- <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-preferences')">Settings</button> -->
+    </div>
+
+    <div class="tab-settings tabcontent active" style="display:block">
+
+
+        {% for (var i=0; i<o.indicator.details.inputs.length; i++) { %} 
+
+        {% if (o.indicator.details.inputs[i].name === 'mamode') { %}
+        <div class="input-group">
+            <label for="">Moving average</label>
+            <select class="input mamode-select" data-key="{%=o.indicator.details.inputs[i].name%}">
+                {% for (var j=0; j<o.indicator.details.mamode.length; j++) { %} 
+                <option value="{%=j%}"
+                {% if (o.indicator.details.inputs[i].default[0] === j) { %}
+                    selected
+                {% } %}
+                >{%=o.indicator.details.mamode[j]%}</option>
+                {% } %}
+            </select>
+        </div>
+
+        {% } else { %}
+        <div class="input-group">
+            <label for="">{%=o.indicator.details.inputs[i].name.charAt(0).toUpperCase() + o.indicator.details.inputs[i].name.slice(1)%}</label>
+            <input type="number" class="input"  data-key="{%=o.indicator.details.inputs[i].name%}" placeholder="{%='e.g. ' + o.indicator.details.inputs[i].default.join(', ')%}">
+        </div>
+        {% } %}
+
+        {% } %}
+
+
+        <div class="input-group">
+            <label for="">Pane</label>
+            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.onPaneChange(this)">
+                {% for (var i=0; i<o.self.panes.length; i++) { %} <option value="{%=i%}">{%=o.self.panes[i].name%}
+                </option>
+                {% } %}
+                <option value="{%=i%}">New</option>
+            </select>
+        </div>
+
+        {% for (var i=0; i<o.y_axes.length; i++) { %} 
+
+        <div class="input-group">
+            <label for="">Y axis {%=o.y_axes.length > 1 ? o.y_axes[i].y_axis : ''%}</label>
+            <div class="multi-input">
+                <select class="axes-list" data-preferred="{%=o.y_axes[i].y_axis%}" data-key="{%=o.y_axes[i].y_axis%}">
+                    
+                </select>
+                <select class="scales-list" data-key="{%=o.y_axes[i].y_axis%}">
+                    <option value="linear">linear scale</option>
+                    <option value="log">log scale</option>
+                </select>
+            </div>
+        </div>
+        {% } %}
+
+        {% for (var i=0; i<o.indicator.details.columns.length; i++) { %} 
+        <div class="input-group">
+            <label for="">Data {%=o.indicator.details.columns.length > 1 ? o.indicator.details.columns[i] : ''%}</label>
+            <select class="data-list" data-preferred="{%=o.indicator.details.columns[i]%}"  data-key="{%=o.indicator.details.columns[i]%}">
+                
+            </select>
+        </div>
+        {% } %}
+
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+        </div>
+    </div>
+    <div class="tab-styles tabcontent">
+
+        {% for (var i=0; i<o.indicator.details.outputs.length; i++) { %} 
+        <div class="input-group">
+            <label for="">{%=o.indicator.details.outputs[i].name.charAt(0).toUpperCase() + o.indicator.details.outputs[i].name.slice(1)%} color</label>
+            <div style="flex:1;
+                display: flex;
+                align-items: center; /* Centers vertically */
+            " class="color-list" data-key="{%=o.indicator.details.outputs[i].name%}">
+                
+            </div>
+        </div>
+        {% } %}
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+        </div>
+
+    </div>
+    <div class="tab-preferences tabcontent">
+
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+        </div>
+    </div>
+
+</div>

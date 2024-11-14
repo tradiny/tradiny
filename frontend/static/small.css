@@ -1,0 +1,38 @@
+/*
+This software is licensed under a dual license:
+
+1. Creative Commons Attribution-NonCommercial (CC BY-NC)
+   for individuals and open source projects.
+2. Commercial License for business use.
+
+For commercial inquiries, contact: license@tradiny.com
+
+For more details, refer to the LICENSE file in the root directory of this project.
+*/
+
+.small.tradiny-chart,
+.small.tradiny-chart select,
+.small.tradiny-chart input,
+.small.tradiny-chart button {
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.small .controls .icon {
+  width: 32px;
+  height: 32px;
+}
+
+.small .legend .row .icon {
+  width: 25px;
+  height: 25px;
+}
+
+.small button.settings-button {
+  width: 32px;
+  height: 32px;
+}
+
+.small .tab {
+  height: 35px;
+}

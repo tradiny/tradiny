@@ -1,0 +1,25 @@
+.large.tradiny-chart,
+.large.tradiny-chart button,
+.large.tradiny-chart select,
+.large.tradiny-chart input {
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.large .controls .icon {
+  width: 25px;
+  height: 25px;
+}
+
+.large .legend .row .icon {
+  min-width: 25px;
+}
+
+.large button.settings-button {
+  width: 25px;
+  height: 25px;
+}
+
+.large .tab {
+  height: 25px;
+}

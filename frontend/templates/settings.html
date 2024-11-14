@@ -1,0 +1,177 @@
+<div>
+
+
+<div class="tab">
+
+{% for (var i=0; i<o.self.panes.length; i++) { %}
+  <button class="tablinks {%=(i==0?'active':'')%}" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-{%=o.self.panes[i].name%}')">{%=o.self.panes[i].name%}</button>
+{% } %}
+
+
+  <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-general')">General</button>
+  <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-about')">About</button>
+</div>
+
+{% for (var i=0; i<o.self.panes.length; i++) { %}
+<div class="tab-{%=o.self.panes[i].name%}  tabcontent {%=(i==0?'active':'')%}" {% if (i==0) { %} style="display:block" {% } %}>
+  
+  <div>
+    <label>
+        <input type="checkbox"  class="tab-{%=o.self.panes[i].name%}-autoscale" {% if (o.self.yAxes[i][o.self.firstAxisKey[i]].meta.dynamic) { %} checked {% } %}>
+        Autoscale Y axis
+    </label>
+  </div>
+  <div>
+    <label>
+        <p style="cursor:pointer; color:red" class="tab-{%=o.self.panes[i].name%}-remove">Remove pane {%=o.self.panes[i].name%}</p>
+    </label>
+  </div>
+
+</div>
+{% } %}
+
+<div class="tab-general tabcontent">
+
+  <div style="margin-bottom: 15px">
+<label >Theme</label>
+<select style="max-width: 100%" onchange="{%=o.self.id%}.DOMHandler.switchTheme(this)">
+    <option value="dark" {%=((o.theme === 'dark') ? 'selected' : '')%}>Dark</option>
+    <option value="light" {%=((o.theme === 'light' || o.theme === '') ? 'selected' : '')%}>Light</option>
+</select>
+  </div>
+
+  <div>
+
+    <!-- TODO; Note: customtickformatter supports timezone -->
+<!--
+<label for="timezone">Timezone</label>
+<select id="timezone" style="max-width: 100%">
+    <option value="-12">(UTC-12:00) International Date Line West</option>
+    <option value="-11">(UTC-11:00) Coordinated Universal Time-11</option>
+    <option value="-10">(UTC-10:00) Hawaii</option>
+    <option value="-9">(UTC-09:00) Alaska</option>
+    <option value="-8">(UTC-08:00) Baja California</option>
+    <option value="-8">(UTC-08:00) Pacific Time (US and Canada)</option>
+    <option value="-7">(UTC-07:00) Chihuahua, La Paz, Mazatlan</option>
+    <option value="-7">(UTC-07:00) Arizona</option>
+    <option value="-7">(UTC-07:00) Mountain Time (US and Canada)</option>
+    <option value="-6">(UTC-06:00) Central America</option>
+    <option value="-6">(UTC-06:00) Central Time (US and Canada)</option>
+    <option value="-6">(UTC-06:00) Saskatchewan</option>
+    <option value="-6">(UTC-06:00) Guadalajara, Mexico City, Monterey</option>
+    <option value="-5">(UTC-05:00) Bogota, Lima, Quito</option>
+    <option value="-5">(UTC-05:00) Indiana (East)</option>
+    <option value="-5">(UTC-05:00) Eastern Time (US and Canada)</option>
+    <option value="-4.5">(UTC-04:30) Caracas</option>
+    <option value="-4">(UTC-04:00) Atlantic Time (Canada)</option>
+    <option value="-4">(UTC-04:00) Asuncion</option>
+    <option value="-4">(UTC-04:00) Georgetown, La Paz, Manaus, San Juan</option>
+    <option value="-4">(UTC-04:00) Cuiaba</option>
+    <option value="-4">(UTC-04:00) Santiago</option>
+    <option value="-3.5">(UTC-03:30) Newfoundland</option>
+    <option value="-3">(UTC-03:00) Brasilia</option>
+    <option value="-3">(UTC-03:00) Greenland</option>
+    <option value="-3">(UTC-03:00) Cayenne, Fortaleza</option>
+    <option value="-3">(UTC-03:00) Buenos Aires</option>
+    <option value="-3">(UTC-03:00) Montevideo</option>
+    <option value="-2">(UTC-02:00) Coordinated Universal Time-2</option>
+    <option value="-1">(UTC-01:00) Cape Verde</option>
+    <option value="-1">(UTC-01:00) Azores</option>
+    <option value="0">(UTC+00:00) Casablanca</option>
+    <option value="0">(UTC+00:00) Monrovia, Reykjavik</option>
+    <option value="0">(UTC+00:00) Dublin, Edinburgh, Lisbon, London</option>
+    <option value="0">(UTC+00:00) Coordinated Universal Time</option>
+    <option value="1">(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna</option>
+    <option value="1">(UTC+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+    <option value="1">(UTC+01:00) West Central Africa</option>
+    <option value="1">(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague</option>
+    <option value="1">(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb</option>
+    <option value="1">(UTC+01:00) Windhoek </option>
+    <option value="2">(UTC+02:00) Athens, Bucharest, Istanbul</option>
+    <option value="2">(UTC+02:00) Helsinki, Kiev, Riga, Sofia, Tallinn, Vilnius</option>
+    <option value="2">(UTC+02:00) Cairo </option>
+    <option value="2">(UTC+02:00) Damascus </option>
+    <option value="2">(UTC+02:00) Amman</option>
+    <option value="2">(UTC+02:00) Harare, Pretoria</option>
+    <option value="2">(UTC+02:00) Jerusalem </option>
+    <option value="2">(UTC+02:00) Beirut </option>
+    <option value="3">(UTC+03:00) Baghdad </option>
+    <option value="3">(UTC+03:00) Minsk </option>
+    <option value="3">(UTC+03:00) Kuwait, Riyadh </option>
+    <option value="3">(UTC+03:00) Nairobi</option>
+    <option value="3">(UTC+03:30) Tehran </option>
+    <option value="4">(UTC+04:00) Moscow, St. Petersburg, Volgograd </option>
+    <option value="4">(UTC+04:00) Tbilisi </option>
+    <option value="4">(UTC+04:00) Yerevan </option>
+    <option value="4">(UTC+04:00) Abu Dhabi, Muscat</option>
+    <option value="4">(UTC+04:00) Baku </option>
+    <option value="4">(UTC+04:00) Port Louis</option>
+    <option value="4.5">(UTC+04:30) Kabul</option>
+    <option value="5">(UTC+05:00) Tashkent</option>
+    <option value="5">(UTC+05:00) Islamabad, Karachi</option>
+    <option value="5.5">(UTC+05:30) Sri Jayewardenepura Kotte </option>
+    <option value="5.5">(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi</option>
+    <option value="5.75">(UTC+05:45) Kathmandu </option>
+    <option value="6">(UTC+06:00) Astana</option>
+    <option value="6">(UTC+06:00) Dhaka </option>
+    <option value="6">(UTC+06:00) Yekaterinburg </option>
+    <option value="6.5">(UTC+06:30) Yangon</option>
+    <option value="7">(UTC+07:00) Bangkok, Hanoi, Jakarta</option>
+    <option value="7">(UTC+07:00) Novosibirsk</option>
+    <option value="8">(UTC+08:00) Krasnoyarsk</option>
+    <option value="8">(UTC+08:00) Ulaanbaatar</option>
+    <option value="8">(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi</option>
+    <option value="8">(UTC+08:00) Perth </option>
+    <option value="8">(UTC+08:00) Kuala Lumpur, Singapore</option>
+    <option value="8">(UTC+08:00) Taipei</option>
+    <option value="9">(UTC+09:00) Irkutsk</option>
+    <option value="9">(UTC+09:00) Seoul </option>
+    <option value="9">(UTC+09:00) Osaka, Sapporo, Tokyo </option>
+    <option value="9.5">(UTC+09:30) Darwin</option>
+    <option value="9.5">(UTC+09:30) Adelaide </option>
+    <option value="10">(UTC+10:00) Hobart </option>
+    <option value="10">(UTC+10:00) Yakutsk </option>
+    <option value="10">(UTC+10:00) Brisbane  </option>
+    <option value="10">(UTC+10:00) Guam, Port Moresby</option>
+    <option value="10">(UTC+10:00) Canberra, Melbourne, Sydney</option>
+    <option value="11">(UTC+11:00) Vladivostok </option>
+    <option value="11">(UTC+11:00) Solomon Islands, New Caledonia </option>
+    <option value="12">(UTC+12:00) Coordinated Universal Time+12 </option>
+    <option value="12">(UTC+12:00) Fiji, Marshall Islands</option>
+    <option value="12">(UTC+12:00) Magadan</option>
+    <option value="12">(UTC+12:00) Auckland, Wellington  </option>
+    <option value="13">(UTC+13:00) Nuku'alofa </option>
+    <option value="13">(UTC+13:00) Samoa</option>
+
+
+
+</select>
+-->
+</div>
+
+
+</div>
+
+<div class="tab-about tabcontent" style="line-height: 1.5em;">
+  <p>
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="float: left; margin: 0 10px 0px 0">
+      <path d="M10.9528 0.183594C9.07199 0.183594 7.62695 1.39377 7.62695 3.52002V28.7409C7.62695 30.8672 9.06713 32.0773 10.9528 32.0773C12.8385 32.0773 14.2787 30.8672 14.2787 28.7409V3.52002C14.2787 1.39377 12.8369 0.183594 10.9528 0.183594Z" fill="#24EAA4"/>
+      <path d="M18.4911 16.2966C20.333 16.2966 21.7424 15.1137 21.7424 13.0341V10.9448C21.7424 8.86513 20.333 7.68066 18.4911 7.68066C16.6491 7.68066 15.2397 8.86513 15.2397 10.9448V13.0341C15.2397 15.1073 16.6475 16.2966 18.4911 16.2966Z" fill="#24EAA4"/>
+      <path d="M21.8168 30.355C21.8168 28.2287 20.375 27.0186 18.4909 27.0186C16.6068 27.0186 15.165 28.2287 15.165 30.355V32.4812C15.165 34.6075 16.6068 35.8177 18.4909 35.8177C20.375 35.8177 21.8168 34.6075 21.8168 32.4812V30.355Z" fill="#24EAA4"/>
+      <path d="M3.41345 7.68066C1.57151 7.68066 0.162109 8.86513 0.162109 10.9448V13.0341C0.162109 15.1073 1.57151 16.2966 3.41345 16.2966C5.25539 16.2966 6.66641 15.1073 6.66641 13.0341V10.9448C6.66641 8.86513 5.25701 7.68066 3.41345 7.68066Z" fill="#24EAA4"/>
+      <path d="M22.7773 13.0341C22.7773 15.1137 24.1867 16.2966 26.0287 16.2966C27.8706 16.2966 29.2816 15.1073 29.2816 13.0341V10.9448C29.2816 8.86513 27.8722 7.68066 26.0287 7.68066C24.1851 7.68066 22.7773 8.86513 22.7773 10.9448V13.0341Z" fill="#24EAA4"/>
+      <path d="M29.3544 26.9829C29.3544 24.8567 27.9142 23.6465 26.0285 23.6465C24.1428 23.6465 22.7026 24.8567 22.7026 26.9829V29.1092C22.7026 31.2354 24.1444 32.444 26.0285 32.444C27.9126 32.444 29.3544 31.2354 29.3544 29.1092V26.9829Z" fill="#24EAA4"/>
+    </svg>
+    <span>Tradiny is a 
+    lightweight yet full-featured,
+highly-extensible,
+WebGL-powered,
+open-source charting platform.</span>
+
+
+
+  </p>
+  <p>
+    <a href="https://tradiny.com" target="_blank">Website</a> | <a href="https://docs.tradiny.com" target="_blank">Documentation</a> | <a href="https://github.com/tradiny/" target="_blank">Github</a>
+  </p>
+</div>

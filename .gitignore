@@ -1,0 +1,13 @@
+*.swp
+.vscode
+dist/
+site/
+node_modules
+frontend/package-lock.json
+__pycache__
+backend/db.sqlite3
+backend/private_key.pem
+backend/.env
+backend/dist/
+backend/build/
+backend/out/

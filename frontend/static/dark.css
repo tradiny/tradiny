@@ -1,0 +1,177 @@
+/*
+This software is licensed under a dual license:
+
+1. Creative Commons Attribution-NonCommercial (CC BY-NC)
+   for individuals and open source projects.
+2. Commercial License for business use.
+
+For commercial inquiries, contact: license@tradiny.com
+
+For more details, refer to the LICENSE file in the root directory of this project.
+*/
+
+.tradiny-chart.dark {
+  background: #101010;
+  color: #ffffff;
+}
+.dark .backdrop-show {
+  background-color: rgba(1, 1, 1, 0.8);
+}
+.dark .popup-show {
+  background-color: #101010;
+  box-shadow: 0 4px 8px rgba(1, 1, 1, 0.1);
+}
+.dark .tab {
+  border: 1px solid #21232e;
+  border-bottom: none;
+  background-color: #000;
+}
+
+/* Change background color of buttons on hover */
+.dark .tab button:hover {
+  background-color: #21232e;
+}
+
+/* Create an active/current tablink class */
+.dark .tab button.active {
+  background-color: #101010;
+}
+
+.dark .tabcontent {
+  border: 1px solid #21232e;
+}
+.dark .tabcontent table td {
+  border-bottom: 1px solid #21232e;
+}
+.dark .tabcontent .note {
+  color: #999;
+}
+
+.dark .controls .icon {
+  border: 1px solid #21232e;
+}
+
+.dark .legend {
+  background: rgba(14, 15, 29, 0.7);
+}
+
+.dark .settings-button {
+  border: 1px solid #21232e;
+}
+
+.dark .x-axis text {
+  fill: white;
+}
+.dark .x-axis g.label rect.bg {
+  fill: white;
+}
+.dark .x-axis g.label text {
+  fill: #101010;
+}
+
+.dark .y-axis-volume text {
+  fill: #aaa;
+}
+.dark .y-axis-volume line {
+  stroke: #aaa;
+}
+
+.dark .y-axis g.label rect.bg {
+  fill: white;
+  height: 1.5em;
+  width: 100%;
+}
+.dark .y-axis g.label text {
+  fill: #101010;
+}
+
+.dark .y-axis.y-axis-volume g.label rect.bg {
+  fill: #ccc;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background: #101010;
+  color: white;
+  border: 1px solid #21232e;
+  outline: none;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.dark ::-webkit-scrollbar {
+  width: 12px; /* Adjust the width of the scrollbar */
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #2c2c2c; /* Background color of the scrollbar track */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #5a5a5a; /* Color of the scrollbar thumb */
+  border-radius: 10px; /* Optional: roundness of the scrollbar thumb */
+  border: 2px solid #2c2c2c; /* Optional: border around the thumb for better visibility */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #4a4a4a; /* Color of the scrollbar thumb when hovered */
+}
+
+/* Firefox */
+.dark * {
+  scrollbar-width: thin; /* Adjust the width of the scrollbar */
+  scrollbar-color: #5a5a5a #2c2c2c; /* Color of the thumb and track */
+}
+
+.dark .controls .interval-picker,
+.dark .controls .grid-picker,
+.dark .controls .draw-picker {
+  background: #101010;
+}
+
+.dark .controls .draw-picker .icon {
+  background: #101010;
+}
+
+.dark .controls .interval-picker .icon {
+  background: #101010;
+}
+
+.dark .controls .grid-picker .icon {
+  background: #101010;
+}
+
+.dark .controls .icon.active {
+  background: white;
+  color: #101010;
+}
+
+.dark .drawing .label-bg {
+  fill: #101010;
+}
+
+.dark a {
+  color: white;
+}
+
+.dark .alert-rules .rule {
+  border: 1px dotted #21232e;
+  padding: 10px 7px 0 7px;
+}
+
+.dark .conversation .user {
+  background-color: #21232e; /* Dark gray for user */
+  color: #fff; /* White text for contrast */
+}
+
+.dark .conversation .assistant {
+  background-color: #222; /* Slightly lighter dark gray for assistant */
+  color: #fff; /* White text for contrast */
+}
+
+.dark .col-delimiter::before,
+.dark .row-delimiter::before,
+.dark .corner-delimiter::before,
+.dark .corner-delimiter::after {
+  background: #21232e;
+}

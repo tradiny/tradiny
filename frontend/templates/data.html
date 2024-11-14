@@ -1,0 +1,89 @@
+<div class="add">
+    <div class="tab">
+        <button class="tablinks active" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-settings')">{%=o.title%}</button>
+        <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-styles')">Styles</button>
+        <!-- <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-preferences')">Settings</button> -->
+    </div>
+
+    <div class="tab-settings tabcontent active" style="display:block">
+
+
+        <div class="input-group">
+            <label for="">Pane</label>
+            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.onPaneChange(this)">
+                <option value="{%=(o.self.panes ? o.self.panes.length : 0)%}">New</option>
+
+                {% if (o.self.panes) { %}
+                {% for (var i=0; i<o.self.panes.length; i++) { %} <option value="{%=i%}">{%=o.self.panes[i].name%}
+                </option>
+                {% } %}
+                {% } %}
+            </select>
+        </div>
+
+        {% for (var i=0; i<o.y_axes.length; i++) { %} 
+
+        <div class="input-group">
+            <label for="">Y axis {%=o.y_axes.length > 1 ? o.y_axes[i].y_axis : ''%}</label>
+            <select class="axes-list" data-key="{%=o.y_axes[i].y_axis%}">
+                
+            </select>
+            <select class="scales-list" data-key="{%=o.y_axes[i].y_axis%}">
+                <option value="linear">linear scale</option>
+                <option value="log">log scale</option>
+            </select>
+        </div>
+        {% } %}
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+        </div>
+
+    </div>
+    <div class="tab-styles tabcontent">
+
+        {% if (o.data.details.type === 'line') { %}
+        <div class="input-group">
+            <label for="">Line color</label>
+            <div style="flex:1;
+                display: flex;
+                align-items: center;
+            " class="color-list" data-key="color">
+            </div>
+        </div>
+        {% } %}
+
+        {% if (o.data.details.type === 'candlestick') { %}
+        <div class="input-group">
+            <label for="">Bullish candle</label>
+            <div style="flex:1;
+                display: flex;
+                align-items: center;
+            " class="color-list" data-key="bullish-candle">
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="">Bearish candle</label>
+            <div style="flex:1;
+                display: flex;
+                align-items: center;
+            " class="color-list" data-key="bearish-candle">
+            </div>
+        </div>
+
+        {% } %}
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+        </div>
+
+    </div>
+    <div class="tab-preferences tabcontent">
+
+        <div>
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+        </div>
+
+    </div>
+
+</div>

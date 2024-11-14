@@ -1,0 +1,103 @@
+<div class="add">
+    <div class="tab">
+      {% if (o.render.includes('charts') && Object.keys(o.charts).length) { %}
+        <button class="tablinks {%= (o.activeTab === 'charts') ? 'active' : '' %}" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-charts');">Charts</button>
+      {% } %}
+
+      {% if (o.render.includes('grids') && Object.keys(o.grids).length) { %}
+        <button class="tablinks {%= (o.activeTab === 'grids') ? 'active' : '' %}" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-grids');">Grids</button>
+      {% } %}
+
+      <button class="tablinks {%= (o.activeTab === 'data') ? 'active' : '' %}" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-data');setTimeout(() => {%=o.self.chart.id%}.select('input.data-search').node().focus(), 0)">Data</button>
+
+      {% if (o.render.includes('indicators')) { %}
+      <button class="tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-indicators');setTimeout(() => {%=o.self.chart.id%}.select('input.indicators-search').node().focus(), 0)">Indicators</button>
+      {% } %}
+
+      {% if (o.render.includes('alert')) { %}
+      <button class="tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-alert');setTimeout(() => {%=o.self.chart.id%}.DOMHandler.addAlertRule(1), 0)">Alert</button>
+      {% } %}
+    </div>
+    
+    <div class="tab-charts tabcontent {%= (o.activeTab === 'charts') ? 'active' : '' %}" style="{%= (o.activeTab === 'charts') ? 'display:block' : '' %}">
+      
+
+      <table>
+        <thead>
+            <td>Name</td>
+        </thead>
+      {% for (var i=0; i<Object.keys(o.charts).length; i++) {
+        var key = Object.keys(o.charts)[i];
+        %}
+        <tr class="clickable">
+            <td onclick="{%=o.self.chart.id%}.saveHandler.loadChart('{%=o.charts[key].id%}')">{%=o.charts[key].name%}</td>
+            <td onclick="{%=o.self.chart.id%}.saveHandler.removeChart('{%=o.charts[key].id%}', event)"><svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"></path>
+              </svg></td>
+        </tr>
+      {% } %}
+      {% if (Object.keys(o.charts).length === 0) { %}
+      <tr><td colspan="2">Not found</td></tr>
+      {% } %}
+      </table>
+
+    </div>
+
+    <div class="tab-grids tabcontent {%= (o.activeTab === 'grids') ? 'active' : '' %}" style="{%= (o.activeTab === 'grids') ? 'display:block' : '' %}">
+      
+      <table>
+        <thead>
+            <td>Name</td>
+        </thead>
+      {% for (var i=0; i<Object.keys(o.grids).length; i++) {
+        var key = Object.keys(o.grids)[i];
+        %}
+        <tr class="clickable">
+            <td onclick="{%=o.self.chart.id%}.saveHandler.loadGrid('{%=o.grids[key].id%}', event)">{%=o.grids[key].name%}</td>
+            <td onclick="{%=o.self.chart.id%}.saveHandler.removeGrid('{%=o.grids[key].id%}', event)"><svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"></path>
+              </svg></td>
+        </tr>
+      {% } %}
+      {% if (Object.keys(o.grids).length === 0) { %}
+      <tr><td colspan="2">Not found</td></tr>
+      {% } %}
+      </table>
+
+    </div>
+
+
+    <div class="tab-data tabcontent {%= (o.activeTab === 'data') ? 'active' : '' %}" style="{%= (o.activeTab === 'data') ? 'display:block' : '' %}">
+      
+      <div class="input-group">
+        <input type="text" class="data-search" placeholder="Search">
+      </div>
+      <div class="data-search-results">
+
+      </div>
+    
+    </div>
+    
+    <div class="tab-indicators tabcontent">
+        <div class="input-group">
+          <input type="text" class="indicators-search" placeholder="Search">
+        </div>
+        <div class="indicators-search-results">
+        </div>
+    </div>
+
+    <div class="tab-alert tabcontent">
+      <div class="input-group">
+          <label>Message</label>
+          <textarea placeholder=""></textarea>
+      </div>
+      <div class="alert-rules" style="margin-bottom: 15px"></div>
+      <div style="margin-bottom: 15px">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.addAlertRule()" value="Add rule">
+      </div>
+      <div>
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.saveAlert()" value="Submit">
+      </div>
+  
+    </div>
+</div>

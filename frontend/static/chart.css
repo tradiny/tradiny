@@ -1,0 +1,297 @@
+/*
+This software is licensed under a dual license:
+
+1. Creative Commons Attribution-NonCommercial (CC BY-NC)
+   for individuals and open source projects.
+2. Commercial License for business use.
+
+For commercial inquiries, contact: license@tradiny.com
+
+For more details, refer to the LICENSE file in the root directory of this project.
+*/
+
+.tradiny-chart {
+  color: #1b1e23;
+  font-family: sans-serif;
+}
+.cartesian-chart {
+  grid-template-columns: 0 auto 1fr auto 0 !important;
+  grid-template-rows: 0 auto 1fr auto 0 !important;
+}
+.cartesian-chart .y-axis {
+  width: 0 !important;
+}
+
+.cartesian-chart .x-axis {
+  height: 0 !important;
+}
+
+.domain,
+.gridline-y,
+.gridline-x,
+.annotation-line > line {
+  stroke: currentColor;
+  stroke-opacity: 0.1;
+}
+
+.delimiter {
+  cursor: ns-resize;
+}
+
+.x-axis.interactive {
+  cursor: ew-resize;
+}
+
+.y-axis.interactive {
+  cursor: ns-resize;
+}
+
+.legend {
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 1;
+  border-radius: 3px;
+  padding: 5px 5px 5px 5px;
+}
+
+.legend .row .label {
+  font-family: sans-serif;
+  display: inline;
+}
+
+.legend .row .icon {
+  margin-right: 5px;
+  text-align: center;
+  display: inline-block;
+}
+.legend .row .icon > * {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+.legend .row * {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.annotation-crosshair .point {
+  display: none;
+}
+
+.x-axis g.label rect.bg {
+  fill: black;
+}
+.x-axis g.label text {
+  fill: white;
+}
+
+.y-axis-volume text {
+  fill: #aaa;
+}
+.y-axis-volume line {
+  stroke: #aaa;
+}
+
+.y-axis g.label rect.bg {
+  fill: black;
+  height: 1.5em;
+  width: 100%;
+}
+.y-axis g.label text {
+  fill: white;
+}
+
+.y-axis.y-axis-volume g.label rect.bg {
+  fill: #ccc;
+}
+
+.y-axis g.label-last rect.bg {
+  height: 1.5em;
+  width: 100%;
+}
+.y-axis g.label-last text {
+}
+
+.settings-button {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  color: inherit;
+}
+.controls {
+  display: flex;
+  /*align-items: center;*/
+}
+.controls .icon {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tick line,
+.tick path {
+  display: none;
+}
+
+.controls .interval-picker,
+.controls .grid-picker,
+.controls .draw-picker {
+  height: 100%;
+  background: white;
+}
+
+.controls .draw-picker .icon {
+  background: white;
+}
+
+.controls .interval-picker .icon {
+  background: white;
+}
+
+.controls .grid-picker .icon {
+  background: white;
+}
+
+.controls .icon.active {
+  background: #101010;
+  color: white;
+}
+
+.drawing .label-bg {
+  fill: white;
+}
+
+a {
+  color: black;
+}
+
+.info {
+  opacity: 0.4;
+  font-size: 0.8em;
+}
+
+.alert-rules .rule {
+  border: 1px dotted #ccc;
+  padding: 10px 7px 0 7px;
+}
+
+.rule .controls {
+  display: flex;
+  margin: 0 0 10px 0;
+}
+
+.rule .controls p.title {
+  margin: 0 0 0 0;
+  font-weight: bold;
+  flex: 1;
+}
+
+.grid-cell {
+  position: relative;
+  overflow: hidden;
+  /* border: 1px solid #ccc; */
+}
+
+.row-delimiter {
+  grid-row: auto / span 1;
+  grid-column: 1 / -1;
+  cursor: row-resize;
+}
+
+.col-delimiter {
+  grid-row: 1 / -1;
+  grid-column: auto / span 1;
+  cursor: col-resize;
+}
+
+.conversation > .assistant > *,
+.conversation > .user > * {
+  margin: 0;
+}
+
+.conversation {
+  font-family: Arial, Helvetica, sans-serif;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 10px;
+  margin-bottom: 25px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.conversation .user {
+  background-color: #4347e3;
+  color: #fff;
+  padding: 10px;
+  border-radius: 7px;
+  margin: 10px 0 10px auto; /* 10px to top and bottom, auto to left */
+  max-width: 60%;
+  text-align: left;
+}
+
+.conversation .assistant {
+  background-color: #f1f0f0;
+  color: #000;
+  padding: 10px;
+  border-radius: 7px;
+  margin: 10px auto 10px 0; /* 10px to top and bottom, auto to right */
+  max-width: 90%;
+  text-align: left;
+}
+
+.col-delimiter::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #ccc;
+  transform: translateX(-50%);
+}
+
+.row-delimiter::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ccc;
+  transform: translateY(-50%);
+}
+
+.corner-delimiter::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #ccc;
+  transform: translateX(-50%);
+}
+
+.corner-delimiter::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ccc;
+  transform: translateY(-50%);
+}
+
+.col-delimiter,
+.row-delimiter,
+.corner-delimiter {
+  position: relative;
+  background: none;
+}

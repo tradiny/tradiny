@@ -1,0 +1,16 @@
+<div class="prompt-container">
+    <div class="tab">
+      <button class="tablinks active" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-save');setTimeout(() => {%=o.self.chart.id%}.select('input.prompt').node().focus(), 0)">Prompt</button>
+    </div>
+    
+    <div class="tab-save tabcontent active" style="display:block">
+
+        <div class="conversation" style="display: none"></div>
+          
+        <div class="input-group">
+            <textarea class="prompt" rows="4" cols="50">Perform a predictive analysis on this chart, and based on the results, advise whether a long or short position is more appropriate.</textarea>
+            <input class="prompt-button" type="button" onclick="{%=o.self.chart.id%}.DOMHandler.promptSubmit()" value="Submit" style="max-width: 65px">
+        </div>
+
+    </div>
+</div>

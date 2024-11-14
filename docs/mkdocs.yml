@@ -1,0 +1,50 @@
+site_name: Tradiny Documentation
+nav:
+  - Home: index.md
+  - Running on Local Computer: local.md
+  - Running on Server: docker.md
+  - Development and Customizations:
+    - Architecture:
+      - Architecture Overview: arch/overview.md
+      - Design Decisions: arch/design.md
+    - Development Setup: 
+      - Building and Running: dev/build.md
+      - Contrinuting to the Code Base: dev/contributing.md
+      - Building a Windows Application: dev/pyinstaller.md
+    - Frontend:
+      - Plot Charts: frontend/plot.md
+      - Plot Indicator: frontend/indicator.md
+      - Draw Annotations: frontend/draw.md
+      - Add Theme: frontend/theme.md
+    - Backend:
+      - Add Data Source: backend/data.md
+      - Add Indicator: backend/indicator.md
+      - Add Notification Type: backend/notification.md
+  - Development Plan: plan.md
+  - License: license.md
+plugins:
+  - search
+  - mkdocstrings
+
+theme:
+  name: material
+  logo: images/logo.svg
+  favicon: images/favicon.png
+  palette:
+    primary: custom
+
+  features:
+    - content.code.copy
+    # - navigation.expand
+extra_css:
+  - stylesheets/extra.css
+extra:
+  generator: false
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

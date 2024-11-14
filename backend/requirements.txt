@@ -1,0 +1,16 @@
+fastapi 
+uvicorn
+websockets
+websocket-client
+fastapi-utils
+typing-inspect
+python-dotenv
+SQLAlchemy
+pywebpush
+openai
+httpx[http2]
+
+python-binance==1.0.19
+polygon-api-client
+pyti
+git+https://github.com/twopirllc/pandas-ta.git@development#egg=pandas-ta
