@@ -54,6 +54,13 @@ export class OperationsHandler {
     const name = data.details.name;
     const interval = this.chart.dataProvider.interval;
 
+    this.chart.saveHandler.onAdd("data", `${source}-${name}`, {
+      data,
+      source,
+      name,
+      interval,
+    });
+
     const isReady =
       !this.chart.panes || (this.chart.panes && this.chart.panes.length === 0)
         ? false
@@ -438,6 +445,12 @@ export class OperationsHandler {
       .map(([key, value]) => `${key}-${value.value}`)
       .join("_");
     const indicatorId = `${indicator.id.replace(/\./g, "-")}_${inputId}_${dataId}`;
+
+    this.chart.saveHandler.onAdd("indicator", `${indicatorId}`, {
+      indicator,
+      inputs,
+      dataMap,
+    });
 
     const settings = {
       type: "indicator",

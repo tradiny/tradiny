@@ -18,6 +18,7 @@ import { GridHandler } from "./grid.js";
 export class SaveHandler {
   static chartsKey = "MyCharts";
   static gridsKey = "MyGrids";
+  static mostAddedKey = "MyMostAdded";
   constructor(chart) {
     this.chart = chart;
   }
@@ -350,5 +351,37 @@ export class SaveHandler {
       }
     }
     return serializedDrawing;
+  }
+
+  onAdd(type, id, data) {
+    if (!localStorage.getItem(SaveHandler.mostAddedKey)) {
+      localStorage.setItem(SaveHandler.mostAddedKey, JSON.stringify({}));
+    }
+    let mostAdded = JSON.parse(localStorage.getItem(SaveHandler.mostAddedKey));
+    if (!mostAdded[type]) {
+      mostAdded[type] = {};
+    }
+    if (!mostAdded[type][id]) {
+      mostAdded[type][id] = { data, count: 0 };
+    }
+    mostAdded[type][id].count += 1;
+    localStorage.setItem(SaveHandler.mostAddedKey, JSON.stringify(mostAdded));
+  }
+
+  getMostAdded(type) {
+    let mostAdded = localStorage.getItem(SaveHandler.mostAddedKey);
+    if (!mostAdded) {
+      return [];
+    }
+    mostAdded = JSON.parse(mostAdded);
+    if (!mostAdded[type]) {
+      return [];
+    }
+    let items = mostAdded[type];
+    const entries = Object.entries(items);
+    const sortedEntries = entries.sort(([, a], [, b]) => b.count - a.count);
+    const topEntries = sortedEntries.slice(0, 5);
+    const topItems = Object.fromEntries(topEntries);
+    return Object.values(topItems);
   }
 }

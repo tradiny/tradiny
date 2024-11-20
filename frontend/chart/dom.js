@@ -1013,7 +1013,22 @@ export class DOMHandler {
 
         const searchData = (s) => {
           this.chart.dataProvider.searchData(s, (data) => {
+            // inject most used
+            if (!s) {
+              const mostAdded = this.chart.saveHandler.getMostAdded("data");
+              for (let i = 0; i < mostAdded.length; i++) {
+                const d = mostAdded[i].data;
+                data.unshift({
+                  details: d.data.details,
+                  id: `${d.source}-${d.name}`,
+                  name: d.name,
+                  type: "data",
+                });
+              }
+            }
+
             this._data = data;
+
             new Renderer().render(
               "data-search-results",
               { self: this.chart, data },
