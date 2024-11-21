@@ -14,6 +14,7 @@ import asyncio
 import db
 import logging
 import time
+import os
 from config import Config
 
 dbconn = db.create_connection(Config.DB)
@@ -563,8 +564,12 @@ async def websocket_endpoint(
 
 app.include_router(websocket_router)
 
-app.mount("/", StaticFiles(directory=resource_path("dist"), html=True), name="static")
+dist_directory = resource_path("dist")
 
+if os.path.exists(dist_directory):
+    app.mount("/", StaticFiles(directory=dist_directory, html=True), name="static")
+else:
+    logging.warning("Warning: 'dist' directory does not exist; static files not mounted.")
 
 async def handle_message(websocket: WebSocket, data: dict, alert_queue: Queue):
     handle_first = ["data"]

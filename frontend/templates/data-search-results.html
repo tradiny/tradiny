@@ -1,11 +1,37 @@
 <div>
-
 <table>
-    <thead>
-        <td>Category</td>
-        <td>Source</td>
-        <td>Name</td>
-    </thead>
+{% if (!o.s &&  o.frequentlyUsed && o.frequentlyUsed.length) { %}
+<tr><td colspan="3" class="info">Frequently used</td></tr>
+{% for (var i=0; i<o.frequentlyUsed.length; i++) { %}
+    {% if (o.frequentlyUsed[i].details) { %}
+        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.dataWindow('{%=o.frequentlyUsed[i].id%}')">
+            <td>
+                {% if (o.frequentlyUsed[i].details.categories) { %}
+
+                {% for (var j=0; j<o.frequentlyUsed[i].details.categories.length; j++) { %}
+                {%=o.frequentlyUsed[i].details.categories[j]%} 
+                {% } %}
+
+                {% } else { %}
+
+
+                {% } %}
+                
+            </td>
+            <!-- <td></td> -->
+            <td>
+                {%=(o.frequentlyUsed[i].details.name_label?o.frequentlyUsed[i].details.name_label+" ("+o.frequentlyUsed[i].details.name+")":o.frequentlyUsed[i].details.name)%}
+                
+            </td>
+            <td>
+                <span class="info">{%=(o.frequentlyUsed[i].details.source_label?o.frequentlyUsed[i].details.source_label:o.frequentlyUsed[i].details.source)%}</span>
+            </td>
+        </tr>
+    {% } %}
+{% } %}
+<tr><td colspan="3" class="info">All</td></tr>
+{% } %}
+
 {% for (var i=0; i<o.data.length; i++) { %}
     {% if (o.data[i].details) { %}
         <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.dataWindow('{%=o.data[i].id%}')">
@@ -20,9 +46,16 @@
 
 
                 {% } %}
+                
             </td>
-            <td>{%=(o.data[i].details.source_label?o.data[i].details.source_label:o.data[i].details.source)%}</td>
-            <td>{%=(o.data[i].details.name_label?o.data[i].details.name_label+" ("+o.data[i].details.name+")":o.data[i].details.name)%}</td>
+            <!-- <td></td> -->
+            <td>
+                {%=(o.data[i].details.name_label?o.data[i].details.name_label+" ("+o.data[i].details.name+")":o.data[i].details.name)%}
+                
+            </td>
+            <td>
+                <span class="info">{%=(o.data[i].details.source_label?o.data[i].details.source_label:o.data[i].details.source)%}</span>
+            </td>
         </tr>
     {% } %}
 {% } %}

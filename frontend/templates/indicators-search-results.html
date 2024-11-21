@@ -1,9 +1,36 @@
 <div>
+
+{%
+    function cap(str) {
+        if (!str) return str; // Handle null, undefined, or empty strings
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }      
+%}
     <table>
-        <thead>
-            <td>Category</td>
-            <td>Name</td>
-        </thead>
+    {% if (!o.s &&  o.frequentlyUsed && o.frequentlyUsed.length) { %}
+    <tr><td colspan="3" class="info">Frequently used</td></tr>
+    {% for (var i=0; i<o.frequentlyUsed.length; i++) { %}
+        {% if (o.frequentlyUsed[i].details) { %}
+        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.indicatorWindow('{%=o.frequentlyUsed[i].id%}')">
+            <td>
+                {% if (o.data[i].details.categories) { %}
+
+                {% for (var j=0; j<o.frequentlyUsed[i].details.categories.length; j++) { %}
+                {%=cap(o.frequentlyUsed[i].details.categories[j])%} 
+                {% } %}
+
+                {% } else { %}
+
+                {%=o.frequentlyUsed[i].details.library%}
+
+                {% } %}
+            </td>
+            <td>{%=o.frequentlyUsed[i].name%}</td>
+        </tr>
+        {% } %}
+    {% } %}
+    <tr><td colspan="3" class="info">All</td></tr>
+    {% } %}
     {% for (var i=0; i<o.data.length; i++) { %}
         {% if (o.data[i].details) { %}
             <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.indicatorWindow('{%=o.data[i].id%}')">
@@ -11,7 +38,7 @@
                     {% if (o.data[i].details.categories) { %}
 
                     {% for (var j=0; j<o.data[i].details.categories.length; j++) { %}
-                    {%=o.data[i].details.categories[j]%} 
+                    {%=cap(o.data[i].details.categories[j])%} 
                     {% } %}
 
                     {% } else { %}

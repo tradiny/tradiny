@@ -18,6 +18,7 @@ import { GridHandler } from "./grid.js";
 export class SaveHandler {
   static chartsKey = "MyCharts";
   static gridsKey = "MyGrids";
+  static frequentlyUsedKey = "MyFrequentlyUsed";
   constructor(chart) {
     this.chart = chart;
   }
@@ -350,5 +351,42 @@ export class SaveHandler {
       }
     }
     return serializedDrawing;
+  }
+
+  onUsed(type, id, data) {
+    if (!localStorage.getItem(SaveHandler.frequentlyUsedKey)) {
+      localStorage.setItem(SaveHandler.frequentlyUsedKey, JSON.stringify({}));
+    }
+    let frequentlyUsed = JSON.parse(
+      localStorage.getItem(SaveHandler.frequentlyUsedKey),
+    );
+    if (!frequentlyUsed[type]) {
+      frequentlyUsed[type] = {};
+    }
+    if (!frequentlyUsed[type][id]) {
+      frequentlyUsed[type][id] = { data, count: 0 };
+    }
+    frequentlyUsed[type][id].count += 1;
+    localStorage.setItem(
+      SaveHandler.frequentlyUsedKey,
+      JSON.stringify(frequentlyUsed),
+    );
+  }
+
+  getFrequentlyUsed(type) {
+    let frequentlyUsed = localStorage.getItem(SaveHandler.frequentlyUsedKey);
+    if (!frequentlyUsed) {
+      return [];
+    }
+    frequentlyUsed = JSON.parse(frequentlyUsed);
+    if (!frequentlyUsed[type]) {
+      return [];
+    }
+    let items = frequentlyUsed[type];
+    const entries = Object.entries(items);
+    const sortedEntries = entries.sort(([, a], [, b]) => b.count - a.count);
+    const topEntries = sortedEntries.slice(0, 5);
+    const topItems = Object.fromEntries(topEntries);
+    return Object.values(topItems);
   }
 }

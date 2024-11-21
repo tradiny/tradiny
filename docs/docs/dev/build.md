@@ -40,6 +40,7 @@ To install the necessary dependencies, run:
 
 ```
 npm install
+npm update
 ```
 
 This library has been tested with Node.js version 20.

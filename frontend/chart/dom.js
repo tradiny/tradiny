@@ -984,6 +984,7 @@ export class DOMHandler {
     const grids = this.chart.saveHandler.getGrids();
     const charts = this.chart.saveHandler.getCharts();
     const d3ContainerEl = d3.select("#" + this.chart.elementId); // need to have its own reference, because it might be not initialized yet
+    const frequentlyUsed = this.getFrequentlyUsed();
 
     let activeTab = "data";
     if (render.includes("charts") && Object.keys(charts).length) {
@@ -1014,9 +1015,15 @@ export class DOMHandler {
         const searchData = (s) => {
           this.chart.dataProvider.searchData(s, (data) => {
             this._data = data;
+
             new Renderer().render(
               "data-search-results",
-              { self: this.chart, data },
+              {
+                self: this.chart,
+                s,
+                data,
+                frequentlyUsed: frequentlyUsed.data,
+              },
               (content) => {
                 d3ContainerEl.select("div.data-search-results").html(content);
               },
@@ -1029,7 +1036,13 @@ export class DOMHandler {
             this._indicators = data;
             new Renderer().render(
               "indicators-search-results",
-              { self: this.chart, that: this, data },
+              {
+                self: this.chart,
+                s,
+                that: this,
+                data,
+                frequentlyUsed: frequentlyUsed.indicator,
+              },
               (content) => {
                 d3ContainerEl
                   .select("div.indicators-search-results")
@@ -1084,6 +1097,9 @@ export class DOMHandler {
   dataWindow(id) {
     this._win.closePopup();
     this._data = this._data.find((item) => item.id === id);
+    if (!this._data) {
+      this._data = this.getFrequentlyUsed().data.find((item) => item.id === id);
+    }
 
     if (
       !this.chart.panes ||
@@ -1320,6 +1336,11 @@ export class DOMHandler {
   indicatorWindow(id) {
     this._win.closePopup();
     this._indicator = this._indicators.find((item) => item.id === id);
+    if (!this._indicator) {
+      this._indicator = this.getFrequentlyUsed().indicator.find(
+        (item) => item.id === id,
+      );
+    }
 
     new Renderer().render(
       "indicator",
@@ -1599,5 +1620,26 @@ export class DOMHandler {
     };
     this.chart.dataProvider.addAlert(alertObj);
     this._win.closePopup();
+  }
+
+  getFrequentlyUsed() {
+    const frequentlyUsed = { data: [], indicator: [] };
+    let _ = this.chart.saveHandler.getFrequentlyUsed("data");
+    for (let i = 0; i < _.length; i++) {
+      const d = _[i].data;
+      frequentlyUsed.data.push({
+        details: d.data.details,
+        id: `${d.source}-${d.name}`,
+        name: d.name,
+        type: "data",
+      });
+    }
+
+    _ = this.chart.saveHandler.getFrequentlyUsed("indicator");
+    for (let i = 0; i < _.length; i++) {
+      const d = _[i].data;
+      frequentlyUsed.indicator.push(d.indicator);
+    }
+    return frequentlyUsed;
   }
 }
