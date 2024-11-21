@@ -18,7 +18,7 @@ import { GridHandler } from "./grid.js";
 export class SaveHandler {
   static chartsKey = "MyCharts";
   static gridsKey = "MyGrids";
-  static mostAddedKey = "MyMostAdded";
+  static frequentlyUsedKey = "MyFrequentlyUsed";
   constructor(chart) {
     this.chart = chart;
   }
@@ -353,31 +353,36 @@ export class SaveHandler {
     return serializedDrawing;
   }
 
-  onAdd(type, id, data) {
-    if (!localStorage.getItem(SaveHandler.mostAddedKey)) {
-      localStorage.setItem(SaveHandler.mostAddedKey, JSON.stringify({}));
+  onUsed(type, id, data) {
+    if (!localStorage.getItem(SaveHandler.frequentlyUsedKey)) {
+      localStorage.setItem(SaveHandler.frequentlyUsedKey, JSON.stringify({}));
     }
-    let mostAdded = JSON.parse(localStorage.getItem(SaveHandler.mostAddedKey));
-    if (!mostAdded[type]) {
-      mostAdded[type] = {};
+    let frequentlyUsed = JSON.parse(
+      localStorage.getItem(SaveHandler.frequentlyUsedKey),
+    );
+    if (!frequentlyUsed[type]) {
+      frequentlyUsed[type] = {};
     }
-    if (!mostAdded[type][id]) {
-      mostAdded[type][id] = { data, count: 0 };
+    if (!frequentlyUsed[type][id]) {
+      frequentlyUsed[type][id] = { data, count: 0 };
     }
-    mostAdded[type][id].count += 1;
-    localStorage.setItem(SaveHandler.mostAddedKey, JSON.stringify(mostAdded));
+    frequentlyUsed[type][id].count += 1;
+    localStorage.setItem(
+      SaveHandler.frequentlyUsedKey,
+      JSON.stringify(frequentlyUsed),
+    );
   }
 
-  getMostAdded(type) {
-    let mostAdded = localStorage.getItem(SaveHandler.mostAddedKey);
-    if (!mostAdded) {
+  getFrequentlyUsed(type) {
+    let frequentlyUsed = localStorage.getItem(SaveHandler.frequentlyUsedKey);
+    if (!frequentlyUsed) {
       return [];
     }
-    mostAdded = JSON.parse(mostAdded);
-    if (!mostAdded[type]) {
+    frequentlyUsed = JSON.parse(frequentlyUsed);
+    if (!frequentlyUsed[type]) {
       return [];
     }
-    let items = mostAdded[type];
+    let items = frequentlyUsed[type];
     const entries = Object.entries(items);
     const sortedEntries = entries.sort(([, a], [, b]) => b.count - a.count);
     const topEntries = sortedEntries.slice(0, 5);

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-d3fc": "cd node_modules/d3fc && npm install && npm run bundle-min",
+    "build-d3fc": "cd node_modules/d3fc && npm install && npm update && npm run bundle-min",
     "build": "npm run build-d3fc && cross-env NODE_ENV=production webpack --mode production --config webpack.config.js",
     "build-without-d3fc": "cross-env NODE_ENV=production webpack --mode production --config webpack.config.js",
     "format": "npx prettier . --write",

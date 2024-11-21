@@ -54,7 +54,7 @@ export class OperationsHandler {
     const name = data.details.name;
     const interval = this.chart.dataProvider.interval;
 
-    this.chart.saveHandler.onAdd("data", `${source}-${name}`, {
+    this.chart.saveHandler.onUsed("data", `${source}-${name}`, {
       data,
       source,
       name,
@@ -446,10 +446,8 @@ export class OperationsHandler {
       .join("_");
     const indicatorId = `${indicator.id.replace(/\./g, "-")}_${inputId}_${dataId}`;
 
-    this.chart.saveHandler.onAdd("indicator", `${indicatorId}`, {
+    this.chart.saveHandler.onUsed("indicator", indicator.id, {
       indicator,
-      inputs,
-      dataMap,
     });
 
     const settings = {
