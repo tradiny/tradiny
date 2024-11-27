@@ -19,9 +19,9 @@ CONFIG_FIELDS = [
     ("PORT", "8000", "Server port number"),
     ("DB", "db.sqlite3", "Database file or URI"),
     ("VAPID_KEY_PATH", "private_key.pem", "Path to VAPID private key"),
-    ("CSV_FILE_PATH", "", "Path to CSV file data source"),
+    ("CSV_FOLDER_PATH", "", "Path to CSV folder data source"),
     ("CSV_DATE_COLUMN", "timestamp", "CSV column name for date"),
-    ("CSV_DATE_COLUMN_FORMATTER", "timestamp_formatter", "Formatter for date column"),
+    ("CSV_DATE_COLUMN_FORMATTER", "ISO-8601", "Formatter for date column"),
     (
         "BINANCE_API_KEY",
         "",

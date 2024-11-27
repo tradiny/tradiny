@@ -8,9 +8,11 @@
 #
 # For more details, refer to the LICENSE.md file in the root directory of this project.
 from multiprocessing import freeze_support, set_start_method
+
 set_start_method("spawn")
 from pathlib import Path
 from config import CONFIG_FIELDS, Config, update_config_vars
+
 
 def main():
     freeze_support()

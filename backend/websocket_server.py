@@ -470,9 +470,10 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         subscriptions = self.get_data_subscriptions(websocket)
         for source, name, interval in subscriptions:
-            providers[source].send_to(
-                {"action": "on_close", "args": (id(websocket), name, interval)}
-            )
+            if source in providers:
+                providers[source].send_to(
+                    {"action": "on_close", "args": (id(websocket), name, interval)}
+                )
 
         clients.pop(id(websocket), None)
 
@@ -569,7 +570,10 @@ dist_directory = resource_path("dist")
 if os.path.exists(dist_directory):
     app.mount("/", StaticFiles(directory=dist_directory, html=True), name="static")
 else:
-    logging.warning("Warning: 'dist' directory does not exist; static files not mounted.")
+    logging.warning(
+        "Warning: 'dist' directory does not exist; static files not mounted."
+    )
+
 
 async def handle_message(websocket: WebSocket, data: dict, alert_queue: Queue):
     handle_first = ["data"]

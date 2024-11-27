@@ -33,7 +33,7 @@ def populate_from_provider(api_key, provider_class):
 def main():
 
     providers = [
-        (Config.CSV_FILE_PATH, "data_providers.csv.CSVProvider"),
+        (Config.CSV_FOLDER_PATH, "data_providers.csv.CSVProvider"),
         (Config.POLYGON_IO_API_KEY, "data_providers.polygon.PolygonProvider"),
         (Config.BINANCE_API_KEY, "data_providers.binance.BinanceProvider"),
     ]

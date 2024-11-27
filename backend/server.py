@@ -47,7 +47,7 @@ def initialize_provider(config_key, provider_module, provider_class):
 def initialize_providers():
     providers = []
     provider_configs = [
-        ("CSV_FILE_PATH", "data_providers.csv", "CSVProvider"),
+        ("CSV_FOLDER_PATH", "data_providers.csv", "CSVProvider"),
         ("POLYGON_IO_API_KEY", "data_providers.polygon", "PolygonProvider"),
         ("BINANCE_API_KEY", "data_providers.binance", "BinanceProvider"),
     ]
