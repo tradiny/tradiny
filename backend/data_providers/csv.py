@@ -10,6 +10,8 @@
 
 from datetime import datetime, timedelta, timezone
 import threading
+from collections import deque
+
 
 import time
 import re
@@ -101,6 +103,8 @@ class CSVProvider(Provider):
         self.date_column = Config.CSV_DATE_COLUMN
         self.date_column_formatter = date_column_formatter
 
+        self.cache = {}
+
         super().__init__()
 
     def init(self):
@@ -123,15 +127,14 @@ class CSVProvider(Provider):
             header = clean_header(filepath, self.date_column)
 
             if "open" in header:  # candlestick type
-                print(f"Creating candlestick {filepath}")
                 dataset.append(
                     {
                         "source": CSVProvider.key,
                         "name": name,
-                        "name_label": f"{name}.csv, OHLCV",
+                        "name_label": f"OHLCV",
                         "path": filepath,
                         "type": "candlestick",
-                        "categories": ["CSV"],
+                        "categories": [f"{name}.csv"],
                         "outputs": [
                             {"name": f"open", "y_axis": f"price"},
                             {"name": f"high", "y_axis": f"price"},
@@ -149,15 +152,14 @@ class CSVProvider(Provider):
 
             for value in additional_values:
 
-                print(f"Creating line {value}")
                 dataset.append(
                     {
                         "source": CSVProvider.key,
                         "name": f"{name}__{value}",
-                        "name_label": f"{name}.csv, column {value}",
+                        "name_label": f"{value}",
                         "path": filepath,
                         "type": "line",
-                        "categories": ["CSV"],
+                        "categories": [f"{name}.csv"],
                         "outputs": [{"name": value, "y_axis": value}],
                     }
                 )
@@ -247,10 +249,26 @@ class CSVProvider(Provider):
         start_time_query="",
         end_time_query="",
     ):
+        cache_key = (file_path, date_column)
+
+        if cache_key not in self.cache:
+            self.cache[cache_key] = []
+
+        cached_pointers = self.cache[cache_key]
+        valid_pointer = None
+        for pointer, timestamp in cached_pointers:
+            if timestamp >= end_time_query:
+                valid_pointer = pointer
+                break
 
         def is_date_in_range(date_str, start_time_query, end_time_query):
-            formatted_date = date_column_formatter(date_str)
             return start_time_query <= formatted_date <= end_time_query
+
+        def is_date_in_range_or_lower(date_str, start_time_query, end_time_query):
+            return (
+                start_time_query <= formatted_date <= end_time_query
+                or formatted_date <= start_time_query
+            )
 
         def get_date_column_index(header, date_column_name):
             columns = header.split(",")
@@ -260,14 +278,14 @@ class CSVProvider(Provider):
             return -1
 
         with open(file_path, "rb") as f:
-            f.seek(0, os.SEEK_END)
-            end_pointer = f.tell()
+            if valid_pointer is None:
+                f.seek(0, os.SEEK_END)
+                start_pointer = f.tell()
 
-            # Read the first line to extract header and determine the date column index
             f.seek(0)
             header = f.readline().decode("utf-8").strip()
             data_columns = header.split(",")
-            data_columns.remove(self.date_column)
+            data_columns.remove(date_column)
 
             date_column_index = get_date_column_index(header, date_column)
             if date_column_index == -1:
@@ -280,47 +298,74 @@ class CSVProvider(Provider):
                     raise ValueError(f"Column '{col}' not found in header")
                 map_columns_index[col] = column_index
 
+            chunk_size = 1024
             buffer = bytearray()
-            pointer_location = end_pointer
+            pointer_location = (
+                valid_pointer if valid_pointer is not None else start_pointer
+            )
             lines_found = 0
             lines_to_skip = skip_lines
             filtered_lines = []
 
             while pointer_location >= 0 and len(filtered_lines) < n_lines:
-                f.seek(pointer_location)
-                new_byte = f.read(1)
-                if new_byte == b"\n" and pointer_location != end_pointer:
+                read_size = min(chunk_size, pointer_location + 1)
+                f.seek(pointer_location - read_size + 1)
+                chunk = f.read(read_size)
+                buffer[:0] = chunk  # Prepend the new chunk to the buffer
+
+                # Process full lines from the buffer
+                while b"\n" in buffer:
+                    newline_pos = buffer.rindex(b"\n")
+
+                    # Extract the entire line
+                    line_data = buffer[newline_pos + 1 :]
+                    buffer = buffer[:newline_pos]
+
+                    processed_line = line_data.decode("utf-8").strip()
                     lines_found += 1
-                    line = buffer[::-1].decode("utf-8").strip()
 
-                    buffer.clear()
-
-                    # Split line into columns
-                    columns = line.split(",")
-                    if len(columns) - 1 > date_column_index:
+                    columns = processed_line.split(",")
+                    if len(columns) - 1 == len(data_columns):
                         date_str = columns[date_column_index].strip()
                         formatted_date = date_column_formatter(date_str)
 
                         d = {"date": formatted_date}
                         for col in data_columns:
                             idx = map_columns_index[col]
-                            d[col] = columns[idx]
+                            if idx < len(columns):
+                                d[col] = columns[idx]
+
+                        if lines_found > lines_to_skip and (
+                            end_time_query == "now UTC"
+                            or is_date_in_range_or_lower(
+                                formatted_date, start_time_query, end_time_query
+                            )
+                        ):
+                            filtered_lines.append(d)
 
                         if len(filtered_lines) >= n_lines:
                             break
 
-                        if end_time_query == "now UTC":
-                            if lines_found > lines_to_skip:
-                                filtered_lines.append(d)
-                        else:
-                            if is_date_in_range(
-                                formatted_date, start_time_query, end_time_query
-                            ):
-                                if lines_found > lines_to_skip:
-                                    filtered_lines.append(d)
+                        if (pointer_location, formatted_date) not in self.cache[
+                            cache_key
+                        ]:
+                            self.cache[cache_key].append(
+                                (pointer_location, formatted_date)
+                            )
 
-                buffer.extend(new_byte)
-                pointer_location -= 1
+                if len(filtered_lines) >= n_lines:
+                    break
 
-            filtered_lines.reverse()
+                # Move the pointer backward
+                pointer_location -= read_size
+
+            # Final check for any remaining line data
+            # if buffer:
+            #    remaining_data = buffer.decode('utf-8').strip()
+            #    if remaining_data:
+            #        print(f"Leftover line: {remaining_data}")
+
+            filtered_lines.reverse()  # Reverse to maintain original order
+            self.cache[cache_key].sort(key=lambda x: x[1])
+
             return filtered_lines
