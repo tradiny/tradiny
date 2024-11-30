@@ -14,3 +14,4 @@ python-binance==1.0.19
 polygon-api-client
 pyti
 git+https://github.com/twopirllc/pandas-ta.git@development#egg=pandas-ta
+setuptools
