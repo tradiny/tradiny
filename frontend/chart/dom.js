@@ -858,13 +858,20 @@ export class DOMHandler {
       } else if (this.chart.panes.length >= 3) {
         if (i - 1 < 0) {
           this.chart.delimiterEls.splice(i, 1);
-          this.chart.d3ContainerEl.selectAll(".delimiter").nodes()[0].remove();
+          const delimiterEls = this.chart.d3ContainerEl
+            .selectAll(".delimiter")
+            .nodes();
+          if (delimiterEls.length) {
+            delimiterEls[0].remove();
+          }
         } else {
           this.chart.delimiterEls.splice(i - 1, 1);
-          this.chart.d3ContainerEl
+          const delimiterEls = this.chart.d3ContainerEl
             .selectAll(".delimiter")
-            .nodes()
-            [i - 1].remove();
+            .nodes();
+          if (delimiterEls.length >= i) {
+            delimiterEls[i - 1].remove();
+          }
         }
       }
     }
