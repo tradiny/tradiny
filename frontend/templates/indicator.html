@@ -36,7 +36,7 @@
 
         <div class="input-group">
             <label for="">Pane</label>
-            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.onPaneChange(this)">
+            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.controls.onPaneChange(this)">
                 {% for (var i=0; i<o.self.panes.length; i++) { %} <option value="{%=i%}">{%=o.self.panes[i].name%}
                 </option>
                 {% } %}
@@ -71,7 +71,7 @@
 
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
     </div>
     <div class="tab-styles tabcontent">
@@ -89,7 +89,7 @@
         {% } %}
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
 
     </div>
@@ -97,7 +97,7 @@
 
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addIndicator()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
     </div>
 

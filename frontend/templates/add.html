@@ -15,7 +15,7 @@
       {% } %}
 
       {% if (o.render.includes('alert')) { %}
-      <button class="tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-alert');setTimeout(() => {%=o.self.chart.id%}.DOMHandler.addAlertRule(1), 0)">Alert</button>
+      <button class="tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-alert');setTimeout(() => {%=o.self.chart.id%}.DOMHandler.controls.addAlertRule(1), 0)">Alert</button>
       {% } %}
     </div>
     
@@ -93,10 +93,10 @@
       </div>
       <div class="alert-rules" style="margin-bottom: 15px"></div>
       <div style="margin-bottom: 15px">
-          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.addAlertRule()" value="Add rule">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addAlertRule()" value="Add rule">
       </div>
       <div>
-          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.saveAlert()" value="Submit">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.saveAlert()" value="Submit">
       </div>
   
     </div>

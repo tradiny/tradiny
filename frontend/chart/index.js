@@ -64,7 +64,7 @@ export default class TradinyChart {
     this.initializeProperties(options);
 
     const theme = localStorage.getItem(TradinyChart.ThemeKey);
-    this.DOMHandler.setTheme(
+    this.DOMHandler.controls.setTheme(
       this.gridHandler.options.theme || options.theme || theme || "dark",
     );
 
@@ -128,7 +128,7 @@ export default class TradinyChart {
       if (this.options.gridPosition === "1x1") {
         tabs.unshift("grids");
       }
-      this.DOMHandler.addWindow(tabs, true);
+      this.DOMHandler.controls.addWindow(tabs, true);
     }
   }
 

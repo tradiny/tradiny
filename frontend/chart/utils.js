@@ -516,4 +516,49 @@ export class Utils {
 
     return markdown;
   }
+
+  static getAxisWidthBasedOnSample(sample, formatter, fontSize) {
+    if (sample == undefined) {
+      return 0;
+    }
+    if (formatter) {
+      if (formatter === "si") {
+        sample = d3.format(".3s")(sample);
+      } else {
+        sample = formatter(sample);
+      }
+    }
+    let str = "" + sample;
+    if (str.includes(".")) {
+      str = str.replace(/0+$/, "");
+    }
+    const w = Math.round(
+      Utils.getTextWidth(str + "0", `${fontSize}px sans-serif`),
+    );
+
+    return w;
+  }
+
+  static getPrecisionBasedOnSample(sample, formatter) {
+    if (sample == undefined) {
+      return 0;
+    }
+    if (formatter) {
+      if (formatter === "si") {
+        sample = d3.format(".3s")(sample);
+      } else {
+        sample = formatter(sample);
+      }
+    }
+    let str = sample.toString();
+    if (str.includes(".")) {
+      str = str.replace(/\.?0+$/, "");
+    }
+    const decimalIndex = str.indexOf(".");
+    if (decimalIndex === -1) {
+      return 0; // No decimal places
+    } else {
+      return str.length - decimalIndex - 1;
+    }
+  }
 }

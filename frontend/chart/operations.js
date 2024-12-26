@@ -100,7 +100,7 @@ export class OperationsHandler {
                 type: data.details.type,
                 legend: [
                   {
-                    icon: this.chart.DOMHandler.getIcon("line"),
+                    icon: this.chart.DOMHandler.icon.getIcon("line"),
                     label: { source, name, interval },
                     color: color,
                   },
@@ -157,7 +157,7 @@ export class OperationsHandler {
               type: data.details.type,
               legend: [
                 {
-                  icon: this.chart.DOMHandler.getIcon("candle"),
+                  icon: this.chart.DOMHandler.icon.getIcon("candle"),
                   label: { source, name, interval },
                 },
               ],
@@ -280,7 +280,7 @@ export class OperationsHandler {
             type: data.details.type,
             legend: [
               {
-                icon: this.chart.DOMHandler.getIcon("line"),
+                icon: this.chart.DOMHandler.icon.getIcon("line"),
                 label: { source, name, interval },
                 color: color,
               },
@@ -357,7 +357,7 @@ export class OperationsHandler {
               type: data.details.type,
               legend: [
                 {
-                  icon: this.chart.DOMHandler.getIcon("candle"),
+                  icon: this.chart.DOMHandler.icon.getIcon("candle"),
                   label: { source, name, interval },
                 },
               ],
@@ -568,7 +568,7 @@ export class OperationsHandler {
           type: "line",
           legend: [
             {
-              icon: this.chart.DOMHandler.getIcon("line"),
+              icon: this.chart.DOMHandler.icon.getIcon("line"),
               label: `${indicator.details.categories[0]} / ${indicator.name} ${dataKey} ${inputText}`,
               color: color,
             },

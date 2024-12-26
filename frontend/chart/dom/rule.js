@@ -8,13 +8,6 @@
  * For commercial inquiries, contact: license@tradiny.com
  */
 
-import * as fc from "d3fc";
-
-import { IntervalPicker } from "../../intervalpicker.js";
-import { Renderer } from "../../renderer.js";
-
-import { Utils } from "../utils.js";
-
 function parent(element) {
   return element.node().parentNode;
 }

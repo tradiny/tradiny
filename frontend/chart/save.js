@@ -50,7 +50,7 @@ export class SaveHandler {
   }
 
   loadChart(id) {
-    this.chart.DOMHandler._win.closePopup();
+    this.chart.DOMHandler.controls._win.closePopup();
     const charts = JSON.parse(localStorage.getItem(SaveHandler.chartsKey));
     const chart = charts[id];
 
@@ -177,7 +177,7 @@ export class SaveHandler {
   }
 
   loadGrid(id) {
-    this.chart.DOMHandler._win.closePopup();
+    this.chart.DOMHandler.controls._win.closePopup();
 
     this.chart.gridHandler.destroyGrid(true);
 

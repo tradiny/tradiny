@@ -42,7 +42,7 @@ export class GridPicker {
     rect.style.display = "flex";
     rect.style.alignItems = "center";
     rect.style.justifyContent = "center";
-    rect.innerHTML = this.domHandler.getIcon("back");
+    rect.innerHTML = this.domHandler.icon.getIcon("back");
     rect.addEventListener("click", this.closePicker.bind(this));
     this.container.appendChild(rect);
 

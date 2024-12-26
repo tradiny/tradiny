@@ -11,7 +11,7 @@
     <tr><td colspan="3" class="info">Frequently used</td></tr>
     {% for (var i=0; i<o.frequentlyUsed.length; i++) { %}
         {% if (o.frequentlyUsed[i].details) { %}
-        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.indicatorWindow('{%=o.frequentlyUsed[i].id%}')">
+        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.controls.indicatorWindow('{%=o.frequentlyUsed[i].id%}')">
             <td>
                 {% if (o.data[i].details.categories) { %}
 
@@ -33,7 +33,7 @@
     {% } %}
     {% for (var i=0; i<o.data.length; i++) { %}
         {% if (o.data[i].details) { %}
-            <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.indicatorWindow('{%=o.data[i].id%}')">
+            <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.controls.indicatorWindow('{%=o.data[i].id%}')">
                 <td>
                     {% if (o.data[i].details.categories) { %}
 

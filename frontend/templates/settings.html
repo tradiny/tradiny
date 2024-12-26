@@ -34,7 +34,7 @@
 
   <div style="margin-bottom: 15px">
 <label >Theme</label>
-<select style="max-width: 100%" onchange="{%=o.self.id%}.DOMHandler.switchTheme(this)">
+<select style="max-width: 100%" onchange="{%=o.self.id%}.DOMHandler.controls.switchTheme(this)">
     <option value="dark" {%=((o.theme === 'dark') ? 'selected' : '')%}>Dark</option>
     <option value="light" {%=((o.theme === 'light' || o.theme === '') ? 'selected' : '')%}>Light</option>
 </select>

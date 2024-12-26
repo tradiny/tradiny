@@ -566,8 +566,12 @@ export class DrawingHandler {
   }
 
   toggle(tool) {
-    if (this.active) {
+    if (this.activeTool === tool) {
       return this._toggle(this.activeTool);
+    }
+    if (this.active) {
+      // first disable, then activate `tool`
+      this._toggle(this.activeTool);
     }
 
     if (["ruler", "fib"].includes(tool)) {

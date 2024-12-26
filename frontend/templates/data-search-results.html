@@ -4,7 +4,7 @@
 <tr><td colspan="3" class="info">Frequently used</td></tr>
 {% for (var i=0; i<o.frequentlyUsed.length; i++) { %}
     {% if (o.frequentlyUsed[i].details) { %}
-        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.dataWindow('{%=o.frequentlyUsed[i].id%}')">
+        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.controls.dataWindow('{%=o.frequentlyUsed[i].id%}')">
             <td>
                 {% if (o.frequentlyUsed[i].details.categories) { %}
 
@@ -34,7 +34,7 @@
 
 {% for (var i=0; i<o.data.length; i++) { %}
     {% if (o.data[i].details) { %}
-        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.dataWindow('{%=o.data[i].id%}')">
+        <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.controls.dataWindow('{%=o.data[i].id%}')">
             <td>
                 {% if (o.data[i].details.categories) { %}
 

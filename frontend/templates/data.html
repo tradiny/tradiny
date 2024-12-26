@@ -10,7 +10,7 @@
 
         <div class="input-group">
             <label for="">Pane</label>
-            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.onPaneChange(this)">
+            <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.controls.onPaneChange(this)">
                 <option value="{%=(o.self.panes ? o.self.panes.length : 0)%}">New</option>
 
                 {% if (o.self.panes) { %}
@@ -36,7 +36,7 @@
         {% } %}
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addData()" value="Submit">
         </div>
 
     </div>
@@ -74,14 +74,14 @@
         {% } %}
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addData()" value="Submit">
         </div>
 
     </div>
     <div class="tab-preferences tabcontent">
 
         <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.addData()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addData()" value="Submit">
         </div>
 
     </div>
