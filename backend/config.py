@@ -48,6 +48,11 @@ CONFIG_FIELDS = [
     ("SMTP_PASSWORD", "", "Email password (in the case of Gmail, use App Password)"),
     ("SMTP_HOST", "smtp.gmail.com", "SMTP SSL hostname"),
     ("SMTP_PORT", "465", "SMTP SSL port"),
+    (
+        "RELEASE_HISTORICAL_CACHE_MINUTES",
+        str(60 * 24),
+        "Duration in minutes to retain the cache when not accessed by any user",
+    ),
     ("ALERT_WORKERS", "5", "Number of alert worker threads"),
     ("INDICATOR_WORKERS", "5", "Number of indicator worker threads"),
     ("MAX_REQUESTS_PER_IP_PER_HOUR", "100", "Max requests per hour per IP"),

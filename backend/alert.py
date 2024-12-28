@@ -16,6 +16,9 @@ import json
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
+from fastapi import Depends
+
+from log import setup_logging
 from config import Config
 
 from alert_evaluate import alert_evaluate
@@ -154,11 +157,28 @@ def stop_workers(task_queue, threads):
 
 def init_alerts(task_queue, dbconn):
     alerts = db.get_alerts(dbconn)
+    logging.info(f"Number of alerts: {len(alerts)}")
     for alert in alerts:
         trigger_worker(task_queue, {"action": "alert", "alert_id": str(alert["id"])})
 
 
-# task_queue, threads = spawn_workers(5)
-# trigger_worker(task_queue, "My Task")  # You can call this after the workers have started
-# # Once you're done with adding tasks, call stop_workers to signal them to stop.
-# stop_workers(task_queue, threads)
+class AlertQueueWrapper:
+    instance = None
+
+    def __init__(self):
+        if not AlertQueueWrapper.instance:
+            AlertQueueWrapper.instance = self
+
+            self.queue = spawn_workers(int(Config.ALERT_WORKERS))
+            dbconn = db.create_connection(Config.DB)
+            init_alerts(self.queue[0], dbconn)
+
+
+def get_queue_wrapper():
+    if not AlertQueueWrapper.instance:
+        AlertQueueWrapper()
+    return AlertQueueWrapper.instance.queue
+
+
+def init():
+    get_queue_wrapper()

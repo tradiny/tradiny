@@ -10,10 +10,16 @@
 
 from multiprocessing import Process, Queue
 
+import asyncio
 import concurrent.futures
 import time
 import logging
 from queue import Empty
+
+
+from config import Config
+from app.globals import providers
+from app.handlers import handle_message_from_provider
 
 
 class Provider(Process):
@@ -88,3 +94,37 @@ class Provider(Process):
     def stop_process(self):
         self.to_queue.put({"action": "stop"})
         self.process.join()
+
+
+def register_provider(provider):
+    providers[provider.key] = provider
+
+    asyncio.ensure_future(handle_message_from_provider(provider.from_queue))
+
+
+def initialize_provider(config_key, provider_module, provider_class):
+    if getattr(Config, config_key):
+        provider = getattr(
+            __import__(provider_module, fromlist=[provider_class]), provider_class
+        )()
+        logging.info(f"Starting process for provider {provider.key}.")
+        provider.start()
+        return provider
+    else:
+        return None
+
+
+def initialize_providers():
+    _providers = []
+    provider_configs = [
+        ("CSV_FOLDER_PATH", "data_providers.csv", "CSVProvider"),
+        ("POLYGON_IO_API_KEY", "data_providers.polygon", "PolygonProvider"),
+        ("BINANCE_API_KEY", "data_providers.binance", "BinanceProvider"),
+    ]
+
+    for env_key, config_path, provider_class in provider_configs:
+        provider = initialize_provider(env_key, config_path, provider_class)
+        if provider:
+            _providers.append(provider)
+
+    return _providers

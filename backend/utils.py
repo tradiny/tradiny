@@ -270,3 +270,21 @@ def get_current_date(interval):
         now - (now - datetime.min.replace(tzinfo=timezone.utc)) % delta
     )
     return current_candle_start.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def generate_method_key(method_name, *args, **kwargs):
+    # Convert positional arguments to strings
+    args_str = "_".join(str(arg) for arg in args)
+
+    # Convert keyword arguments to strings, sorted by key for consistency
+    kwargs_str = "_".join(f"{key}={value}" for key, value in sorted(kwargs.items()))
+
+    # Combine method name, args, and kwargs strings to form the method key
+    if args_str and kwargs_str:
+        method_key = f"{method_name}_{args_str}_{kwargs_str}"
+    elif args_str:
+        method_key = f"{method_name}_{args_str}"
+    else:
+        method_key = f"{method_name}_{kwargs_str}"
+
+    return method_key
