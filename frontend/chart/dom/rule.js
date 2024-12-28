@@ -12,10 +12,15 @@ function parent(element) {
   return element.node().parentNode;
 }
 
-export class DOMAlertRuleHandler {
-  constructor(chart) {
+export class DOMRuleHandler {
+  constructor(chart, selector) {
     this.chart = chart;
     this.step = "constructed";
+    this.selector = selector;
+
+    this.hideSource = false;
+    this.hideName = false;
+
     this.nextAvailableRuleId = 1;
     this.rules = {};
 
@@ -105,7 +110,7 @@ export class DOMAlertRuleHandler {
   }
 
   getRule(ruleId) {
-    const ruleSelector = `.alert-rules .rule-${ruleId}`;
+    const ruleSelector = `${this.selector}.rules .rule-${ruleId}`;
     const elements = this.chart.d3ContainerEl.selectAll(
       `${ruleSelector} input, ${ruleSelector} select`,
     );
@@ -138,13 +143,15 @@ export class DOMAlertRuleHandler {
   }
 
   count(cls) {
-    return this.chart.d3ContainerEl.selectAll(`.${cls}`).size() + 1;
+    return (
+      this.chart.d3ContainerEl.selectAll(`${this.selector} .${cls}`).size() + 1
+    );
   }
 
   countRulePart(ruleId) {
     const cls = "rule-type";
     const numOfTypes = this.chart.d3ContainerEl
-      .selectAll(`.rule-${ruleId} .${cls}`)
+      .selectAll(`${this.selector} .rule-${ruleId} .${cls}`)
       .size();
     if (numOfTypes <= 1) {
       return "1";
@@ -155,7 +162,9 @@ export class DOMAlertRuleHandler {
 
   countPerRule(ruleId, cls) {
     return (
-      this.chart.d3ContainerEl.selectAll(`.rule-${ruleId} .${cls}`).size() + 1
+      this.chart.d3ContainerEl
+        .selectAll(`${this.selector} .rule-${ruleId} .${cls}`)
+        .size() + 1
     );
   }
 
@@ -186,12 +195,12 @@ export class DOMAlertRuleHandler {
       .append("div")
       .attr("class", "controls");
 
-    cntrls.append("p").attr("class", "title").text(`Rule #${ruleId}`);
+    cntrls.append("p").attr("class", "title").text(`Condition ${ruleId}`);
 
     cntrls
       .append(`input`)
       .attr("type", "button")
-      .attr("value", `Remove rule #${ruleId}`)
+      .attr("value", `Remove condition ${ruleId}`)
       .on("click", () => {
         const el = this.rules[ruleId].container.node();
         let operatorEl = el.nextSibling;
@@ -256,11 +265,12 @@ export class DOMAlertRuleHandler {
 
     const inputGroup = this.rules[ruleId].container
       .append("div")
-      .attr("class", "input-group");
-
-    inputGroup.append("label").text("Type");
+      .attr("class", "input-group type");
 
     const count = this.countPerRule(ruleId, "rule-type");
+
+    inputGroup.append("label").text(`Operand ${count}`);
+
     const select = inputGroup
       .append("select")
       .attr("class", "rule-type")
@@ -273,7 +283,21 @@ export class DOMAlertRuleHandler {
 
     // Add option elements to the select element in a loop
     types.forEach((t) => {
-      const option = select.append("option").attr("value", t).text(t);
+      let text;
+      switch (t) {
+        case "data":
+          text = "Data source";
+          break;
+        case "indicator":
+          text = "Indicator";
+          break;
+        case "value":
+          text = "Value";
+          break;
+        default:
+          text = t;
+      }
+      const option = select.append("option").attr("value", t).text(text);
 
       if (defaultType === t) {
         option.attr("selected", "selected");
@@ -289,6 +313,9 @@ export class DOMAlertRuleHandler {
     const inputGroup = this.rules[ruleId].container
       .append("div")
       .attr("class", "input-group");
+    if (this.hideSource) {
+      inputGroup.style("display", "none");
+    }
 
     inputGroup.append("label").text("Source");
 
@@ -314,6 +341,9 @@ export class DOMAlertRuleHandler {
     const inputGroup = this.rules[ruleId].container
       .append("div")
       .attr("class", "input-group");
+    if (this.hideName) {
+      inputGroup.style("display", "none");
+    }
 
     inputGroup.append("label").text("Name");
 
@@ -423,7 +453,7 @@ export class DOMAlertRuleHandler {
 
     const inputGroup = this.rules[ruleId].container
       .append("div")
-      .attr("class", "input-group");
+      .attr("class", "input-group comparator");
 
     inputGroup.append("label").text("Comparator");
 
@@ -536,12 +566,18 @@ export class DOMAlertRuleHandler {
     inputGroup.append("label").text("Data");
 
     const count = this.countRulePart(ruleId);
-    let descr = `<table>
+    let descr;
+    descr = `<table>
         <thead>
         <tr>
-            <td>Data</td>
-            <td>Source</td>
-            <td>Symbol</td>
+            <td>Data</td>`;
+    if (!this.hideSource) {
+      descr += `<td>Source</td>`;
+    }
+    if (!this.hideName) {
+      descr += `<td>Symbol</td>`;
+    }
+    descr += `
             <td>Key</td>
         </tr>
         </thead>
@@ -549,10 +585,14 @@ export class DOMAlertRuleHandler {
     const dm = this._indicators[ruleObj[`indicator${count}`]].indicator.dataMap;
     Object.keys(dm).forEach((k) => {
       descr += `<tr>
-                <td>${k}</td>
-                <td>${dm[k].source}</td>
-                <td>${dm[k].name}</td>
-                <td>${dm[k].dataKey}</td>
+                <td>${k}</td>`;
+      if (!this.hideSource) {
+        descr += `<td>${dm[k].source}</td>`;
+      }
+      if (!this.hideName) {
+        descr += `<td>${dm[k].name}</td>`;
+      }
+      descr += `<td>${dm[k].dataKey}</td>
             </tr>`;
     });
 

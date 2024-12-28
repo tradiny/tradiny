@@ -278,6 +278,10 @@ async def process_message(websocket: WebSocket, d: dict, alert_queue: Queue):
                 ),
             )
 
+        elif d.get("type") == "scan":
+            print("TODO")
+            print(d)
+
         elif d.get("type") == "prompt":
 
             client_ip = websocket.client.host

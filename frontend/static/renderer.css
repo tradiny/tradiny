@@ -169,6 +169,14 @@ For more details, refer to the LICENSE file in the root directory of this projec
   align-items: flex-start;
   margin-bottom: 10px;
 }
+.rule .input-group {
+  margin-left: 15px;
+}
+.rule .input-group.type,
+.input-group.comparator {
+  margin-left: 0;
+  margin-right: 0;
+}
 .input-group label {
   padding: 3px 0px;
   margin-right: 10px;

@@ -13,7 +13,7 @@ import { GridPicker } from "../../gridpicker.js";
 import { IntervalPicker } from "../../intervalpicker.js";
 import { ColorPicker } from "../../colorpicker.js";
 import { DrawPicker } from "../../drawpicker.js";
-import { DOMAlertRuleHandler } from "./rule.js";
+import { DOMRuleHandler } from "./rule.js";
 
 import { Utils } from "../utils.js";
 import TradinyChart from "../index.js";
@@ -150,6 +150,82 @@ export class DOMControlsHandler {
     }
   }
 
+  scan() {
+    const search = this.chart.d3ContainerEl
+      .select(".data-search")
+      .property("value");
+    if (!search) {
+      alert("All inputs are required!");
+      return;
+    }
+
+    const rules = this.serializeRules(this.domFilter);
+    if (rules) {
+      rules.search = search;
+
+      this.toggleFilter(0);
+
+      this.chart.dataProvider.scan(rules);
+    }
+  }
+
+  toggleFilter(open = 1) {
+    const d3ContainerEl = d3.select("#" + this.chart.elementId);
+    const isScannerOpen =
+      d3ContainerEl.select(".scanner .open").style("display") !== "none";
+
+    if (open && !isScannerOpen) {
+      d3ContainerEl.select(".filter-rules").style("display", "block");
+      d3ContainerEl.select(".scanner .open").style("display", "inline");
+      d3ContainerEl.select(".scanner .close").style("display", "none");
+
+      d3ContainerEl.select(".add-filter-button").style("display", "block");
+      d3ContainerEl.select(".scan-button").style("display", "block");
+    } else {
+      d3ContainerEl.select(".filter-rules").style("display", "none");
+      d3ContainerEl.select(".scanner .open").style("display", "none");
+      d3ContainerEl.select(".scanner .close").style("display", "inline");
+
+      d3ContainerEl.select(".add-filter-button").style("display", "none");
+      // d3ContainerEl.select(".scan-button").style("display", "none");
+    }
+    d3ContainerEl
+      .select(".tab-data input.data-search")
+      .attr("disabled", "disabled");
+    d3ContainerEl.select(".data-search-results").style("display", "none");
+
+    this.addFilterRule(1);
+
+    const rulesSize = this.chart.d3ContainerEl
+      .selectAll(".filter-rules .rule")
+      .size();
+    if (rulesSize) {
+      d3ContainerEl
+        .select(".scanner .info span")
+        .html(`Filters (${rulesSize})`);
+    }
+  }
+
+  addFilterRule(init = 0) {
+    const rulesEl = this.chart.d3ContainerEl.select(".filter-rules");
+    let rulesSize = rulesEl.selectAll("*").size();
+    if (init && rulesSize) {
+      return;
+    }
+
+    if (!this.domFilter || init) {
+      this.domFilter = new DOMRuleHandler(this.chart, ".filter-rules");
+      this.domFilter.hideSource = true;
+      this.domFilter.hideName = true;
+    }
+
+    rulesSize = rulesEl.selectAll("*").size();
+    if (rulesSize) {
+      this.domFilter.createOperator(rulesEl);
+    }
+    this.domFilter.initialize(rulesEl);
+  }
+
   addWindow(
     render = ["grids", "charts", "data", "indicators", "alert"],
     closeDisabled = false,
@@ -198,6 +274,11 @@ export class DOMControlsHandler {
                 frequentlyUsed: frequentlyUsed.data,
               },
               (content) => {
+                if (s) {
+                  d3ContainerEl.select(".scanner").style("display", "block");
+                } else {
+                  d3ContainerEl.select(".scanner").style("display", "none");
+                }
                 d3ContainerEl.select("div.data-search-results").html(content);
               },
             );
@@ -667,7 +748,7 @@ export class DOMControlsHandler {
     }
 
     if (!this.domAlert || init) {
-      this.domAlert = new DOMAlertRuleHandler(this.chart);
+      this.domAlert = new DOMRuleHandler(this.chart, ".alert-rules");
       this.domAlert.token();
     }
 
@@ -678,14 +759,7 @@ export class DOMControlsHandler {
     this.domAlert.initialize(rulesEl);
   }
 
-  saveAlert() {
-    const message = this.chart.d3ContainerEl
-      .select("textarea")
-      .property("value");
-    if (!message) {
-      alert("All inputs are required!");
-      return;
-    }
+  serializeRules(domRules) {
     const operatorEls = this.chart.d3ContainerEl.selectAll(
       ".alert-rules .rule-operator",
     );
@@ -695,8 +769,8 @@ export class DOMControlsHandler {
       operators.push(value);
     });
     const rules = [];
-    for (const ruleId of Object.keys(this.domAlert.rules)) {
-      const rule = this.domAlert.getRule(ruleId);
+    for (const ruleId of Object.keys(domRules.rules)) {
+      const rule = domRules.getRule(ruleId);
       for (let i of Object.keys(rule)) {
         if (!rule[i]) {
           alert("All inputs are required!");
@@ -710,7 +784,7 @@ export class DOMControlsHandler {
     const dataProviderConfig = JSON.parse(
       JSON.stringify(this.chart.dataProvider.config),
     );
-    const indicators = JSON.parse(JSON.stringify(this.domAlert._indicators));
+    const indicators = JSON.parse(JSON.stringify(domRules._indicators));
 
     const sides = ["1", "2"];
     const dataProviderConfigData2 = [];
@@ -784,15 +858,29 @@ export class DOMControlsHandler {
 
     dataProviderConfig.data = dataProviderConfigData2;
 
-    const alertObj = {
-      message,
+    const serialized = {
       operators,
       rules,
       dataProviderConfig,
       indicators,
     };
-    this.chart.dataProvider.addAlert(alertObj);
-    this._win.closePopup();
+    return serialized;
+  }
+
+  saveAlert() {
+    const message = this.chart.d3ContainerEl
+      .select("textarea")
+      .property("value");
+    if (!message) {
+      alert("All inputs are required!");
+      return;
+    }
+    const rules = this.serializeRules(this.domAlert);
+    if (rules) {
+      rules.message = message;
+      this.chart.dataProvider.addAlert(alertObj);
+      this._win.closePopup();
+    }
   }
 
   // TODO move to saveHandler

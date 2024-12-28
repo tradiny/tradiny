@@ -154,7 +154,7 @@ For more details, refer to the LICENSE file in the root directory of this projec
   color: white;
 }
 
-.dark .alert-rules .rule {
+.dark .rule {
   border: 1px dotted #21232e;
   padding: 10px 7px 0 7px;
 }

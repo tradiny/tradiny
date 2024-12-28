@@ -373,6 +373,12 @@ export class DataProvider {
     this.ws.sendMessage(JSON.stringify([{ type: "vapid_public_key" }]));
   }
 
+  scan(data) {
+    let d = JSON.parse(JSON.stringify(data));
+    d.type = "scan";
+    this.ws.sendMessage(JSON.stringify([d]));
+  }
+
   addAlert(data) {
     let d = JSON.parse(JSON.stringify(data));
     d.type = "alert";
