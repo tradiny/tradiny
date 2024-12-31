@@ -20,6 +20,7 @@ from fastapi import Depends
 
 from log import setup_logging
 from config import Config
+from worker_thread import Worker
 
 from alert_evaluate import alert_evaluate
 
@@ -96,52 +97,6 @@ async def process_queue(async_queue: asyncio.Queue, i: int):
             raise
 
 
-def queue_to_async(async_queue, task_queue, loop):
-    while True:
-        task = task_queue.get()  # blocking get
-        asyncio.run_coroutine_threadsafe(async_queue.put(task), loop)
-
-
-class WorkerThread(threading.Thread):
-    def __init__(self, task_queue: queue.Queue, i: int):
-        super().__init__()
-        self.loop = asyncio.new_event_loop()
-        self.task_queue = task_queue
-        self.i = i
-
-    def run(self):
-        asyncio.set_event_loop(self.loop)
-        try:
-            self.loop.run_until_complete(self.main())
-        finally:
-            self.loop.close()
-            asyncio.set_event_loop(None)
-
-    async def main(self):
-        # Create asyncio queue
-        async_queue = asyncio.Queue()
-
-        # Create a new thread that will block on get() calls on the task_queue.
-        threading.Thread(
-            target=queue_to_async, args=(async_queue, self.task_queue, self.loop)
-        ).start()
-
-        # Process incoming tasks
-        await process_queue(async_queue, self.i)
-
-
-def spawn_workers(num):
-    task_queue = queue.Queue()
-
-    threads = []
-    for i in range(num):
-        worker_thread = WorkerThread(task_queue, i)
-        threads.append(worker_thread)
-        worker_thread.start()
-
-    return task_queue, threads
-
-
 def trigger_worker(task_queue, task):
     task_queue.put_nowait(task)
 
@@ -162,23 +117,13 @@ def init_alerts(task_queue, dbconn):
         trigger_worker(task_queue, {"action": "alert", "alert_id": str(alert["id"])})
 
 
-class AlertQueueWrapper:
-    instance = None
-
-    def __init__(self):
-        if not AlertQueueWrapper.instance:
-            AlertQueueWrapper.instance = self
-
-            self.queue = spawn_workers(int(Config.ALERT_WORKERS))
-            dbconn = db.create_connection(Config.DB)
-            init_alerts(self.queue[0], dbconn)
-
-
 def get_queue_wrapper():
-    if not AlertQueueWrapper.instance:
-        AlertQueueWrapper()
-    return AlertQueueWrapper.instance.queue
+    if "alert" not in Worker.instances:
+        Worker("alert", int(Config.ALERT_WORKERS), process_queue)
+    return Worker.instances["alert"].queue
 
 
 def init():
-    get_queue_wrapper()
+    queue = get_queue_wrapper()
+    dbconn = db.create_connection(Config.DB)
+    init_alerts(queue[0], dbconn)

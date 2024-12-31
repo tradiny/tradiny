@@ -9,8 +9,10 @@
 # For more details, refer to the LICENSE.md file in the root directory of this project.
 
 import asyncio
+import threading
 from concurrent.futures import ThreadPoolExecutor
-
+from multiprocessing import Queue as MPQueue
+import queue
 
 class BlockingFetcher:
     def __init__(self, max_workers):

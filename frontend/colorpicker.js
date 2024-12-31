@@ -166,7 +166,7 @@ export class ColorPicker {
     this.colorContainer.style.position = "absolute";
     this.colorContainer.style.display = "none";
     this.colorContainer.style.flexWrap = "wrap";
-    this.colorContainer.style.width = "249px"; // Adjust width to fit more rectangles
+    this.colorContainer.style.width = "252px"; // Adjust width to fit more rectangles
     this.colorContainer.style.backgroundColor = "#fff";
     this.colorContainer.style.border = "1px solid #ccc";
     this.colorContainer.style.boxShadow = "0 2px 5px rgba(0,0,0,0.3)";

@@ -53,8 +53,9 @@ CONFIG_FIELDS = [
         str(60 * 24),
         "Duration in minutes to retain the cache when not accessed by any user",
     ),
-    ("ALERT_WORKERS", "5", "Number of alert worker threads"),
-    ("INDICATOR_WORKERS", "5", "Number of indicator worker threads"),
+    ("ALERT_WORKERS", "5", "Number of dedicated alert worker threads"),
+    ("INDICATOR_WORKERS", "5", "Number of dedicated indicator worker threads"),
+    ("SCANNER_WORKERS", "10", "Number of dedicated scanner worker threads"),
     ("MAX_REQUESTS_PER_IP_PER_HOUR", "100", "Max requests per hour per IP"),
     (
         "MAX_SIMULTANEOUS_CONNECTIONS_PER_IP",

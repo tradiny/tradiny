@@ -71,12 +71,9 @@
       
       <div class="input-group">
         <input type="text" class="data-search" placeholder="Search">
-        <div class="scan-button" style="display: none">
-            <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.scan()" value="Submit">
-        </div>
       </div>
       <div class="scanner" style="display:none; margin: 0px 5px 10px 5px">
-        <div class="info" onclick="{%=o.self.chart.id%}.DOMHandler.controls.toggleFilter()">
+        <div onclick="{%=o.self.chart.id%}.DOMHandler.controls.toggleFilter()" style="cursor: pointer">
           <span>Filters</span>
           <svg class="close" xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
             <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
@@ -88,7 +85,8 @@
       </div>
       <div class="filter-rules rules" style="margin-bottom: 15px"></div>
       <div class="add-filter-button" style="margin-bottom: 15px; display: none">
-          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addFilterRule()" value="Add rule">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addFilterRule()" value="Add condition">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.scan()" value="Submit" style="float: right">
       </div>
       <div class="data-search-results">
 
@@ -111,10 +109,9 @@
       </div>
       <div class="alert-rules rules" style="margin-bottom: 15px"></div>
       <div style="margin-bottom: 15px">
-          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addAlertRule()" value="Add rule">
-      </div>
-      <div>
-          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.saveAlert()" value="Submit">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addAlertRule()" value="Add condition">
+      
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.saveAlert()" value="Submit" style="float: right">
       </div>
   
     </div>

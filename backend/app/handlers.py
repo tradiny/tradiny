@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import pandas as pd
 import json
+import random
 
 from fastapi import WebSocket
 
@@ -54,7 +55,7 @@ async def send_historical_data(
     metadata=None,
 ):
     key = generate_method_key(
-        "send_historical_data", source, name, interval, count=300, end="now UTC"
+        "send_historical_data", source, name, interval, count=300, end="now UTC", r=random.randint(1, 999999)
     )
     futures[key] = asyncio.Future()
 

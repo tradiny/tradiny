@@ -398,13 +398,13 @@ def unserialize_data_entity(row):
     return d
 
 
-def search_data_entities(conn, query, type="data"):
+def search_data_entities(conn, query, type="data", limit=100):
     """Search for indicators that match any of the words in the query with prioritization."""
     if not query.strip():  # Check if the query is empty or just whitespace
         # If the query is empty, return all rows ordered by ID
         cur = conn.cursor()
         cur.execute(
-            f'SELECT * FROM data_entities WHERE type = "{type}" ORDER BY id LIMIT 100'
+            f'SELECT * FROM data_entities WHERE type = "{type}" ORDER BY id LIMIT {limit}'
         )
         rows = cur.fetchall()
         return [unserialize_data_entity(r) for r in rows]
@@ -426,7 +426,7 @@ def search_data_entities(conn, query, type="data"):
 
     # Construct the SELECT clause to include scoring
     score_clause = " + ".join(scoring_select) + " AS score"
-    query_string = f'SELECT *, {score_clause} FROM data_entities WHERE type = "{type}" AND score > 0 ORDER BY score DESC, id ASC LIMIT 100'
+    query_string = f'SELECT *, {score_clause} FROM data_entities WHERE type = "{type}" AND score > 0 ORDER BY score DESC, id ASC LIMIT {limit}'
 
     cur = conn.cursor()
     cur.execute(query_string, params)

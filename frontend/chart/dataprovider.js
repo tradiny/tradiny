@@ -373,9 +373,16 @@ export class DataProvider {
     this.ws.sendMessage(JSON.stringify([{ type: "vapid_public_key" }]));
   }
 
-  scan(data) {
+  scan(data, onProgress, onResult) {
+    this._onScanProgress = onProgress;
+    this._onScanResult = onResult;
     let d = JSON.parse(JSON.stringify(data));
     d.type = "scan";
+    this.ws.sendMessage(JSON.stringify([d]));
+  }
+
+  scanStop() {
+    const d = {type: "scan_stop"};
     this.ws.sendMessage(JSON.stringify([d]));
   }
 
@@ -646,6 +653,18 @@ export class DataProvider {
         case "data_search":
           if (this.onSearchDone) {
             this.onSearchDone(message.data);
+          }
+          break;
+
+        case "scan_progress":
+          if (this._onScanProgress) {
+            this._onScanProgress(message.message)
+          }
+          break;
+
+        case "scan_result":
+          if (this._onScanResult) {
+            this._onScanResult(message.data)
           }
           break;
 

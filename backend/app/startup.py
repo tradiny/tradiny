@@ -17,6 +17,7 @@ from . import app
 from .periodic import run_periodic_tasks
 from .globals import startup_actions
 from alert import init as alert_init
+from scanner import init as scanner_init
 
 
 def register_startup_action(action):
@@ -36,6 +37,7 @@ def register_startup_actions(on_startup):
             on_startup()
 
         alert_init()
+        scanner_init()
 
     register_startup_action(startup_event)
 

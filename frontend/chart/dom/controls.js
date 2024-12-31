@@ -159,13 +159,54 @@ export class DOMControlsHandler {
       return;
     }
 
-    const rules = this.serializeRules(this.domFilter);
-    if (rules) {
-      rules.search = search;
+    new Renderer().render(
+      "data-search-results",
+      { self: this.chart, data: [], loading: true },
+      (content) => {
+        this.chart.d3ContainerEl.select("div.data-search-results").html(content);
+      },
+    );
+
+    const scanObj = this.serializeRules(this.domFilter);
+    if (scanObj) {
+      scanObj.search = search;
 
       this.toggleFilter(0);
+      const data = [];
 
-      this.chart.dataProvider.scan(rules);
+      this._win.onClose(() => {
+        this.chart.dataProvider.scanStop();
+      })
+
+      this.chart.dataProvider.scan(scanObj, (progressMessage) => {
+        const rulesSize = this.chart.d3ContainerEl
+          .selectAll(".filter-rules .rule")
+          .size();
+        if (rulesSize) {
+          this.chart.d3ContainerEl
+            .select(".scanner > div > span")
+            .html(`Filters (${rulesSize}): ${progressMessage}`);
+        }
+      }, (d) => {
+        data.push(d);
+
+        new Renderer().render(
+          "data-search-results",
+          {
+            self: this.chart,
+            s: "PLACEHOLDER",
+            data,
+            frequentlyUsed: [],
+          },
+          (content) => {
+            const el = this.chart.d3ContainerEl.select("div.data-search-results");
+            if (el) {
+              el
+                .html(content);
+            }
+          },
+        );
+      });
     }
   }
 
@@ -176,34 +217,32 @@ export class DOMControlsHandler {
 
     if (open && !isScannerOpen) {
       d3ContainerEl.select(".filter-rules").style("display", "block");
+      d3ContainerEl.select(".data-search-results").style("display", "none");
       d3ContainerEl.select(".scanner .open").style("display", "inline");
       d3ContainerEl.select(".scanner .close").style("display", "none");
 
       d3ContainerEl.select(".add-filter-button").style("display", "block");
       d3ContainerEl.select(".scan-button").style("display", "block");
+
+      d3ContainerEl
+        .select(".tab-data input.data-search")
+        .attr("disabled", "disabled");
+
     } else {
       d3ContainerEl.select(".filter-rules").style("display", "none");
+      d3ContainerEl.select(".data-search-results").style("display", "block");
       d3ContainerEl.select(".scanner .open").style("display", "none");
       d3ContainerEl.select(".scanner .close").style("display", "inline");
 
       d3ContainerEl.select(".add-filter-button").style("display", "none");
       // d3ContainerEl.select(".scan-button").style("display", "none");
+
+      // d3ContainerEl
+      //   .select(".tab-data input.data-search")
+      //   .attr("disabled", null);
     }
-    d3ContainerEl
-      .select(".tab-data input.data-search")
-      .attr("disabled", "disabled");
-    d3ContainerEl.select(".data-search-results").style("display", "none");
 
     this.addFilterRule(1);
-
-    const rulesSize = this.chart.d3ContainerEl
-      .selectAll(".filter-rules .rule")
-      .size();
-    if (rulesSize) {
-      d3ContainerEl
-        .select(".scanner .info span")
-        .html(`Filters (${rulesSize})`);
-    }
   }
 
   addFilterRule(init = 0) {
@@ -856,7 +895,7 @@ export class DOMControlsHandler {
       }
     }
 
-    dataProviderConfig.data = dataProviderConfigData2;
+    dataProviderConfig.data = Utils.removeDuplicates(dataProviderConfigData2);
 
     const serialized = {
       operators,
@@ -875,9 +914,9 @@ export class DOMControlsHandler {
       alert("All inputs are required!");
       return;
     }
-    const rules = this.serializeRules(this.domAlert);
-    if (rules) {
-      rules.message = message;
+    const alertObj = this.serializeRules(this.domAlert);
+    if (alertObj) {
+      alertObj.message = message;
       this.chart.dataProvider.addAlert(alertObj);
       this._win.closePopup();
     }

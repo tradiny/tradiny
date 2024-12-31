@@ -561,4 +561,19 @@ export class Utils {
       return str.length - decimalIndex - 1;
     }
   }
+
+  static removeDuplicates(array) {
+    const seen = new Set();
+    
+    return array.filter(item => {
+        const serialized = JSON.stringify(item);
+        
+        if (seen.has(serialized)) {
+            return false; // This item is a duplicate
+        }
+        
+        seen.add(serialized);
+        return true; // This item is unique so far
+    });
+  }
 }
