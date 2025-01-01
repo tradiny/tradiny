@@ -169,8 +169,8 @@ export class PopupWindow {
       this.popupElement.remove();
       this.backdrop.remove();
     }, 50); // Match the duration of the hide animation
-    this.closeEvents.forEach(callback => {
-      if (typeof callback === 'function') {
+    this.closeEvents.forEach((callback) => {
+      if (typeof callback === "function") {
         callback(); // Call the function
       }
     });

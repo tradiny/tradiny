@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Queue as MPQueue
 import queue
 
+
 class BlockingFetcher:
     def __init__(self, max_workers):
         self.executor = ThreadPoolExecutor(max_workers=max_workers)

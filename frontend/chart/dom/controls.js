@@ -167,7 +167,9 @@ export class DOMControlsHandler {
       "data-search-results",
       { self: this.chart, data: [], loading: true },
       (content) => {
-        this.chart.d3ContainerEl.select("div.data-search-results").html(content);
+        this.chart.d3ContainerEl
+          .select("div.data-search-results")
+          .html(content);
       },
     );
 
@@ -180,53 +182,63 @@ export class DOMControlsHandler {
       const rows = [];
 
       this._win.onClose(() => {
-
         this.scanning = false; // disable scanning on selection if there is any
         this.chart.dataProvider.scanStop();
-      })
+      });
 
       this.scanning = true;
-      this.chart.dataProvider.scan(scanObj, (progressMessage) => {
-        const rulesSize = this.chart.d3ContainerEl
-          .selectAll(".filter-rules .rule")
-          .size();
-        if (rulesSize) {
-          this.chart.d3ContainerEl
-            .select(".scanner > div > span")
-            .html(`Filters (${rulesSize}): ${progressMessage}`);
-        }
-      }, (d) => {
-        if (!this.scanning) { return; }
-        const dbEntry = d.data;
-        data.push(dbEntry);
-        this._data = data;
+      this.chart.dataProvider.scan(
+        scanObj,
+        (progressMessage) => {
+          const rulesSize = this.chart.d3ContainerEl
+            .selectAll(".filter-rules .rule")
+            .size();
+          if (rulesSize) {
+            this.chart.d3ContainerEl
+              .select(".scanner > div > span")
+              .html(`Filters (${rulesSize}): ${progressMessage}`);
+          }
+        },
+        (d) => {
+          if (!this.scanning) {
+            return;
+          }
+          const dbEntry = d.data;
+          data.push(dbEntry);
+          this._data = data;
 
-        const dataValues = d.data_values;
-        let row = {
-          Source: dbEntry.details.source_label ? `${dbEntry.details.source_label} (${dbEntry.details.source})` : dbEntry.details.source,
-          Categories: dbEntry.details.categories.join(", "),
-          Name: dbEntry.details.name_label ? `${dbEntry.details.name_label} (${dbEntry.details.name})` : dbEntry.details.name,
-        };
-        row = {...row, ...dataValues};
-        rows.push(row);
-        this._rows = rows;
+          const dataValues = d.data_values;
+          let row = {
+            Source: dbEntry.details.source_label
+              ? `${dbEntry.details.source_label} (${dbEntry.details.source})`
+              : dbEntry.details.source,
+            Categories: dbEntry.details.categories.join(", "),
+            Name: dbEntry.details.name_label
+              ? `${dbEntry.details.name_label} (${dbEntry.details.name})`
+              : dbEntry.details.name,
+          };
+          row = { ...row, ...dataValues };
+          rows.push(row);
+          this._rows = rows;
 
-        new Renderer().render(
-          "data-table",
-          {
-            self: this.chart,
-            rows: rows,
-            data
-          },
-          (content) => {
-            const el = this.chart.d3ContainerEl.select("div.data-search-results");
-            if (el) {
-              el
-                .html(content);
-            }
-          },
-        );
-      });
+          new Renderer().render(
+            "data-table",
+            {
+              self: this.chart,
+              rows: rows,
+              data,
+            },
+            (content) => {
+              const el = this.chart.d3ContainerEl.select(
+                "div.data-search-results",
+              );
+              if (el) {
+                el.html(content);
+              }
+            },
+          );
+        },
+      );
     }
   }
 
@@ -247,7 +259,6 @@ export class DOMControlsHandler {
       d3ContainerEl
         .select(".tab-data input.data-search")
         .attr("disabled", "disabled");
-
     } else {
       d3ContainerEl.select(".filter-rules").style("display", "none");
       d3ContainerEl.select(".data-search-results").style("display", "block");

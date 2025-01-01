@@ -12,19 +12,18 @@ import db
 from db import search_data_entities
 from worker_thread import Worker
 
-from app.globals import (
-    clients
-)
+from app.globals import clients
 from app.connection import safe_send_message
 
 from rules_evaluate import rules_evaluate
 
 scanner_status = {}
 
+
 def replace_all_in_obj(obj, target_value, replacement_value, visited=None):
     if visited is None:
         visited = {}
-        
+
     obj_id = id(obj)
     if obj_id in visited:
         return visited[obj_id]
@@ -43,22 +42,32 @@ def replace_all_in_obj(obj, target_value, replacement_value, visited=None):
 
     if isinstance(obj, Mapping):
         for key, value in obj.items():
-            new_key = key.replace(target_value, replacement_value) if isinstance(key, str) else key
+            new_key = (
+                key.replace(target_value, replacement_value)
+                if isinstance(key, str)
+                else key
+            )
             if isinstance(value, str):
-                result[new_key] = re.sub(re.escape(target_value), replacement_value, value)
+                result[new_key] = re.sub(
+                    re.escape(target_value), replacement_value, value
+                )
             else:
-                result[new_key] = replace_all_in_obj(value, target_value, replacement_value, visited)
+                result[new_key] = replace_all_in_obj(
+                    value, target_value, replacement_value, visited
+                )
     elif isinstance(obj, Sequence):
         for item in obj:
-            result.append(replace_all_in_obj(item, target_value, replacement_value, visited))
+            result.append(
+                replace_all_in_obj(item, target_value, replacement_value, visited)
+            )
 
     return result
 
 
 async def scan(dbconn, d, client_id, websocket):
     """
-    Iterates over data entries from the database, alters the source and name 
-    in the existing configuration to fetch data, and evaluates it against the 
+    Iterates over data entries from the database, alters the source and name
+    in the existing configuration to fetch data, and evaluates it against the
     provided rules. Sends messages with progress and results to the websocket.
 
     Args:
@@ -67,7 +76,7 @@ async def scan(dbconn, d, client_id, websocket):
         client_id: The client ID, used as the websocket ID.
         websocket: The websocket connection to send messages.
     """
-    
+
     source_replace = None
     name_replace = None
     interval = None
@@ -77,7 +86,9 @@ async def scan(dbconn, d, client_id, websocket):
             name_replace = data["name"]
             interval = data["interval"]
 
-    data_entries = search_data_entities(dbconn, d.get("search"), type="data", limit=10**6)
+    data_entries = search_data_entities(
+        dbconn, d.get("search"), type="data", limit=10**6
+    )
     z = len(str(len(data_entries)))
 
     for i, db_entry in enumerate(data_entries):
@@ -89,42 +100,40 @@ async def scan(dbconn, d, client_id, websocket):
             name_label = db_entry["details"]["name_label"]
         else:
             name_label = name
-        
+
         try:
-            await websocket.send_text(json.dumps(
-                {
-                    "type": "scan_progress",
-                    "message": f"Scanning {i+1:0{z}}/{len(data_entries)}"
-                }
-            ))
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "scan_progress",
+                        "message": f"Scanning {i+1:0{z}}/{len(data_entries)}",
+                    }
+                )
+            )
         except WebSocketDisconnect:
             logging.error("Attempted to write to a disconnected WebSocket.")
             logging.info("Scanning stopped because the client is gone")
-            if client_id in scanner_status: del scanner_status[client_id]
+            if client_id in scanner_status:
+                del scanner_status[client_id]
             return
         except Exception as e:
             logging.error(f"Error while sending message: {e}")
-            logging.info("Scanning stopped because could not send message to the client")
-            if client_id in scanner_status: del scanner_status[client_id]
+            logging.info(
+                "Scanning stopped because could not send message to the client"
+            )
+            if client_id in scanner_status:
+                del scanner_status[client_id]
             return
 
         di = copy.deepcopy(d)
         if source != source_replace:
-            di = replace_all_in_obj(
-                di,
-                source_replace,
-                source
-            )
+            di = replace_all_in_obj(di, source_replace, source)
         if name != name_replace:
-            di = replace_all_in_obj(
-                di,
-                name_replace,
-                name
-            )
+            di = replace_all_in_obj(di, name_replace, name)
 
         data_request = di["dataProviderConfig"]["data"]
         for dr in data_request:
-            dr["stream"] = False # disable streaming new data
+            dr["stream"] = False  # disable streaming new data
         expected_init_messages = len(data_request)
         actual_init_messages = 0
         errors = []
@@ -135,6 +144,7 @@ async def scan(dbconn, d, client_id, websocket):
         url = d["dataProviderConfig"]["full_url"]
         # logging.info(f"Connecting to {url}")
         async with websockets.connect(url) as ws:
+
             async def receive_data():
                 nonlocal actual_init_messages, errors
 
@@ -142,17 +152,17 @@ async def scan(dbconn, d, client_id, websocket):
                 async for message in ws:
                     message = json.loads(message)
 
-                    if message['type'] == "data_init":
+                    if message["type"] == "data_init":
                         if len(message["data"]) == 0:
                             errors.append("not enough data")
                         else:
                             lastDataPoint.update(message["data"][-1])
                         actual_init_messages += 1
                         # logging.info(f"Received {message['type']} for {message['source']}, {message['name']}, {message['interval']}")
-                    elif message['type'] == "no_data":
+                    elif message["type"] == "no_data":
                         # logging.info(f"Received {message['type']} for {message}")
                         break
-                    elif message['type'] == "indicator_init":
+                    elif message["type"] == "indicator_init":
                         if len(message["data"]) == 0:
                             errors.append("not enough data")
                         else:
@@ -161,7 +171,7 @@ async def scan(dbconn, d, client_id, websocket):
                         # logging.info(f"Received {message['type']} for {message['id']}")
                     # else:
                     #     logging.info(f"Received {message['type']}")
-                        
+
                     if actual_init_messages == expected_init_messages:
                         break
 
@@ -169,43 +179,57 @@ async def scan(dbconn, d, client_id, websocket):
                 await asyncio.wait_for(receive_data(), timeout)
                 # logging.info(f"Got data: {lastDataPoint}")
             except asyncio.TimeoutError:
-                errors.append(f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds.")
-                
+                errors.append(
+                    f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds."
+                )
+
         if len(errors):
-            logging.info(f"While scanning {name_label} skipped because {' and '.join(errors)}")
+            logging.info(
+                f"While scanning {name_label} skipped because {' and '.join(errors)}"
+            )
             continue
-            
+
         rules = di["rules"]
         operators = di["operators"]
         indicators = di["indicators"]
 
-        result, data_values = rules_evaluate(rules, operators, indicators, lastDataPoint)
+        result, data_values = rules_evaluate(
+            rules, operators, indicators, lastDataPoint
+        )
 
         if result:
             try:
-                await websocket.send_text(json.dumps(
-                    {
-                        "type": "scan_result",
-                        "data": db_entry,
-                        "data_values": data_values
-                    }
-                ))
+                await websocket.send_text(
+                    json.dumps(
+                        {
+                            "type": "scan_result",
+                            "data": db_entry,
+                            "data_values": data_values,
+                        }
+                    )
+                )
             except WebSocketDisconnect:
                 logging.error("Attempted to write to a disconnected WebSocket.")
                 logging.info("Scanning stopped because the client is gone")
-                if client_id in scanner_status: del scanner_status[client_id]
+                if client_id in scanner_status:
+                    del scanner_status[client_id]
                 return
             except Exception as e:
                 logging.error(f"Error while sending message: {e}")
-                logging.info("Scanning stopped because could not send message to the client")
-                if client_id in scanner_status: del scanner_status[client_id]
+                logging.info(
+                    "Scanning stopped because could not send message to the client"
+                )
+                if client_id in scanner_status:
+                    del scanner_status[client_id]
                 return
 
-        if scanner_status[client_id] == 'stop':
-            logging.info(f"Scanner for {client_id} stopped because stop signal was received.")
-            if client_id in scanner_status: del scanner_status[client_id]
+        if scanner_status[client_id] == "stop":
+            logging.info(
+                f"Scanner for {client_id} stopped because stop signal was received."
+            )
+            if client_id in scanner_status:
+                del scanner_status[client_id]
             return
-    
 
 
 # Process new tasks as they arrive
@@ -221,13 +245,18 @@ async def process_queue(async_queue: asyncio.Queue, i: int):
                 break
             elif action == "scan":
                 try:
-                    scanner_status[task["client_id"]] = 'running'
-                    await scan(dbconn, task["settings"], task["client_id"], clients[task["client_id"]]["websocket"])
+                    scanner_status[task["client_id"]] = "running"
+                    await scan(
+                        dbconn,
+                        task["settings"],
+                        task["client_id"],
+                        clients[task["client_id"]]["websocket"],
+                    )
                 except Exception as e:
                     logging.error(f"Failed to scan: {e}")
                     raise
             elif action == "scan_stop":
-                scanner_status[task["client_id"]] = 'stop'
+                scanner_status[task["client_id"]] = "stop"
 
         except Exception as e:
             logging.error(f"Error processing task: {e}")

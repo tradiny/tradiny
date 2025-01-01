@@ -24,6 +24,7 @@ from notification import send_notification
 
 from rules_evaluate import rules_evaluate
 
+
 def alert_evaluate(dbconn, message, alert, data):
 
     alert = get_alert_by_id(dbconn, alert["id"])

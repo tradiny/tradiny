@@ -382,7 +382,7 @@ export class DataProvider {
   }
 
   scanStop() {
-    const d = {type: "scan_stop"};
+    const d = { type: "scan_stop" };
     this.ws.sendMessage(JSON.stringify([d]));
   }
 
@@ -658,13 +658,13 @@ export class DataProvider {
 
         case "scan_progress":
           if (this._onScanProgress) {
-            this._onScanProgress(message.message)
+            this._onScanProgress(message.message);
           }
           break;
 
         case "scan_result":
           if (this._onScanResult) {
-            this._onScanResult(message)
+            this._onScanResult(message);
           }
           break;
 

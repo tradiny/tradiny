@@ -1,8 +1,9 @@
-import logging 
+import logging
 
 # def get_inidicator_label(indicator):
 
 #     dataKey = indicator["indicator"]["details"]["outputs"][j].name;
+
 
 def get_key(indicators, side, rule):
     type_key = f"type{side}"
@@ -14,9 +15,11 @@ def get_key(indicators, side, rule):
 
         inputs = indicators[rule[indicator_key]]["indicator"]["inputs"]
         input_text = ", ".join(f"{key}={value}" for key, value in inputs.items())
-        indicator_name = indicators[rule[indicator_key]]["indicator"]["indicator"]["name"]
+        indicator_name = indicators[rule[indicator_key]]["indicator"]["indicator"][
+            "name"
+        ]
         label = f"{indicator_name} {output} {input_text}"
-        
+
         return f"{base}-{output}", label
     elif rule[type_key] == "data":
         source = f"source{side}"
@@ -29,6 +32,7 @@ def get_key(indicators, side, rule):
     elif rule[type_key] == "value":
         return "value", None
 
+
 def get_change(previous, current):
     if current == previous:
         return 0.0
@@ -36,6 +40,7 @@ def get_change(previous, current):
         return (abs(current - previous) / previous) * 100.0
     except ZeroDivisionError:
         return 0.0
+
 
 def evaluate(rules, operators):
     rules = ["True" if rule else "False" for rule in rules]
@@ -47,6 +52,7 @@ def evaluate(rules, operators):
     expression = " ".join(expression)
 
     return eval(expression)
+
 
 def rules_evaluate(rules, operators, indicators, lastDataPoint):
 
@@ -74,8 +80,10 @@ def rules_evaluate(rules, operators, indicators, lastDataPoint):
         else:
             v2 = float(lastDataPoint[k2])
 
-        if l1: data_values[l1] = v1
-        if l2: data_values[l2] = v2
+        if l1:
+            data_values[l1] = v1
+        if l2:
+            data_values[l2] = v2
 
         if rule["comparator"] == "<":
             rules_evaluated.append(v1 < v2)

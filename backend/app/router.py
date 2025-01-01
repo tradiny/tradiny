@@ -24,7 +24,7 @@ from config import Config
 from openai_gpt import query, query_reply
 from alert import (
     get_queue_wrapper as get_alert_queue_wrapper,
-    trigger_worker as trigger_alert_worker
+    trigger_worker as trigger_alert_worker,
 )
 from vapid import get as get_vapid_public_key
 
@@ -35,7 +35,7 @@ from .globals import dbconn, providers, indicator_fetcher
 from .handlers import send_historical_data, send_indicator_data
 from scanner import (
     get_queue_wrapper as get_scanner_queue_wrapper,
-    trigger_worker as trigger_scanner_worker
+    trigger_worker as trigger_scanner_worker,
 )
 
 from utils import register_request, is_request_allowed
@@ -51,9 +51,9 @@ data_requests = defaultdict(list)
 
 @websocket_router.websocket("/websocket/")
 async def websocket_endpoint(
-    websocket: WebSocket, 
+    websocket: WebSocket,
     alert_queue=Depends(get_alert_queue_wrapper),
-    scanner_queue=Depends(get_scanner_queue_wrapper)
+    scanner_queue=Depends(get_scanner_queue_wrapper),
 ):
     await conn.connect(websocket)
 
@@ -112,13 +112,17 @@ async def websocket_endpoint(
         conn.disconnect(websocket)
 
 
-async def handle_message(websocket: WebSocket, data: dict, alert_queue: Queue, scanner_queue: Queue):
+async def handle_message(
+    websocket: WebSocket, data: dict, alert_queue: Queue, scanner_queue: Queue
+):
     handle_first = ["data"]
     tasks = []
 
     # Handle 'data' type messages first
     for d in [d for d in data if d.get("type") in handle_first]:
-        task = asyncio.create_task(process_message(websocket, d, alert_queue, scanner_queue))
+        task = asyncio.create_task(
+            process_message(websocket, d, alert_queue, scanner_queue)
+        )
         tasks.append(task)
 
     # Await all 'data' type message handling tasks
@@ -126,11 +130,15 @@ async def handle_message(websocket: WebSocket, data: dict, alert_queue: Queue, s
 
     # Handle all other types of messages
     for d in [d for d in data if d.get("type") not in handle_first]:
-        task = asyncio.create_task(process_message(websocket, d, alert_queue, scanner_queue))
+        task = asyncio.create_task(
+            process_message(websocket, d, alert_queue, scanner_queue)
+        )
         await task
 
 
-async def process_message(websocket: WebSocket, d: dict, alert_queue: Queue, scanner_queue: Queue):
+async def process_message(
+    websocket: WebSocket, d: dict, alert_queue: Queue, scanner_queue: Queue
+):
     global data_requests
     global last_alert_created
     global ip_alerts
@@ -182,7 +190,7 @@ async def process_message(websocket: WebSocket, d: dict, alert_queue: Queue, sca
 
             stream = d.get("stream", True)
 
-            if stream: 
+            if stream:
                 key = (d.get("source"), d.get("name"), d.get("interval"))
                 if key not in conn.get_data_subscriptions(websocket):
                     conn.add_data_subscription(websocket, key)
@@ -222,7 +230,7 @@ async def process_message(websocket: WebSocket, d: dict, alert_queue: Queue, sca
             )
 
         elif d.get("type") == "indicator" or d.get("type") == "indicator_history":
-            
+
             stream = d.get("stream", True)
 
             if d.get("type") == "indicator":
@@ -299,7 +307,7 @@ async def process_message(websocket: WebSocket, d: dict, alert_queue: Queue, sca
             trigger_scanner_worker(scanner_queue[0], task)
 
         elif d.get("type") == "scan_stop":
-            
+
             task = {"action": "scan_stop", "client_id": id(websocket)}
             logging.info(f"Adding task {task['action']} to {scanner_queue[0]}")
             trigger_scanner_worker(scanner_queue[0], task)

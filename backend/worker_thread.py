@@ -5,7 +5,6 @@ import threading
 import db
 
 
-
 def queue_to_async(async_queue, task_queue, loop):
     while True:
         task = task_queue.get()  # blocking get
@@ -39,6 +38,7 @@ class WorkerThread(threading.Thread):
 
         # Process incoming tasks
         await self.process_queue(async_queue, self.i)
+
 
 def spawn_workers(num, process_queue):
     task_queue = queue.Queue()

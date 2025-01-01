@@ -55,7 +55,13 @@ async def send_historical_data(
     metadata=None,
 ):
     key = generate_method_key(
-        "send_historical_data", source, name, interval, count=300, end="now UTC", r=random.randint(1, 999999)
+        "send_historical_data",
+        source,
+        name,
+        interval,
+        count=300,
+        end="now UTC",
+        r=random.randint(1, 999999),
     )
     futures[key] = asyncio.Future()
 
