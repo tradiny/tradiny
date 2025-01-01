@@ -56,7 +56,18 @@ def replace_all_in_obj(obj, target_value, replacement_value, visited=None):
 
 
 async def scan(dbconn, d, client_id, websocket):
+    """
+    Iterates over data entries from the database, alters the source and name 
+    in the existing configuration to fetch data, and evaluates it against the 
+    provided rules. Sends messages with progress and results to the websocket.
 
+    Args:
+        dbconn: A connection object to the database.
+        d: The entire configuration object.
+        client_id: The client ID, used as the websocket ID.
+        websocket: The websocket connection to send messages.
+    """
+    
     source_replace = None
     name_replace = None
     interval = None
@@ -69,23 +80,15 @@ async def scan(dbconn, d, client_id, websocket):
     data_entries = search_data_entities(dbconn, d.get("search"), type="data", limit=10**6)
     z = len(str(len(data_entries)))
 
-    for i, de in enumerate(data_entries):
-        if scanner_status[client_id] == 'stop':
-            logging.info(f"Scanner for {client_id} stopped.")
-            if client_id in scanner_status: del scanner_status[client_id]
-            return
+    for i, db_entry in enumerate(data_entries):
 
-        source = de["details"]["source"]
-        name = de["details"]["name"]
+        source = db_entry["details"]["source"]
+        name = db_entry["details"]["name"]
 
-        if "name_label" in de["details"]:
-            name_label = de["details"]["name_label"]
+        if "name_label" in db_entry["details"]:
+            name_label = db_entry["details"]["name_label"]
         else:
             name_label = name
-
-        category = ""
-        if "categories" in de["details"]:
-            category = de["details"]["categories"][0] + " / "
         
         try:
             await websocket.send_text(json.dumps(
@@ -96,12 +99,12 @@ async def scan(dbconn, d, client_id, websocket):
             ))
         except WebSocketDisconnect:
             logging.error("Attempted to write to a disconnected WebSocket.")
-            logging.info("Scanning stopped")
+            logging.info("Scanning stopped because the client is gone")
             if client_id in scanner_status: del scanner_status[client_id]
             return
         except Exception as e:
             logging.error(f"Error while sending message: {e}")
-            logging.info("Scanning stopped")
+            logging.info("Scanning stopped because could not send message to the client")
             if client_id in scanner_status: del scanner_status[client_id]
             return
 
@@ -124,6 +127,7 @@ async def scan(dbconn, d, client_id, websocket):
             dr["stream"] = False # disable streaming new data
         expected_init_messages = len(data_request)
         actual_init_messages = 0
+        errors = []
         timeout = 15
 
         lastDataPoint = {}
@@ -132,21 +136,27 @@ async def scan(dbconn, d, client_id, websocket):
         # logging.info(f"Connecting to {url}")
         async with websockets.connect(url) as ws:
             async def receive_data():
-                nonlocal actual_init_messages
+                nonlocal actual_init_messages, errors
 
                 await ws.send(json.dumps(data_request))
                 async for message in ws:
                     message = json.loads(message)
 
                     if message['type'] == "data_init":
-                        lastDataPoint.update(message["data"][-1])
+                        if len(message["data"]) == 0:
+                            errors.append("not enough data")
+                        else:
+                            lastDataPoint.update(message["data"][-1])
                         actual_init_messages += 1
                         # logging.info(f"Received {message['type']} for {message['source']}, {message['name']}, {message['interval']}")
                     elif message['type'] == "no_data":
                         # logging.info(f"Received {message['type']} for {message}")
                         break
                     elif message['type'] == "indicator_init":
-                        lastDataPoint.update(message["data"][-1])
+                        if len(message["data"]) == 0:
+                            errors.append("not enough data")
+                        else:
+                            lastDataPoint.update(message["data"][-1])
                         actual_init_messages += 1
                         # logging.info(f"Received {message['type']} for {message['id']}")
                     # else:
@@ -157,37 +167,44 @@ async def scan(dbconn, d, client_id, websocket):
 
             try:
                 await asyncio.wait_for(receive_data(), timeout)
-                logging.info(f"Got data: {lastDataPoint}")
+                # logging.info(f"Got data: {lastDataPoint}")
             except asyncio.TimeoutError:
-                logging.info(f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds.")
+                errors.append(f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds.")
                 
-            
+        if len(errors):
+            logging.info(f"While scanning {name_label} skipped because {' and '.join(errors)}")
+            continue
             
         rules = di["rules"]
         operators = di["operators"]
         indicators = di["indicators"]
 
-        result = rules_evaluate(rules, operators, indicators, lastDataPoint)
+        result, data_values = rules_evaluate(rules, operators, indicators, lastDataPoint)
 
         if result:
             try:
                 await websocket.send_text(json.dumps(
                     {
                         "type": "scan_result",
-                        "data": de
+                        "data": db_entry,
+                        "data_values": data_values
                     }
                 ))
             except WebSocketDisconnect:
                 logging.error("Attempted to write to a disconnected WebSocket.")
-                logging.info("Scanning stopped")
+                logging.info("Scanning stopped because the client is gone")
                 if client_id in scanner_status: del scanner_status[client_id]
                 return
             except Exception as e:
                 logging.error(f"Error while sending message: {e}")
-                logging.info("Scanning stopped")
+                logging.info("Scanning stopped because could not send message to the client")
                 if client_id in scanner_status: del scanner_status[client_id]
                 return
 
+        if scanner_status[client_id] == 'stop':
+            logging.info(f"Scanner for {client_id} stopped because stop signal was received.")
+            if client_id in scanner_status: del scanner_status[client_id]
+            return
     
 
 
@@ -208,8 +225,8 @@ async def process_queue(async_queue: asyncio.Queue, i: int):
                     await scan(dbconn, task["settings"], task["client_id"], clients[task["client_id"]]["websocket"])
                 except Exception as e:
                     logging.error(f"Failed to scan: {e}")
+                    raise
             elif action == "scan_stop":
-                print("SET status", task["client_id"])
                 scanner_status[task["client_id"]] = 'stop'
 
         except Exception as e:

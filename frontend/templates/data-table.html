@@ -1,0 +1,26 @@
+<div>
+    <div>
+        <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.downloadCSV()" value="Download CSV">
+    </div>
+<table>
+<thead>
+    <tr>
+{% var header = Object.keys(o.rows[0]); %}
+{% for (var i=0; i<header.length; i++) { %}
+        <td>{%=header[i]%}</td>
+{% } %}
+    </tr>
+</thead>
+
+<tbody>
+{% for (var i=0; i<o.rows.length; i++) { %}
+    <tr class="clickable" onclick="{%=o.self.id%}.DOMHandler.controls.dataWindow('{%=o.data[i].id%}')">
+        {% for (var j=0; j<header.length; j++) { %}
+            <td>{%=o.rows[i][header[j]]%}</td>
+        {% } %}
+    </tr>
+{% } %}
+</tbody>
+</table>
+
+</div>

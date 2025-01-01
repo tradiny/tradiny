@@ -150,6 +150,10 @@ export class DOMControlsHandler {
     }
   }
 
+  downloadCSV() {
+    Utils.downloadCSV(this._rows);
+  }
+
   scan() {
     const search = this.chart.d3ContainerEl
       .select(".data-search")
@@ -173,11 +177,15 @@ export class DOMControlsHandler {
 
       this.toggleFilter(0);
       const data = [];
+      const rows = [];
 
       this._win.onClose(() => {
+
+        this.scanning = false; // disable scanning on selection if there is any
         this.chart.dataProvider.scanStop();
       })
 
+      this.scanning = true;
       this.chart.dataProvider.scan(scanObj, (progressMessage) => {
         const rulesSize = this.chart.d3ContainerEl
           .selectAll(".filter-rules .rule")
@@ -188,15 +196,27 @@ export class DOMControlsHandler {
             .html(`Filters (${rulesSize}): ${progressMessage}`);
         }
       }, (d) => {
-        data.push(d);
+        if (!this.scanning) { return; }
+        const dbEntry = d.data;
+        data.push(dbEntry);
+        this._data = data;
+
+        const dataValues = d.data_values;
+        let row = {
+          Source: dbEntry.details.source_label ? `${dbEntry.details.source_label} (${dbEntry.details.source})` : dbEntry.details.source,
+          Categories: dbEntry.details.categories.join(", "),
+          Name: dbEntry.details.name_label ? `${dbEntry.details.name_label} (${dbEntry.details.name})` : dbEntry.details.name,
+        };
+        row = {...row, ...dataValues};
+        rows.push(row);
+        this._rows = rows;
 
         new Renderer().render(
-          "data-search-results",
+          "data-table",
           {
             self: this.chart,
-            s: "PLACEHOLDER",
-            data,
-            frequentlyUsed: [],
+            rows: rows,
+            data
           },
           (content) => {
             const el = this.chart.d3ContainerEl.select("div.data-search-results");
@@ -237,9 +257,9 @@ export class DOMControlsHandler {
       d3ContainerEl.select(".add-filter-button").style("display", "none");
       // d3ContainerEl.select(".scan-button").style("display", "none");
 
-      // d3ContainerEl
-      //   .select(".tab-data input.data-search")
-      //   .attr("disabled", null);
+      d3ContainerEl
+        .select(".tab-data input.data-search")
+        .attr("disabled", null);
     }
 
     this.addFilterRule(1);
@@ -313,6 +333,13 @@ export class DOMControlsHandler {
                 frequentlyUsed: frequentlyUsed.data,
               },
               (content) => {
+                if (this.scanning) {
+                  this.scanning = false;
+                  this.chart.dataProvider.scanStop();
+                }
+                this.chart.d3ContainerEl
+                  .select(".scanner > div > span")
+                  .html(`Filters`);
                 if (s) {
                   d3ContainerEl.select(".scanner").style("display", "block");
                 } else {
@@ -389,6 +416,7 @@ export class DOMControlsHandler {
 
   dataWindow(id) {
     this._win.closePopup();
+
     this._data = this._data.find((item) => item.id === id);
     if (!this._data) {
       this._data = this.getFrequentlyUsed().data.find((item) => item.id === id);
@@ -800,7 +828,7 @@ export class DOMControlsHandler {
 
   serializeRules(domRules) {
     const operatorEls = this.chart.d3ContainerEl.selectAll(
-      ".alert-rules .rule-operator",
+      ".rules .rule-operator",
     );
     let operators = [];
     operatorEls.each(function () {

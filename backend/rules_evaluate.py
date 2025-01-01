@@ -1,5 +1,9 @@
 import logging 
 
+# def get_inidicator_label(indicator):
+
+#     dataKey = indicator["indicator"]["details"]["outputs"][j].name;
+
 def get_key(indicators, side, rule):
     type_key = f"type{side}"
     if rule[type_key] == "indicator":
@@ -7,15 +11,23 @@ def get_key(indicators, side, rule):
         output_key = f"output{side}"
         base = indicators[rule[indicator_key]]["indicator"]["id"]
         output = rule[output_key]
-        return f"{base}-{output}"
+
+        inputs = indicators[rule[indicator_key]]["indicator"]["inputs"]
+        input_text = ", ".join(f"{key}={value}" for key, value in inputs.items())
+        indicator_name = indicators[rule[indicator_key]]["indicator"]["indicator"]["name"]
+        label = f"{indicator_name} {output} {input_text}"
+        
+        return f"{base}-{output}", label
     elif rule[type_key] == "data":
         source = f"source{side}"
         name = f"name{side}"
         interval = f"interval{side}"
         key = f"key{side}"
-        return f"{rule[source]}-{rule[name]}-{rule[interval]}-{rule[key]}"
+
+        label = f"{rule[key]}"
+        return f"{rule[source]}-{rule[name]}-{rule[interval]}-{rule[key]}", label
     elif rule[type_key] == "value":
-        return "value"
+        return "value", None
 
 def get_change(previous, current):
     if current == previous:
@@ -39,10 +51,11 @@ def evaluate(rules, operators):
 def rules_evaluate(rules, operators, indicators, lastDataPoint):
 
     rules_evaluated = []
+    data_values = {}
 
     for rule in rules:
-        k1 = get_key(indicators, "1", rule)
-        k2 = get_key(indicators, "2", rule)
+        k1, l1 = get_key(indicators, "1", rule)
+        k2, l2 = get_key(indicators, "2", rule)
 
         if k1 not in ["value"] and k1 not in lastDataPoint:
             logging.info(f"do not have data {k1}; has keys {lastDataPoint.keys()}")
@@ -61,6 +74,9 @@ def rules_evaluate(rules, operators, indicators, lastDataPoint):
         else:
             v2 = float(lastDataPoint[k2])
 
+        if l1: data_values[l1] = v1
+        if l2: data_values[l2] = v2
+
         if rule["comparator"] == "<":
             rules_evaluated.append(v1 < v2)
         elif rule["comparator"] == ">":
@@ -71,4 +87,4 @@ def rules_evaluate(rules, operators, indicators, lastDataPoint):
 
     result = evaluate(rules_evaluated, operators)
 
-    return result
+    return result, data_values

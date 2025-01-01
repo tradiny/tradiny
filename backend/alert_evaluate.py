@@ -63,7 +63,7 @@ def alert_evaluate(dbconn, message, alert, data):
     operators = alert["settings"]["operators"]
     indicators = alert["settings"]["indicators"]
 
-    result = rules_evaluate(rules, operators, indicators, lastDataPoint)
+    result, _ = rules_evaluate(rules, operators, indicators, lastDataPoint)
 
     if result and alert["next_tick"] == 1:
         logging.info(f"alert {alert['id']} matched")

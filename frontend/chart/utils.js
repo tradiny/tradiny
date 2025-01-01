@@ -576,4 +576,32 @@ export class Utils {
         return true; // This item is unique so far
     });
   }
+  static downloadCSV(arrOfObjects) {
+    function replacer(key, value) {
+      return value === null ? '' : value;
+    }
+    if (!arrOfObjects || !arrOfObjects.length) {
+      throw new Error("Array of objects is required");
+    }
+  
+    const headers = Object.keys(arrOfObjects[0]);
+    const csvRows = arrOfObjects.map(obj =>
+      headers.map(header => JSON.stringify(obj[header], replacer)).join(',')
+    );
+  
+    const csvString = [headers.join(','), ...csvRows].join('\n');
+  
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+  
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'data.csv');
+    link.style.visibility = 'hidden';
+  
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  
 }

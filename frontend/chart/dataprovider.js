@@ -664,7 +664,7 @@ export class DataProvider {
 
         case "scan_result":
           if (this._onScanResult) {
-            this._onScanResult(message.data)
+            this._onScanResult(message)
           }
           break;
 

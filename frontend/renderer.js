@@ -13,6 +13,7 @@ import settingsTmpl from "./templates/settings.html";
 
 import dataSearchResultsTmpl from "./templates/data-search-results.html";
 import dataTmpl from "./templates/data.html";
+import dataTableTmpl from "./templates/data-table.html";
 
 import indicatorsSearchResultsTmpl from "./templates/indicators-search-results.html";
 import indicatorTmpl from "./templates/indicator.html";
@@ -31,6 +32,7 @@ const templateCache = {
 
   "data-search-results": dataSearchResultsTmpl,
   data: dataTmpl,
+  "data-table": dataTableTmpl,
 
   "indicators-search-results": indicatorsSearchResultsTmpl,
   indicator: indicatorTmpl,
