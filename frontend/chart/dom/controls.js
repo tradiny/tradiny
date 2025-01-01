@@ -348,10 +348,15 @@ export class DOMControlsHandler {
                   this.scanning = false;
                   this.chart.dataProvider.scanStop();
                 }
-                this.chart.d3ContainerEl
-                  .select(".scanner > div > span")
-                  .html(`Filters`);
-                if (s) {
+                if (this.chart.d3ContainerEl) {
+                  const filtersEl = this.chart.d3ContainerEl.select(
+                    ".scanner > div > span",
+                  );
+                  if (filtersEl) {
+                    filtersEl.html(`Filters`);
+                  }
+                }
+                if (s && this.chart.d3ContainerEl) {
                   d3ContainerEl.select(".scanner").style("display", "block");
                 } else {
                   d3ContainerEl.select(".scanner").style("display", "none");
