@@ -121,9 +121,12 @@ export class AxisHandler {
           yAxis.orient === "right" ? d3.axisRight(scale) : d3.axisLeft(scale),
       };
 
-      this.chart.yAxes[i][yAxis.key].axis.ticks(
-        this.getYTicks(this.chart.paneHeights[i]),
-      );
+      let h = this.chart.paneHeights[i];
+      if (yAxis.height && yAxis.position === "bottom") {
+        h *= yAxis.height / 100;
+      }
+
+      this.chart.yAxes[i][yAxis.key].axis.ticks(this.getYTicks(h));
 
       if (yAxis.tickFormat === "si") {
         const tick3s = d3.format(".3s");
@@ -187,6 +190,10 @@ export class AxisHandler {
         const column = pane.yAxes[j].gridPosition[0];
         w = this.chart.yAxesWidths[1][column - 1];
       }
+      if (yAxis.meta.height && yAxis.meta.position === "bottom") {
+        yAxisEl.style("align-self", "end");
+      }
+
       const svg = yAxisEl.append("svg");
       if (w) {
         svg.attr("width", w);
@@ -202,7 +209,7 @@ export class AxisHandler {
     return Math.floor(Math.max(w / 80, 2));
   }
   getYTicks(h) {
-    return Math.floor(Math.max(h / 80, 3));
+    return Math.floor(Math.max(h / 80, 4));
   }
 
   addXLabel(svg, mousePosition) {
@@ -416,7 +423,7 @@ export class AxisHandler {
       }
     }
 
-    // update labels
+    // update crosshair labels
     if (mousePosition.position && mousePosition.i == i) {
       if (yAxis.label) {
         const parent = yAxis.label.g.node().parentNode;
@@ -470,18 +477,15 @@ export class AxisHandler {
       if (yAxis.meta.orient === "left") {
         const column = yAxis.meta.gridPosition[0] - 1; // -1 for controls
         const w = this.chart.yAxesWidths[0][column - 1];
+        let h =
+          mousePosition.position.y - Math.floor(this.chart.textHeight / 2) - 3;
+        if (yAxis.meta.height && yAxis.meta.position === "bottom") {
+          h -= this.chart.paneHeights[i] * (1 - yAxis.meta.height / 100);
+        }
 
-        yAxis.label.g.attr(
-          "transform",
-          `translate(-${w}, ${
-            mousePosition.position.y - Math.floor(this.chart.textHeight / 2) - 3
-          })`,
-        );
+        yAxis.label.g.attr("transform", `translate(-${w}, ${h})`);
         yAxis.label.text.text(
-          this.yAxisFormat(
-            yAxis.meta.tickFormat,
-            yAxis.scale.invert(mousePosition.position.y),
-          ),
+          this.yAxisFormat(yAxis.meta.tickFormat, yAxis.scale.invert(h)),
         );
       }
     } else if (yAxis.label) {

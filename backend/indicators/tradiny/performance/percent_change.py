@@ -16,6 +16,7 @@ import numpy as np
 
 from indicators.data.indicator import Indicator
 
+
 def get_change(previous, current):
     if current == previous:
         return 0.0
@@ -53,8 +54,9 @@ class PERCENTCHANGE(Indicator):
 
             if pd.notna(prev_close) and pd.notna(curr_close):
                 change = get_change(prev_close, curr_close)
-                if prev_close > curr_close: change *= -1
-            
+                if prev_close > curr_close:
+                    change *= -1
+
                 percent_changes.append([df.index[i], change])
 
         return [percent_changes]

@@ -268,7 +268,10 @@ async def process_queue(async_queue: asyncio.Queue, i: int):
                 except Exception as e:
                     logging.error(f"Failed to scan: {e}")
             elif action == "scan_stop":
-                if task["client_id"] in scanner_status and scanner_status[task["client_id"]] == "running":
+                if (
+                    task["client_id"] in scanner_status
+                    and scanner_status[task["client_id"]] == "running"
+                ):
                     scanner_status[task["client_id"]] = "stop"
 
         except Exception as e:

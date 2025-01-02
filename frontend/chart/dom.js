@@ -200,10 +200,11 @@ export class DOMHandler {
     this.chart.panes.forEach((pane, i) => {
       for (let j = 0; j < pane.yAxes.length; j++) {
         const yAxis = pane.yAxes[j];
-        this.chart.yAxes[i][yAxis.key].scale.range([
-          this.chart.paneHeights[i],
-          0,
-        ]); // svg height
+        let height = this.chart.paneHeights[i];
+        if (yAxis.height) {
+          height *= yAxis.height / 100;
+        }
+        this.chart.yAxes[i][yAxis.key].scale.range([height, 0]); // svg height
       }
       Object.keys(this.chart.yAxes[i]).forEach((key, j) => {
         const yAxis = this.chart.yAxes[i][key];
@@ -226,14 +227,15 @@ export class DOMHandler {
           minX = -w;
         }
         let h = this.chart.paneHeights[i];
+        if (yAxis.meta.height && yAxis.meta.position === "bottom") {
+          h *= yAxis.meta.height / 100;
+        }
 
         this.chart.yAxesSvg[i][key].attr("width", w);
         this.chart.yAxesSvg[i][key].attr("height", h);
         this.chart.yAxesSvg[i][key].attr("viewBox", `${minX} 0 ${w} ${h}`);
 
-        yAxis.axis.ticks(
-          this.chart.axisHandler.getYTicks(this.chart.paneHeights[i]),
-        );
+        yAxis.axis.ticks(this.chart.axisHandler.getYTicks(h));
       });
       if (this.chart.gridlines[i]) {
         this.chart.gridlines[i].xTicks(

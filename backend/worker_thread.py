@@ -36,7 +36,6 @@ class WorkerThread(threading.Thread):
         self.i = i
         self.process_queue = process_queue
 
-
     def run(self):
         asyncio.set_event_loop(self.loop)
         try:

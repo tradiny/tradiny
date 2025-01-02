@@ -22,7 +22,18 @@ export class DataHandler {
   }
 
   configureSeries(i) {
-    const getDataKey = (key) => (d) => d[key];
+    const getDataKeyWithHeight = (dataKey) => {
+      if (this.chart.yAxes[i][dataKey.yAxis].meta.height) {
+        return (d) =>
+          d[dataKey.dataKey] *
+          (this.chart.yAxes[i][dataKey.yAxis].meta.height / 100);
+      } else {
+        return (d) => d[dataKey.dataKey];
+      }
+    };
+    const getDataKey = (dataKey) => {
+      return (d) => d[dataKey.dataKey];
+    };
     const pane = this.chart.panes[i];
 
     const series = [];
@@ -102,7 +113,7 @@ export class DataHandler {
             fc
               .seriesWebglBar()
               .crossValue((d) => d.date)
-              .mainValue((d) => getDataKey(dataKey.dataKey)(d))
+              .mainValue((d) => getDataKeyWithHeight(dataKey)(d))
               .decorate(
                 decorateFill(
                   metadata,
@@ -122,7 +133,7 @@ export class DataHandler {
             .crossValue((d) => {
               return d.date;
             })
-            .mainValue((d) => getDataKey(dataKey.dataKey)(d))
+            .mainValue((d) => getDataKey(dataKey)(d))
             .decorate(decorateStroke(metadata));
           metadata.series.yScale(this.chart.yAxes[i][dataKey.yAxis].scale);
           metadata.series.yScale = () => {};

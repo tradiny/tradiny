@@ -300,12 +300,14 @@ export class RenderHandler {
     }
 
     if (yAxis.meta.height) {
-      newDomain = this.adjustRange(
-        newDomain[0],
-        newDomain[1],
-        yAxis.meta.height,
-        yAxis.meta.position,
-      ); //(newDomain[1] - newDomain[0]) * (10.0-((100-this.chart.yAxes[chartI][yAxis].meta.height)/10));
+      if (yAxis.meta.position === "top") {
+        newDomain = this.adjustRange(
+          newDomain[0],
+          newDomain[1],
+          yAxis.meta.height,
+          yAxis.meta.position,
+        ); //(newDomain[1] - newDomain[0]) * (10.0-((100-this.chart.yAxes[chartI][yAxis].meta.height)/10));
+      }
     }
 
     // in case of log scale newDomain[0] can be negative, fix this
