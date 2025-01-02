@@ -206,6 +206,7 @@ async def process_message(
                 d.get("interval"),
                 d.get("count", 300),
                 metadata=metadata,
+                force_request_data=not stream,
             )
 
             if stream:

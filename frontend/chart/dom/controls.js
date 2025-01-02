@@ -167,6 +167,11 @@ export class DOMControlsHandler {
       alert("All inputs are required!");
       return;
     }
+    const scanObj = this.serializeRules(this.domFilter);
+    if (scanObj && scanObj.rules.length === 0) {
+      alert("Add at least one condition.");
+      return;
+    }
 
     new Renderer().render(
       "data-search-results",
@@ -178,7 +183,6 @@ export class DOMControlsHandler {
       },
     );
 
-    const scanObj = this.serializeRules(this.domFilter);
     if (scanObj) {
       scanObj.search = search;
 
@@ -360,7 +364,7 @@ export class DOMControlsHandler {
                   if (filtersEl) {
                     filtersEl.html(`Filters`);
                   }
-                }r
+                }
                 if (s && this.chart.d3ContainerEl) {
                   d3ContainerEl.select(".scanner").style("display", "block");
                 } else {

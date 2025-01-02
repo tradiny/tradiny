@@ -3,7 +3,7 @@
 Tradiny is designed to make investing and trading simple and accessible for everyone.
 Driven by the Founder's 2018 vision, Tradiny launched in 2020, offering technical analysis with over 160 integrated indicators and attracting over 100k active users on Google Play Store and Apple App Store.
 
-To further this vision of simplicity and accessibility, we released Tradiny in 2024 as open-source software for data analysts, investors, and traders explicitly allowing them to use the software for personal profit from investing and trading.
+To further this vision of simplicity and accessibility, we released Tradiny in 2024 as open-source software under the AGPL with additional terms explicitly allowing data analysts, investors, and traders to use the software for personal profit from investing and trading without any obligation to release their proprietary strategies.
 
 Now, everyone can install Tradiny on their computer, adjust it to their needs, and contribute to its development.
 

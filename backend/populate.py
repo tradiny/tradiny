@@ -12,16 +12,9 @@
 
 import db
 import logging
+from log import setup_logging
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-console_handler = logging.StreamHandler()
-# Set format for timestamp to be YYYY-MM-DD HH:MI:SS
-formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
+setup_logging()
 
 from config import Config
 

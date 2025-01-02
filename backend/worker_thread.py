@@ -19,8 +19,13 @@ import db
 
 def queue_to_async(async_queue, task_queue, loop):
     while True:
-        task = task_queue.get()  # blocking get
-        asyncio.run_coroutine_threadsafe(async_queue.put(task), loop)
+        try:
+            task = task_queue.get()  # blocking get
+            asyncio.run_coroutine_threadsafe(async_queue.put(task), loop)
+        except Exception as e:
+            logging.error(f"queue_to_async error: {str(e)}")
+            logging.info("Stopping queue_to_async")
+            break
 
 
 class WorkerThread(threading.Thread):
@@ -30,6 +35,7 @@ class WorkerThread(threading.Thread):
         self.task_queue = task_queue
         self.i = i
         self.process_queue = process_queue
+
 
     def run(self):
         asyncio.set_event_loop(self.loop)

@@ -12,6 +12,7 @@
 
 import logging
 
+
 def get_key(indicators, side, rule):
     type_key = f"type{side}"
     if rule[type_key] == "indicator":

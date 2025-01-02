@@ -1,4 +1,4 @@
-To add a data source, create a new class in the `backend/data_providers/` directory and include it in the `populate.py` and `server.py` scripts.
+To add a data source, create a new class in the `backend/data_providers/` directory and include it in the `populate.py` and `provider.py` scripts.
 
 Here are the existing data source providers:
 
@@ -122,14 +122,13 @@ Note: Caching is already set up, so you don't need to worry about it.
 
 - `on_close(self, ws_client, symbol, interval)`: Triggered when the client disconnects.
 
-To get your MyProvider process going, register it in the `server.py` file to include it in the application:
+To get your MyProvider process going, register it in the `provider.py` file to include it in the application:
 
 ```python
-    from data_providers.my_provider import MyProvider
-    my_provider = MyProvider()
-    my_provider.start()
-
-    async def startup_event():
-        ...
-        register_provider(my_provider)
+    # ...
+    provider_configs = [
+        # ...
+        ("YOUR_API_KEY", "data_providers.my_provider", "MyProvider"), # <-- here
+    ]
+    # ...
 ```

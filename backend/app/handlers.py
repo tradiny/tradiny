@@ -55,6 +55,7 @@ async def send_historical_data(
     count=300,
     end="now UTC",
     metadata=None,
+    force_request_data=False,
 ):
     key = generate_method_key(
         "send_historical_data",
@@ -102,7 +103,9 @@ async def send_historical_data(
         cached_data, required_start_time, required_end_time
     )
 
-    if not request_recent_data_and_has_last_date and (start_needed or end_needed):
+    if force_request_data or (
+        not request_recent_data_and_has_last_date and (start_needed or end_needed)
+    ):
         date_format = "%Y-%m-%d %H:%M:%S"  # "%d %b %Y %H:%M:%S"
         start_time_query = (
             start_needed.strftime(date_format)
