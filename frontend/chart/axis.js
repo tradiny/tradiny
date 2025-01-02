@@ -212,7 +212,7 @@ export class AxisHandler {
     return Math.floor(Math.max(w / 80, 2));
   }
   getYTicks(h) {
-    return Math.floor(Math.max(h / 80, 4));
+    return Math.floor(Math.max(h / 80, 2));
   }
 
   addXLabel(svg, mousePosition) {
