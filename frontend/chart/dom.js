@@ -201,7 +201,7 @@ export class DOMHandler {
       for (let j = 0; j < pane.yAxes.length; j++) {
         const yAxis = pane.yAxes[j];
         let height = this.chart.paneHeights[i];
-        if (yAxis.height) {
+        if (yAxis.height && yAxis.position === "bottom") {
           height *= yAxis.height / 100;
         }
         this.chart.yAxes[i][yAxis.key].scale.range([height, 0]); // svg height
