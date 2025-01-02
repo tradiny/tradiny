@@ -224,7 +224,7 @@ export class RenderHandler {
 
       if (percentage < 50) {
         // For percentages below 50%, use the scaling factor method
-        const scaleFactor = 100 / percentage - 1;
+        const scaleFactor = 100 / percentage;
         const newRange = originalRange * scaleFactor;
         newEnd = start + newRange;
       } else {
@@ -241,7 +241,7 @@ export class RenderHandler {
 
       if (percentage < 50) {
         // For percentages below 50%, use the scaling factor method
-        const scaleFactor = 100 / percentage - 1;
+        const scaleFactor = 100 / percentage;
         const newRange = originalRange * scaleFactor;
         newStart = start - newRange;
       } else {
@@ -300,14 +300,14 @@ export class RenderHandler {
     }
 
     if (yAxis.meta.height) {
-      if (yAxis.meta.position === "top") {
-        newDomain = this.adjustRange(
-          newDomain[0],
-          newDomain[1],
-          yAxis.meta.height,
-          yAxis.meta.position,
-        ); //(newDomain[1] - newDomain[0]) * (10.0-((100-this.chart.yAxes[chartI][yAxis].meta.height)/10));
-      }
+      // if (yAxis.meta.position === "top") {
+      newDomain = this.adjustRange(
+        newDomain[0],
+        newDomain[1],
+        yAxis.meta.height,
+        yAxis.meta.position,
+      ); //(newDomain[1] - newDomain[0]) * (10.0-((100-this.chart.yAxes[chartI][yAxis].meta.height)/10));
+      // }
     }
 
     // in case of log scale newDomain[0] can be negative, fix this

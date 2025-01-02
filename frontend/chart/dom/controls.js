@@ -258,7 +258,7 @@ export class DOMControlsHandler {
 
     if (open && !isScannerOpen) {
       d3ContainerEl.select(".filter-rules").style("display", "block");
-      d3ContainerEl.select(".data-search-results").style("display", "none");
+      // d3ContainerEl.select(".data-search-results").style("display", "none");
       d3ContainerEl.select(".scanner .open").style("display", "inline");
       d3ContainerEl.select(".scanner .close").style("display", "none");
 

@@ -169,7 +169,7 @@ export class AxisHandler {
     Object.keys(this.chart.yAxes[i]).forEach((key, j) => {
       const yAxis = this.chart.yAxes[i][key];
 
-      const yAxisEl = this.chart.d3ContainerEl
+      let yAxisEl = this.chart.d3ContainerEl
         .append("div")
         .attr(
           "class",
@@ -191,7 +191,10 @@ export class AxisHandler {
         w = this.chart.yAxesWidths[1][column - 1];
       }
       if (yAxis.meta.height && yAxis.meta.position === "bottom") {
-        yAxisEl.style("align-self", "end");
+        yAxisEl
+          .style("display", "flex")
+          .style("flex-direction", "column")
+          .style("justify-content", "flex-end");
       }
 
       const svg = yAxisEl.append("svg");
@@ -480,7 +483,7 @@ export class AxisHandler {
         let h =
           mousePosition.position.y - Math.floor(this.chart.textHeight / 2) - 3;
         if (yAxis.meta.height && yAxis.meta.position === "bottom") {
-          h -= this.chart.paneHeights[i] * (1 - yAxis.meta.height / 100);
+          h = h - this.chart.paneHeights[i] * (1.0 - yAxis.meta.height / 100);
         }
 
         yAxis.label.g.attr("transform", `translate(-${w}, ${h})`);

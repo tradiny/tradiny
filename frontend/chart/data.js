@@ -113,7 +113,7 @@ export class DataHandler {
             fc
               .seriesWebglBar()
               .crossValue((d) => d.date)
-              .mainValue((d) => getDataKeyWithHeight(dataKey)(d))
+              .mainValue((d) => getDataKey(dataKey)(d))
               .decorate(
                 decorateFill(
                   metadata,
