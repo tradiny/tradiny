@@ -14,4 +14,5 @@ Tradiny is a lightweight yet full-featured, highly-extensible, WebGL-powered, op
 - **Great User Experience**: Pan and zoom, autoscale, save charts, etc.
 - **Themes**: Dark, white, custom, etc.
 - **Advanced Alerting**: Cross-asset, cross time-frame real-time zero-delay alerting.
+- **Market Scanner**: Scan for real-time data and assets matching user-defined rules and export to CSV.
 - **ChatGPT Integration**: Analyze and interpret charts with ChatGPT.

@@ -9,9 +9,10 @@ Tradiny is a lightweight yet full-featured, highly-extensible, WebGL-powered, op
 ## Features
 
 - **Annotation Tools**: Lines and curves, ruler, Fibonacci tool.
-- **Data Sources**: CSV, finance (stocks 32k, options 1.5M, indices 11k, forex 1.7k, crypto 500).
+- **Data Sources**: CSV, finance (Polygon.io—stocks 32k, options 1.5M, indices 11k, forex 1.7k, Binance—crypto 500).
 - **Statistical and Finance Indicators**: 160+ indicators.
 - **Great User Experience**: Pan and zoom, autoscale, save charts, etc.
 - **Themes**: Dark, white, custom, etc.
 - **Advanced Alerting**: Cross-asset, cross time-frame real-time zero-delay alerting.
+- **Market Scanner**: Scan for real-time data and assets matching user-defined rules and export to CSV.
 - **ChatGPT Integration**: Analyze and interpret charts with ChatGPT.
