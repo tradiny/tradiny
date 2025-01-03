@@ -1,6 +1,6 @@
 # Tradiny
 
-Tradiny is a lightweight yet full-featured, highly-extensible, WebGL-powered, open-source charting platform. Draw time-series data such as line charts or candlestick charts. 
+Tradiny is a lightweight yet full-featured, highly-extensible, open-source charting platform. Draw time-series data such as line charts or candlestick charts. 
 
 [<a href="https://tradiny.com" target="_blank">Website</a>](https://tradiny.com) |
 [<a href="https://docs.tradiny.com/" target="_blank">Documentation</a>](https://docs.tradiny.com/) |

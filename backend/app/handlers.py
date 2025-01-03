@@ -259,11 +259,12 @@ def send_indicator_data(
     df = pd.DataFrame()
     for i, output in enumerate(outputs):
         idf = pd.DataFrame(output)
-        idf.columns = ["date", f"{id}-{obj.outputs[i]['name']}"]
-        if df.empty:
-            df = idf
-        else:
-            df = pd.merge(df, idf, on=["date"], how="inner")
+        if not idf.empty:
+            idf.columns = ["date", f"{id}-{obj.outputs[i]['name']}"]
+            if df.empty:
+                df = idf
+            else:
+                df = pd.merge(df, idf, on=["date"], how="inner")
 
     df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
     # df = df.dropna()

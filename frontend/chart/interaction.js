@@ -243,9 +243,11 @@ export class InteractionHandler {
     let paneHeights = [];
     let distanceDragged;
     let currentTransform = [];
+    let isDragging = false;
     const drag = d3
       .drag()
       .on("start", (event) => {
+        isDragging = false;
         this.chart.dataProvider.disableEvents();
         startY = event.y;
         initialpaneHeights = this.chart.paneHeights.slice(); // shallow copy
@@ -256,6 +258,7 @@ export class InteractionHandler {
         }
       })
       .on("drag", (event) => {
+        isDragging = true;
         const endY = event.y;
         distanceDragged = endY - startY;
         for (let k = 0; k < initialpaneHeights.length; k++) {
@@ -276,6 +279,9 @@ export class InteractionHandler {
         // this.chart.renderHandler.render([this.chart.R.Y_DOMAIN]);
       })
       .on("end", (event) => {
+        if (!isDragging) {
+          return;
+        }
         // reset zoom
         const sumHeights = paneHeights.reduce(
           (partialSum, a) => partialSum + a,
@@ -313,6 +319,7 @@ export class InteractionHandler {
         this.chart.renderHandler.render();
 
         this.chart.dataProvider.enableEvents();
+        isDragging = false;
       });
     return drag;
   }
