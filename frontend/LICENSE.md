@@ -56,7 +56,7 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 - You have no obligation to release any proprietary strategies or tools that you develop on top of the Software.  
 - These rights remain valid as long as you do not redistribute the Software or use it to create publicly available tools or services.
 
-### 2. I want to use the Software in a Docker container.
+### 2. I am a business and I want to use the Software in a Docker container.
 
 **Option 1: AGPL Compliance**  
 - If you choose to use the Software under the AGPL, you must provide attribution to the original authors.  
@@ -68,10 +68,10 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 
 > **Note:** Simply packaging the unmodified Software into a Docker container does not, by itself, trigger additional obligations under the AGPL, but any modifications you make to the Software or its dependencies that create a derivative work will require compliance with the AGPL’s terms.
 
-### 3. I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
+### 3. I am a business and I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
 
 - **Unmodified Integration (e.g., Iframe or Separate Hosting):**  
-  If you embed or reference an **unmodified** instance of the Software (for instance, via an iframe or as a distinct service), you generally do **not** need to release your entire application under the AGPL. However, you still must comply with attribution requirements as specified by the Software’s license.
+  If you embed or reference an **unmodified** instance of the Software (for instance, via an iframe or as a distinct service), you do **not** need to release your entire application under the AGPL. However, you still must comply with attribution requirements as specified by the Software’s license.
 
 - **Modified or Tightly Coupled Integration:**  
   If you **modify** the Software or tightly couple it with your code—such that the combined work is effectively one program—you must:  
