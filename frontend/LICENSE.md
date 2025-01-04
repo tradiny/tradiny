@@ -57,20 +57,28 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 - These rights remain valid as long as you do not redistribute the Software or use it to create publicly available tools or services.
 
 ### 2. I want to use the Software in a Docker container.
+
 **Option 1: AGPL Compliance**  
 - If you choose to use the Software under the AGPL, you must provide attribution to the original authors.  
-- You must release any modifications to the Software under the AGPL.
+- You must release any modifications to the Software under the AGPL, including any changes that affect how the Software runs inside the container.
 
 **Option 2: Commercial License**  
 - If you prefer not to release modifications or provide attribution, you may purchase a commercial license.  
 - Contact [license@tradiny.com](mailto:license@tradiny.com) for more information.
 
-### 3. I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
-If you wish to integrate the Software into your own application, you must:
-1. Release your entire application under the AGPL or a compatible license, and  
-2. Provide attribution to the original authors.
+> **Note:** Simply packaging the unmodified Software into a Docker container does not, by itself, trigger additional obligations under the AGPL, but any modifications you make to the Software or its dependencies that create a derivative work will require compliance with the AGPL’s terms.
 
-If you wish to avoid releasing your application under the AGPL, contact [license@tradiny.com](mailto:license@tradiny.com) to obtain a commercial license.
+### 3. I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
+
+- **Unmodified Integration (e.g., Iframe or Separate Hosting):**  
+  If you embed or reference an **unmodified** instance of the Software (for instance, via an iframe or as a distinct service), you generally do **not** need to release your entire application under the AGPL. However, you still must comply with attribution requirements as specified by the Software’s license.
+
+- **Modified or Tightly Coupled Integration:**  
+  If you **modify** the Software or tightly couple it with your code—such that the combined work is effectively one program—you must:  
+  1. Release your entire application under the AGPL or a compatible license, and  
+  2. Provide attribution to the original authors.
+
+If you wish to avoid releasing your application under the AGPL, **contact [license@tradiny.com](mailto:license@tradiny.com) to obtain a commercial license.**
 
 ---
 
