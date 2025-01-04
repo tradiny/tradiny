@@ -56,11 +56,12 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 - You have no obligation to release any proprietary strategies or tools that you develop on top of the Software.  
 - These rights remain valid as long as you do not redistribute the Software or use it to create publicly available tools or services.
 
-### 2. I am a business and I want to use the Software in a Docker container.
+### 2. I am a business and I want to use the Software in a Docker container and iframe or via a script tag.
 
 **Option 1: AGPL Compliance**  
 - If you choose to use the Software under the AGPL, you must provide attribution to the original authors.  
 - You must release any modifications to the Software under the AGPL, including any changes that affect how the Software runs inside the container.
+- **Note:** If you create a connector (e.g., a data source, indicator, or notification component) that uses your external API to retrieve or process data, you must release the connector code under the AGPL. However, you do **not** have to release the external API code itself.
 
 **Option 2: Commercial License**  
 - If you prefer not to release modifications or provide attribution, you may purchase a commercial license.  
