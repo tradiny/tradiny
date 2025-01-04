@@ -1,13 +1,6 @@
-import docker
 import ipaddress
 import time
 from collections import OrderedDict
-
-_docker_network_cache = {
-    "networks": [],
-    "last_refresh": 0,
-    "refresh_interval": 60 * 60,  # Cache refresh time in seconds
-}
 
 
 class LimitedSizeDict(OrderedDict):
@@ -48,40 +41,23 @@ def is_ip_address_whitelisted(client_ip, WHITELIST_IP):
     if (
         client_ip == "127.0.0.1"
         or client_ip in WHITELIST_IP
-        or is_client_ip_in_docker_networks(client_ip)
+        or is_client_ip_in_local_network(client_ip)
     ):
         return True
     else:
         return False
 
 
-def get_docker_networks():
-    current_time = time.time()
-    # Check if cache needs to be refreshed
-    if (
-        current_time - _docker_network_cache["last_refresh"]
-        > _docker_network_cache["refresh_interval"]
-    ):
-        refresh_docker_networks_cache()
-    return _docker_network_cache["networks"]
-
-
-def refresh_docker_networks_cache():
-    client = docker.from_env()
-    networks = []
-    for network in client.networks.list():
-        ipam_config = network.attrs.get("IPAM", {}).get("Config", [])
-        for ipam in ipam_config:
-            subnet = ipam.get("Subnet")
-            if subnet:
-                networks.append(ipaddress.IPv4Network(subnet))
-    _docker_network_cache["networks"] = networks
-    _docker_network_cache["last_refresh"] = time.time()
-
-
-def is_client_ip_in_docker_networks(client_ip):
+def is_client_ip_in_local_network(client_ip):
+    private_networks = [
+        ipaddress.IPv4Network("10.0.0.0/8"),
+        ipaddress.IPv4Network("172.16.0.0/12"),
+        ipaddress.IPv4Network("192.168.0.0/16"),
+    ]
     client_ip_address = ipaddress.IPv4Address(client_ip)
-    for docker_subnet in get_docker_networks():
-        if client_ip_address in docker_subnet:
+
+    # Check if the IP is in any of the private network ranges
+    for private_network in private_networks:
+        if client_ip_address in private_network:
             return True
     return False
