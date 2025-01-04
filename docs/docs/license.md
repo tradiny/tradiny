@@ -1,7 +1,7 @@
 # Tradiny License  
 *Effective Date: 1.1.2025*
 
-This software (the "**Software**") is licensed under a dual-license model. By using the Software, you agree to comply with the following terms and conditions. If you do not agree, do not use or distribute the Software.
+Tradiny (the "**Software**") is licensed under a dual-license model. By using the Software, you agree to comply with the following terms and conditions. If you do not agree, do not use or distribute the Software.
 
 ---
 
@@ -26,8 +26,8 @@ Individual users, including traders and investors, may use this Software to anal
 
 ## 3. General AGPL Conditions
 
-### 3.1 Network Use
-Under the AGPL, any deployment of the Software over a network that provides user-facing functionality requires making the source code of the modified version publicly accessible.
+### 3.1 Distribution of Modified Versions
+Under the AGPL, if you modify the Software and **distribute** or otherwise provide those modifications to others—whether by sharing compiled code, making the Software available for download, or hosting it as a service—you must also make the source code of your modified version available under the same AGPL terms.
 
 ### 3.2 Attribution
 All AGPL users must provide proper attribution to the original authors, as required by the AGPL.
@@ -40,8 +40,8 @@ Businesses, organizations, and individuals seeking to use the Software in a comm
 
 ### 4.1 Use Under AGPL
 If you choose to use the Software under the AGPL license, you must:
-- Provide attribution to the original authors.  
 - Release any modifications you make to the Software.  
+- Provide attribution to the original authors.  
 
 ### 4.2 Commercial Licensing (No Restrictions)
 If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) or desire additional flexibility for white-labeling, custom development, and new feature creation, you must obtain a commercial license by contacting  
