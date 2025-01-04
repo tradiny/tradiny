@@ -67,7 +67,7 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 - If you prefer not to release modifications or provide attribution, you may purchase a commercial license.  
 - Contact [license@tradiny.com](mailto:license@tradiny.com) for more information.
 
-> **Note:** Simply packaging the unmodified Software into a Docker container does not, by itself, trigger additional obligations under the AGPL, but any modifications you make to the Software or its dependencies that create a derivative work will require compliance with the AGPL’s terms.
+> **Note:** Using the unmodified Software (e.g., in a Docker container, iframe, or script tag) only requires you to provide proper attribution. However, if you modify the Software or create a derivative work (including changes to its dependencies), you must release those modifications under the AGPL.
 
 ### 3. I am a business and I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
 
