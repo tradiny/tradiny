@@ -13,6 +13,8 @@ What's next? To continue supporting and developing Tradiny, we offer [commercial
 
 ## Q1 2025
 
+- **Data Grouping**: Combine your data/assets into logical categories.
+
 - **News**: Display news directly on chart.
 
     Parse RSS, download articles using Selenium, classify and summarize by ChatGPT, include the summaries in the chat as context.
