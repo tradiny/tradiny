@@ -12,7 +12,6 @@
 
 from datetime import datetime, timedelta, timezone
 import pandas as pd
-from collections import OrderedDict
 import time
 import socket
 
@@ -47,40 +46,6 @@ def resource_path(relative_path):
     # PyInstaller creates a temp folder and stores path in _MEIPASS
     base_path = getattr(sys, "_MEIPASS", Path("."))
     return Path(base_path).joinpath(relative_path)
-
-
-class LimitedSizeDict(OrderedDict):
-    def __init__(self, max_size, *args, **kwargs):
-        self.max_size = max_size
-        super().__init__(*args, **kwargs)
-
-    def __setitem__(self, key, value):
-        if key in self:
-            del self[key]  # Remove existing item to update position
-        elif len(self) >= self.max_size:
-            self.popitem(last=False)  # Remove the oldest item
-        super().__setitem__(key, value)
-
-
-def clean_old_requests(obj):
-    current_time = time.time()
-    cutoff_time = current_time - 3600  # 1 hour
-    for ip in list(obj.keys()):
-        # Remove requests older than 1 hour
-        obj[ip] = [t for t in obj[ip] if t > cutoff_time]
-        # Remove the IP entry if no recent requests
-        if not obj[ip]:
-            del obj[ip]
-
-
-def register_request(obj, ip):
-    clean_old_requests(obj)
-    obj[ip].append(time.time())
-
-
-def is_request_allowed(maximum, obj, ip):
-    clean_old_requests(obj)
-    return len(obj[ip]) < int(maximum)
 
 
 def determine_data_needs(cached_data, start_time, end_time):

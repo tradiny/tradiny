@@ -19,7 +19,7 @@ import time
 import logging
 from collections import defaultdict
 
-from utils import LimitedSizeDict, register_request, is_request_allowed
+from security import LimitedSizeDict, register_request, is_request_allowed
 
 max_size = 1000
 conversations = LimitedSizeDict(max_size)

@@ -9,6 +9,7 @@ SQLAlchemy
 pywebpush
 openai
 httpx[http2]
+docker
 
 python-binance==1.0.19
 polygon-api-client

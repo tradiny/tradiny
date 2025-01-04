@@ -29,18 +29,16 @@ from alert import (
     trigger_worker as trigger_alert_worker,
 )
 from vapid import get as get_vapid_public_key
-
-from .connection import safe_send_message
-
-from .connection import conn
-from .globals import dbconn, providers, indicator_fetcher
-from .handlers import send_historical_data, send_indicator_data
 from scanner import (
     get_queue_wrapper as get_scanner_queue_wrapper,
     trigger_worker as trigger_scanner_worker,
 )
+from security import register_request, is_request_allowed, is_ip_address_whitelisted
 
-from utils import register_request, is_request_allowed
+from .connection import safe_send_message, conn
+from .globals import dbconn, providers, indicator_fetcher
+from .handlers import send_historical_data, send_indicator_data
+
 
 websocket_router = APIRouter()
 
@@ -61,7 +59,9 @@ async def websocket_endpoint(
 
     client_ip = websocket.client.host
 
-    if not is_request_allowed(
+    if not is_ip_address_whitelisted(
+        client_ip, Config.WHITELIST_IP
+    ) and not is_request_allowed(
         Config.MAX_REQUESTS_PER_IP_PER_HOUR, ip_requests, client_ip
     ):
         logging.warning(f"Too many requests: {client_ip}")
@@ -72,11 +72,13 @@ async def websocket_endpoint(
         conn.disconnect(websocket)
         return
 
-    if client_ip not in Config.WHITELIST_IP:
+    if not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP):
         register_request(ip_requests, client_ip)
 
-    if client_ip in ip_conns and ip_conns[client_ip] >= int(
-        Config.MAX_SIMULTANEOUS_CONNECTIONS_PER_IP
+    if (
+        not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP)
+        and client_ip in ip_conns
+        and ip_conns[client_ip] >= int(Config.MAX_SIMULTANEOUS_CONNECTIONS_PER_IP)
     ):
         logging.warning(f"Max simultaneous connections reached: {client_ip}")
         await safe_send_message(
@@ -91,7 +93,7 @@ async def websocket_endpoint(
         conn.disconnect(websocket)
         return
 
-    if client_ip not in Config.WHITELIST_IP:
+    if not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP):
         if not client_ip in ip_conns:
             ip_conns[client_ip] = 0
         ip_conns[client_ip] += 1
@@ -105,7 +107,6 @@ async def websocket_endpoint(
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        raise e
         logging.error(f"WebSocket error: {e}")
     finally:
         if client_ip in ip_conns:
@@ -159,7 +160,9 @@ async def process_message(
     if d.get("type") in ["data", "data_history", "indicator", "indicator_history"]:
         client_ip = websocket.client.host
 
-        if not is_request_allowed(
+        if not is_ip_address_whitelisted(
+            client_ip, Config.WHITELIST_IP
+        ) and not is_request_allowed(
             Config.MAX_DATA_REQUESTS_PER_IP_PER_HOUR, data_requests, client_ip
         ):
             logging.warning(f"Too many data requests: {client_ip}")
@@ -171,7 +174,7 @@ async def process_message(
             )
             return
 
-        if client_ip not in Config.WHITELIST_IP:
+        if not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP):
             register_request(data_requests, client_ip)
 
     try:
@@ -268,8 +271,10 @@ async def process_message(
 
             client_ip = websocket.client.host
 
-            if client_ip in ip_alerts and ip_alerts[client_ip] >= int(
-                Config.MAX_ALERTS_PER_IP_PER_DAY
+            if (
+                not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP)
+                and client_ip in ip_alerts
+                and ip_alerts[client_ip] >= int(Config.MAX_ALERTS_PER_IP_PER_DAY)
             ):
                 logging.warning(f"Max alerts reached: {client_ip}")
                 await safe_send_message(
@@ -280,7 +285,7 @@ async def process_message(
                 )
                 return
 
-            if client_ip not in Config.WHITELIST_IP:
+            if not is_ip_address_whitelisted(client_ip, Config.WHITELIST_IP):
                 if client_ip not in ip_alerts:
                     ip_alerts[client_ip] = 0
                 ip_alerts[client_ip] += 1
