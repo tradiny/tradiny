@@ -51,7 +51,7 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 
 ## Frequently Asked Questions (FAQ)
 
-### 1. I am a trader or investor. How can I use the Software?
+### 1. I am a sole or individual trader or investor. How can I use the Software?
 - You are free to use the Software under the AGPL to analyze data, make investment decisions, and generate personal profit.  
 - You have no obligation to release any proprietary strategies or tools that you develop on top of the Software.  
 - These rights remain valid as long as you do not redistribute the Software or use it to create publicly available tools or services.
@@ -62,12 +62,11 @@ If you wish to avoid the AGPL’s requirements (e.g., releasing modifications) o
 - If you choose to use the Software under the AGPL, you must provide attribution to the original authors.  
 - You must release any modifications to the Software under the AGPL, including any changes that affect how the Software runs inside the container.
 - **Note:** If you create a connector (e.g., a data source, indicator, or notification component) that uses your external API to retrieve or process data, you must release the connector code under the AGPL. However, you do **not** have to release the external API code itself.
+- **Note 2:** Using the unmodified Software (e.g., in a Docker container, iframe, or script tag) only requires you to provide proper attribution. However, if you modify the Software or create a derivative work (including changes to its dependencies), you must release those modifications under the AGPL.
 
 **Option 2: Commercial License**  
 - If you prefer not to release modifications or provide attribution, you may purchase a commercial license.  
 - Contact [license@tradiny.com](mailto:license@tradiny.com) for more information.
-
-> **Note:** Using the unmodified Software (e.g., in a Docker container, iframe, or script tag) only requires you to provide proper attribution. However, if you modify the Software or create a derivative work (including changes to its dependencies), you must release those modifications under the AGPL.
 
 ### 3. I am a business and I want to integrate the Software into my app (e.g., embedding, linking, tight coupling, or using it as a dependency).
 
