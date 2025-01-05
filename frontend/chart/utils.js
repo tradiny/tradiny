@@ -584,31 +584,35 @@ export class Utils {
     function replacer(key, value) {
       return value === null ? "" : value;
     }
-    
+
     if (!arrOfObjects || !arrOfObjects.length) {
       throw new Error("Array of objects is required");
     }
-  
+
     // Create a mapping of original to sanitized header names
     const originalHeaders = Object.keys(arrOfObjects[0]);
-    const sanitizedHeaders = originalHeaders.map(header => header.replace(/,/g, ""));
-    
-    const csvRows = arrOfObjects.map((obj) =>
-      sanitizedHeaders.map((sanitizedHeader, index) => 
-        JSON.stringify(obj[originalHeaders[index]], replacer)
-      ).join(","),
+    const sanitizedHeaders = originalHeaders.map((header) =>
+      header.replace(/,/g, ""),
     );
-  
+
+    const csvRows = arrOfObjects.map((obj) =>
+      sanitizedHeaders
+        .map((sanitizedHeader, index) =>
+          JSON.stringify(obj[originalHeaders[index]], replacer),
+        )
+        .join(","),
+    );
+
     const csvString = [sanitizedHeaders.join(","), ...csvRows].join("\n");
-  
+
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-  
+
     link.setAttribute("href", url);
     link.setAttribute("download", "data.csv");
     link.style.visibility = "hidden";
-  
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

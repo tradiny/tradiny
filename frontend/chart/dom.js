@@ -510,11 +510,57 @@ export class DOMHandler {
       }
     }
 
+    let leftAxisNearChartWidth = 0;
+    for (let lr = 0; lr < 2; lr++) {
+      const orient = lr === 0 ? "left" : "right";
+      if (orient === "right") {
+        continue;
+      }
+      for (let li = 0; li < yGridAxes[1]; li++) {
+        for (let i = 0; i < this.chart.panes.length; i++) {
+          const pane = this.chart.panes[i];
+          const axes = pane.yAxes.filter((a) => a.orient === orient);
+          for (let j = axes.length - 1; j >= 0; j--) {
+            const axis = axes[j];
+
+            for (let k = 0; k < pane.metadata.length; k++) {
+              for (let l = 0; l < pane.metadata[k].dataKeys.length; l++) {
+                const key = pane.metadata[k].dataKeys[l];
+                if (axis.key === key.yAxis) {
+                  let idx;
+                  if (lr === 0) {
+                    idx = axes.length - 1 - j;
+                    idx = yGridAxes[0] - idx - 1;
+                  }
+                  // it is left axis and the one closest to the chart
+                  if (orient === "left" && yGridAxes[0] === idx + 1) {
+                    if (
+                      axis.position === "bottom" &&
+                      axis.orient === "left" &&
+                      axis.key.endsWith("-volume")
+                    ) {
+                      // leave 0
+                    } else {
+                      leftAxisNearChartWidth = this.chart.yAxesWidths[lr][idx];
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     // columns:
     let templateColumns = `${this.chart.widthControls}px `;
     // left axes
     for (let i = 0; i < yGridAxes[0]; i++) {
-      templateColumns += this.chart.yAxesWidths[0][i] + "px ";
+      if (i + 1 === yGridAxes[0] && leftAxisNearChartWidth === 0) {
+        templateColumns += "0px ";
+      } else {
+        templateColumns += this.chart.yAxesWidths[0][i] + "px ";
+      }
     }
     // chart column
     templateColumns += "1fr ";
