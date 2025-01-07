@@ -189,6 +189,7 @@ export default class TradinyChart {
     this.textHeight = Utils.getTextHeight("0", `${this.fontSize}px sans-serif`);
     this.resizing = false;
     this.renderer = new Renderer(this);
+    this.yAxisPadding = 10;
 
     this.history = [];
 

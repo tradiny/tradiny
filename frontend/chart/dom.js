@@ -204,7 +204,8 @@ export class DOMHandler {
         if (yAxis.height && yAxis.position === "bottom") {
           height *= yAxis.height / 100;
         }
-        this.chart.yAxes[i][yAxis.key].scale.range([height, 0]); // svg height
+        const padding = this.chart.yAxisPadding;
+        this.chart.yAxes[i][yAxis.key].scale.range([height + padding, padding]); // svg height
       }
       Object.keys(this.chart.yAxes[i]).forEach((key, j) => {
         const yAxis = this.chart.yAxes[i][key];
@@ -489,11 +490,6 @@ export class DOMHandler {
     }
 
     this.chart.yAxesWidths = widths;
-    const sumLeft = widths[0].reduce((acc, curr) => acc + curr, 0);
-    const sumRight = widths[1].reduce((acc, curr) => acc + curr, 0);
-    this.chart.paneWidth =
-      this.chart.domContainerEl.clientWidth -
-      (this.chart.widthControls + sumLeft + sumRight);
 
     if (paneHeights) {
       this.chart.paneHeights = paneHeights;
@@ -511,6 +507,7 @@ export class DOMHandler {
     }
 
     let leftAxisNearChartWidth = 0;
+    let leftAxisNearChartRealWidth = 0;
     for (let lr = 0; lr < 2; lr++) {
       const orient = lr === 0 ? "left" : "right";
       if (orient === "right") {
@@ -543,6 +540,8 @@ export class DOMHandler {
                     } else {
                       leftAxisNearChartWidth = this.chart.yAxesWidths[lr][idx];
                     }
+                    leftAxisNearChartRealWidth =
+                      this.chart.yAxesWidths[lr][idx];
                   }
                 }
               }
@@ -550,6 +549,15 @@ export class DOMHandler {
           }
         }
       }
+    }
+
+    const sumLeft = widths[0].reduce((acc, curr) => acc + curr, 0);
+    const sumRight = widths[1].reduce((acc, curr) => acc + curr, 0);
+    this.chart.paneWidth =
+      this.chart.domContainerEl.clientWidth -
+      (this.chart.widthControls + sumLeft + sumRight);
+    if (leftAxisNearChartWidth === 0) {
+      this.chart.paneWidth += leftAxisNearChartRealWidth;
     }
 
     // columns:

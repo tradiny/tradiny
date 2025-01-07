@@ -212,7 +212,15 @@ export class AxisHandler {
     return Math.floor(Math.max(w / 80, 2));
   }
   getYTicks(h) {
-    return Math.floor(Math.max(h / 80, 2));
+    if (h < 50) {
+      return 1;
+    } else if (h < 100) {
+      return 2;
+      // } else if (h < 150) {
+      //   return 3;
+    } else {
+      return Math.floor(Math.max(h / 80, 3));
+    }
   }
 
   addXLabel(svg, mousePosition) {
@@ -293,6 +301,7 @@ export class AxisHandler {
 
   addYLabels(i, yAxis, svg, mousePosition) {
     const pane = this.chart.panes[i];
+    const padding = this.chart.yAxisPadding;
     for (let k = 0; k < pane.metadata.length; k++) {
       for (let l = 0; l < pane.metadata[k].dataKeys.length; l++) {
         const key = pane.metadata[k].dataKeys[l];
@@ -488,7 +497,10 @@ export class AxisHandler {
 
         yAxis.label.g.attr("transform", `translate(-${w}, ${h})`);
         yAxis.label.text.text(
-          this.yAxisFormat(yAxis.meta.tickFormat, yAxis.scale.invert(h)),
+          this.yAxisFormat(
+            yAxis.meta.tickFormat,
+            yAxis.scale.invert(h + padding),
+          ),
         );
       }
     } else if (yAxis.label) {
