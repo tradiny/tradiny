@@ -201,11 +201,12 @@ export class DOMHandler {
       for (let j = 0; j < pane.yAxes.length; j++) {
         const yAxis = pane.yAxes[j];
         let height = this.chart.paneHeights[i];
+        let padding = 0;
         if (yAxis.height && yAxis.position === "bottom") {
           height *= yAxis.height / 100;
+          padding = this.chart.yAxisPadding;
         }
-        const padding = this.chart.yAxisPadding;
-        this.chart.yAxes[i][yAxis.key].scale.range([height + padding, padding]); // svg height
+        this.chart.yAxes[i][yAxis.key].scale.range([height, padding]); // svg height
       }
       Object.keys(this.chart.yAxes[i]).forEach((key, j) => {
         const yAxis = this.chart.yAxes[i][key];

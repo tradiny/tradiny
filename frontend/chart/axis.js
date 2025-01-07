@@ -496,10 +496,12 @@ export class AxisHandler {
         }
 
         yAxis.label.g.attr("transform", `translate(-${w}, ${h})`);
+
         yAxis.label.text.text(
           this.yAxisFormat(
             yAxis.meta.tickFormat,
             yAxis.scale.invert(h + padding),
+            yAxis.meta.key,
           ),
         );
       }
@@ -511,10 +513,22 @@ export class AxisHandler {
     }
   }
 
-  yAxisFormat(formatter, value) {
+  yAxisFormat(formatter, value, key) {
     let valFormatted;
     if (formatter === "si") {
-      valFormatted = d3.format(".3s")(value);
+      const fmt = (key) => (d) => {
+        return d3.format(".3s")(
+          this.chart.dataProvider.preciseMultiply(
+            d,
+            this.chart.yAxesDivision[key],
+          ),
+        );
+      };
+      if (key) {
+        valFormatted = fmt(key)(value);
+      } else {
+        valFormatted = d3.format(".3s")(value);
+      }
     } else {
       valFormatted = formatter(value);
     }
