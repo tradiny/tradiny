@@ -119,7 +119,7 @@
   border: none;
   outline: none;
   cursor: pointer;
-  line-height: 25px;
+  line-height: 20px;
   padding: 0px 12px;
   transition: 0.3s;
 }
