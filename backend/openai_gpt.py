@@ -32,7 +32,7 @@ async def query(
     system_content,
     user_content,
     img,
-    model="gpt-4-turbo",
+    model="gpt-4o",
     max_tokens=64,
     on_chunk=None,
 ):
@@ -48,15 +48,15 @@ async def query(
     client = AsyncOpenAI()
 
     messages = []
-    if system_content:
-        messages.append({"role": "system", "content": system_content})
+    # if system_content:
+    #     messages.append({"role": "system", "content": system_content})
 
     messages.append(
         {
             "role": "user",
             "content": [
                 {"type": "text", "text": user_content},
-                {"type": "image_url", "image_url": {"url": img}},
+                {"type": "image_url", "image_url": {"url": img, "detail": "high"}},
             ],
         }
     )
@@ -97,7 +97,7 @@ async def query_reply(
     client_ip,
     conversation_id,
     user_content,
-    model="gpt-4-turbo",
+    model="gpt-4o",
     max_tokens=64,
     on_chunk=None,
 ):

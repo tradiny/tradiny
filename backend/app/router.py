@@ -339,7 +339,7 @@ async def process_message(
                 """,
                 f"""{prompt}""",
                 img,
-                model="gpt-4-turbo",
+                model="gpt-4o",
                 max_tokens=1000,
                 on_chunk=send_message_in_parts(websocket),
             )
@@ -353,7 +353,7 @@ async def process_message(
                 client_ip,
                 conversation_id,
                 f"""{prompt}""",
-                model="gpt-4-turbo",
+                model="gpt-4o",
                 max_tokens=1000,
                 on_chunk=send_message_in_parts(websocket),
             )

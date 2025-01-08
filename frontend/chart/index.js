@@ -238,8 +238,10 @@ export default class TradinyChart {
   }
 
   async toImage() {
+    // return await this.imageHandler.downloadImage(this.elementId, "data", { scale: 5, format: "png", quality: 1 });
+
     return await this.imageHandler.getImage(this.elementId, {
-      scale: 1,
+      scale: 3,
       format: "png",
       quality: 1,
     });

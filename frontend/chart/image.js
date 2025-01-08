@@ -30,9 +30,18 @@ export class ImageHandler {
 
     this.chart.renderHandler.render();
     // Ensure WebGL content is captured after rendering
-    requestAnimationFrame(() => {
-      const file = this.captureWebGLAndSVG(source, scale, format, quality);
-      this.startDownload({ file, name, format });
+
+    return new Promise((resolve) => {
+      requestAnimationFrame(async () => {
+        const file = await this.captureWebGLAndSVG(
+          source,
+          scale,
+          format,
+          quality,
+        );
+        this.startDownload({ file, name, format });
+        resolve();
+      });
     });
   }
 
@@ -43,8 +52,13 @@ export class ImageHandler {
     this.chart.renderHandler.render();
 
     return new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        const file = this.captureWebGLAndSVG(source, scale, format, quality);
+      requestAnimationFrame(async () => {
+        const file = await this.captureWebGLAndSVG(
+          source,
+          scale,
+          format,
+          quality,
+        );
         resolve(file);
       });
     });
@@ -63,6 +77,10 @@ export class ImageHandler {
 
     ctxt.scale(scale, scale);
 
+    // Fill canvas with a white background
+    ctxt.fillStyle = "white";
+    ctxt.fillRect(0, 0, canvas.width, canvas.height);
+
     // Draw WebGL canvases first
     const canvases = source.querySelectorAll("canvas");
     for (const cnv of canvases) {
@@ -80,9 +98,20 @@ export class ImageHandler {
       }
     }
 
+    const svgParentClassesToSkip = ["icon", "settings-button"];
     // Draw SVG elements on the same canvas
     const svgs = source.querySelectorAll("svg");
     for (const svg of svgs) {
+      const parent = svg.parentElement;
+      if (
+        parent &&
+        svgParentClassesToSkip.some((className) =>
+          parent.classList.contains(className),
+        )
+      ) {
+        continue;
+      }
+
       const svgData = new XMLSerializer().serializeToString(svg);
       const img = document.createElement("img");
       img.setAttribute(
@@ -108,7 +137,13 @@ export class ImageHandler {
 
     // Custom logic to capture HTML elements with text
     // Improved Position Calculation
-    const classesToSkip = ["y-axis", "x-axis", "cartesian-chart", "chart"];
+    const classesToSkip = [
+      "y-axis",
+      "x-axis",
+      "cartesian-chart",
+      "chart",
+      "icon",
+    ];
     const tagsToSkip = ["text"];
     const elements = source.querySelectorAll("*");
 
@@ -134,6 +169,7 @@ export class ImageHandler {
             const font = `${style.fontSize} ${style.fontFamily}`;
             ctxt.font = font;
             ctxt.textBaseline = "top"; // Aligning text from the top
+            ctxt.fillStyle = "black";
 
             let x = elementRect.left - svgSize.left;
             let y = elementRect.top - svgSize.top;

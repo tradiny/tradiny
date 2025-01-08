@@ -100,10 +100,23 @@ export class DOMControlsHandler {
     const resEl = this.chart.d3ContainerEl.select(`.conversation`);
 
     this.messageId += 1;
+
+    const promptHtml = document.createElement("div");
+    if (this.messageId === 1) {
+      const imgElement = document.createElement("img");
+      imgElement.src = this.img;
+      imgElement.style.maxWidth = "100%";
+      promptHtml.append(imgElement);
+    }
+    const pElement = document.createElement("div");
+    pElement.textContent = prompt;
+    promptHtml.append(pElement);
+
     const userEl = resEl
       .append("div")
-      .attr("class", `user user-${this.messageId}`)
-      .html(prompt);
+      .attr("class", `user user-${this.messageId}`);
+
+    d3.select(userEl.node()).node().appendChild(promptHtml);
 
     this.messageId += 1;
     const assistantEl = resEl
