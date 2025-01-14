@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class STC(Indicator):
-    name = "Schaff Trend Cycle"
+    name = "Schaff Trend Cycle (STC)"
     categories = ["Momentum"]
 
     columns = ["close"]

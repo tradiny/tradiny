@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class WCP(Indicator):
-    name = "Weighted Closing Price"
+    name = "Weighted Closing Price (WCP)"
     categories = ["Overlap"]
 
     columns = ["high", "low", "close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class ERI(Indicator):
-    name = "Elder Ray Index"
+    name = "Elder Ray Index (ERI)"
     categories = ["Momentum"]
 
     columns = ["high", "low", "close"]

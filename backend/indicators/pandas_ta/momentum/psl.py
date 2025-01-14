@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class PSL(Indicator):
-    name = "Psychological Line"
+    name = "Psychological Line (PSL)"
     categories = ["Momentum"]
 
     columns = ["close", "open"]

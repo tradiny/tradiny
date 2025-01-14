@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class MOM(Indicator):
-    name = "Momentum"
+    name = "Momentum (MOM)"
     categories = ["Momentum"]
 
     columns = ["close"]

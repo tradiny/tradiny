@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class TSI(Indicator):
-    name = "True Strength Index"
+    name = "True Strength Index (TSI)"
     categories = ["Momentum"]
     mamode = [
         "dema",

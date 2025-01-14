@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class STOCH(Indicator):
-    name = "Stochastic Oscillator"
+    name = "Stochastic Oscillator (STOCH)"
     categories = ["Momentum"]
     mamode = [
         "dema",

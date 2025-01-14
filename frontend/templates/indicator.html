@@ -37,10 +37,13 @@
         <div class="input-group">
             <label for="">Pane</label>
             <select class="pane-select" onchange="{%=o.self.id%}.DOMHandler.controls.onPaneChange(this)">
-                {% for (var i=0; i<o.self.panes.length; i++) { %} <option value="{%=i%}">{%=o.self.panes[i].name%}
+                {% for (var i=0; i<o.self.panes.length; i++) { %} <option value="{%=i%}" 
+                {%if (o.defaultPane === i) { %}selected="selected"{% } %}>{%=o.self.panes[i].name%}
                 </option>
                 {% } %}
-                <option value="{%=i%}">New</option>
+                <option value="{%=i%}"
+                {%if (o.defaultPane === i) { %}selected="selected"{% } %}
+                >New</option>
             </select>
         </div>
 

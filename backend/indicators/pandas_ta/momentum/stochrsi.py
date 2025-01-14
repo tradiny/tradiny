@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class STOCHRSI(Indicator):
-    name = "Stochastic RSI Oscillator"
+    name = "Stochastic RSI Oscillator (STOCHRSI)"
     categories = ["Momentum"]
     mamode = [
         "dema",

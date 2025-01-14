@@ -21,7 +21,7 @@ from indicators.data.indicator import Indicator
 class BOP(Indicator):
 
     id = "indicators.pandas_ta.momentum.bop.BOP"
-    name = "Balance of Power"
+    name = "Balance of Power (BOP)"
     categories = ["Momentum"]
 
     columns = ["open", "high", "low", "close"]

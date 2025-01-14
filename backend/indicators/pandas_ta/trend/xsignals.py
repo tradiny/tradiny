@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class XSIGNALS(Indicator):
     disabled = True  # TODO: missing default values and probably wrong output
 
-    name = "Cross Signals"
+    name = "Cross Signals (XSIGNALS)"
     categories = ["Trend"]
 
     columns = ["signal"]

@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class PWMA(Indicator):
-    name = "Pascals Weighted Moving Average"
+    name = "Pascals Weighted Moving Average (PWMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

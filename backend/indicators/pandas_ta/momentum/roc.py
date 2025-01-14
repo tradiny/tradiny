@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class ROC(Indicator):
-    name = "Rate of Change"
+    name = "Rate of Change (ROC)"
     categories = ["Momentum"]
 
     columns = ["close"]

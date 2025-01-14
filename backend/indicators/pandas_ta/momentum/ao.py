@@ -21,7 +21,7 @@ from indicators.data.indicator import Indicator
 class AO(Indicator):
 
     id = "indicators.pandas_ta.momentum.ao.AO"
-    name = "Awesome Oscillator"
+    name = "Awesome Oscillator (AO)"
     categories = ["Momentum"]
 
     columns = ["high", "low"]

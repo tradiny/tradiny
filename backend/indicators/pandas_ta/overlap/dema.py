@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 class DEMA(Indicator):
 
-    name = "Double Exponential Moving Average"
+    name = "Double Exponential Moving Average (DEMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

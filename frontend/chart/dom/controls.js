@@ -452,6 +452,41 @@ export class DOMControlsHandler {
     return axesArr;
   }
 
+  defaultAddData(data = undefined, onAdded = undefined) {
+    if (!data) {
+      data = this._data;
+    }
+    const y_axes = this.getYAxesFromOutputs(data.details.outputs);
+    const axesMap = {},
+      scalesMap = {};
+    const axes = ["New right axis", "New left axis"];
+    for (var i = 0; i < y_axes.length; i++) {
+      const k = y_axes[i].y_axis;
+      axesMap[k] = i % 2 === 0 ? axes[0] : axes[1];
+      scalesMap[k] = "linear";
+    }
+    const colorMap = {};
+    switch (data.details.type) {
+      case "line":
+        colorMap["color"] = "#e60049";
+        break;
+      case "candlestick":
+        colorMap["bearish-candle"] = this.chart.defaultBearishCandleColor;
+        colorMap["bullish-candle"] = this.chart.defaultBullishCandleColor;
+        break;
+    }
+
+    this.chart.operationsHandler.addData(
+      data,
+      0,
+      axesMap,
+      scalesMap,
+      colorMap,
+      onAdded,
+    );
+    this._data = null;
+  }
+
   dataWindow(id) {
     this._win.closePopup();
 
@@ -464,34 +499,7 @@ export class DOMControlsHandler {
       !this.chart.panes ||
       (this.chart.panes && this.chart.panes.length === 0)
     ) {
-      const y_axes = this.getYAxesFromOutputs(this._data.details.outputs);
-      const axesMap = {},
-        scalesMap = {};
-      const axes = ["New right axis", "New left axis"];
-      for (var i = 0; i < y_axes.length; i++) {
-        const k = y_axes[i].y_axis;
-        axesMap[k] = i % 2 === 0 ? axes[0] : axes[1];
-        scalesMap[k] = "linear";
-      }
-      const colorMap = {};
-      switch (this._data.details.type) {
-        case "line":
-          colorMap["color"] = "#e60049";
-          break;
-        case "candlestick":
-          colorMap["bearish-candle"] = this.chart.defaultBearishCandleColor;
-          colorMap["bullish-candle"] = this.chart.defaultBullishCandleColor;
-          break;
-      }
-
-      this.chart.operationsHandler.addData(
-        this._data,
-        0,
-        axesMap,
-        scalesMap,
-        colorMap,
-      );
-      this._data = null;
+      this.defaultAddData();
     } else {
       new Renderer().render(
         "data",
@@ -692,6 +700,22 @@ export class DOMControlsHandler {
     // });
   }
 
+  defaultPane(indicator) {
+    let allPriceAxes = true;
+    for (let i = 0; i < indicator.details.outputs.length; i++) {
+      const output = indicator.details.outputs[i];
+      if (output.y_axis && output.y_axis !== "price") {
+        allPriceAxes = false;
+        break;
+      }
+    }
+    if (allPriceAxes) {
+      return 0;
+    } else {
+      return this.chart.panes.length;
+    }
+  }
+
   indicatorWindow(id) {
     this._win.closePopup();
     this._indicator = this._indicators.find((item) => item.id === id);
@@ -708,6 +732,7 @@ export class DOMControlsHandler {
         indicator: this._indicator,
         y_axes: this.getYAxesFromOutputs(this._indicator.details.outputs),
         title: this._indicator.name,
+        defaultPane: this.defaultPane(this._indicator),
       },
       (content) => {
         this._win = new PopupWindow(this.chart.elementId);
@@ -718,6 +743,116 @@ export class DOMControlsHandler {
         );
       },
     );
+  }
+
+  defaultAddIndicator(indicator, inputs = {}, onAdded = undefined) {
+    if (!indicator) {
+      indicator = this._indicator;
+    }
+    const i = this.defaultPane(indicator);
+    const pane = this.chart.panes[i];
+
+    for (let j = 0; j < indicator.details.inputs.length; j++) {
+      const input = indicator.details.inputs[j];
+      if (!inputs[input.name]) {
+        inputs[input.name] = input.default[0];
+      }
+    }
+
+    const y_axes = this.getYAxesFromOutputs(indicator.details.outputs);
+    const axesMap = {};
+    const scalesMap = {};
+    for (let j = 0; j < y_axes.length; j++) {
+      const yAxis = y_axes[j];
+      const preffered = yAxis.y_axis;
+
+      const axes = ["New right axis", "New left axis", "Disable"];
+      if (pane) {
+        for (let j = 0; j < pane.yAxes.length; j++) {
+          const yAxis = pane.yAxes[j];
+          axes.push(yAxis.key);
+        }
+      }
+      for (let j = 0; j < axes.length; j++) {
+        let selected = axes[j].toLowerCase().includes(preffered.toLowerCase());
+
+        if (selected) {
+          axesMap[yAxis.y_axis] = axes[j];
+        }
+      }
+      if (!axesMap[yAxis.y_axis]) {
+        axesMap[yAxis.y_axis] = "New right axis";
+      }
+
+      scalesMap[yAxis.y_axis] = "linear";
+    }
+
+    const self = this;
+    const dataMap = {};
+    for (let m = 0; m < indicator.details.columns.length; m++) {
+      const colKey = indicator.details.columns[m];
+
+      let value;
+      if (!pane) {
+        const keys = Object.keys(self.chart.dataProvider.data[0]);
+        for (let j = 0; j < keys.length; j++) {
+          const key = keys[j];
+          if (["date", "_date", "_dateObj"].includes(key)) {
+            continue;
+          }
+
+          let selected = key.toLowerCase().includes(colKey.toLowerCase());
+
+          if (selected) {
+            value = key;
+          }
+        }
+      } else {
+        for (let j = 0; j < pane.metadata.length; j++) {
+          for (let k = 0; k < pane.metadata[j].dataKeys.length; k++) {
+            const key = pane.metadata[j].dataKeys[k].dataKey;
+            let selected = key.toLowerCase().includes(colKey.toLowerCase());
+
+            if (selected) {
+              value = key;
+            }
+          }
+        }
+      }
+      console.log(colKey, value);
+
+      const datasource = self.chart.dataProvider.keyToData[value] || {};
+      const source = datasource.source;
+      const name = datasource.name;
+      const interval = datasource.interval;
+      const dataKey = datasource.key;
+      dataMap[colKey] = {
+        source,
+        name,
+        interval,
+        value,
+        dataKey,
+      };
+    }
+
+    const colorMap = {};
+    const cp = new ColorPicker("", document.createElement("div"));
+    for (let j = 0; j < indicator.details.outputs.length; j++) {
+      const output = indicator.details.outputs[j];
+      colorMap[output.name] = cp.colors[j];
+    }
+
+    this.chart.operationsHandler.addIndicator(
+      indicator,
+      i,
+      inputs,
+      axesMap,
+      scalesMap,
+      dataMap,
+      colorMap,
+      onAdded,
+    );
+    this._indicator = undefined;
   }
 
   addIndicator() {

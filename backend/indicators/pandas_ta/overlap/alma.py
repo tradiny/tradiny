@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 class ALMA(Indicator):
 
-    name = "Arnaud Legoux Moving Average"
+    name = "Arnaud Legoux Moving Average (ALMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

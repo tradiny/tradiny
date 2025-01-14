@@ -27,7 +27,7 @@ def get_change(previous, current):
 
 
 class PERCENTCHANGE(Indicator):
-    name = "Percent Change Indicator"
+    name = "Percent Change"
     categories = ["Performance"]
 
     columns = ["close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class PVO(Indicator):
-    name = "Percentage Volume Oscillator"
+    name = "Percentage Volume Oscillator (PVO)"
     categories = ["Momentum"]
 
     columns = ["volume"]

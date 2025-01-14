@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class CMO(Indicator):
-    name = "Chande Momentum Oscillator"
+    name = "Chande Momentum Oscillator (CMO)"
     categories = ["Momentum"]
 
     columns = ["close"]

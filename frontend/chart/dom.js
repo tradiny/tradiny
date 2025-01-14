@@ -559,10 +559,16 @@ export class DOMHandler {
       (this.chart.widthControls + sumLeft + sumRight);
     if (leftAxisNearChartWidth === 0) {
       this.chart.paneWidth += leftAxisNearChartRealWidth;
+      this.chart.paneWidth += this.chart.widthControls;
     }
 
     // columns:
-    let templateColumns = `${this.chart.widthControls}px `;
+    let templateColumns = "";
+    if (leftAxisNearChartWidth === 0) {
+      templateColumns += `0px `;
+    } else {
+      templateColumns += `${this.chart.widthControls}px `;
+    }
     // left axes
     for (let i = 0; i < yGridAxes[0]; i++) {
       if (i + 1 === yGridAxes[0] && leftAxisNearChartWidth === 0) {
@@ -674,7 +680,7 @@ export class DOMHandler {
       .style("z-index", "1")
       .style("position", "absolute")
       .style("top", "5px")
-      .style("left", "5px")
+      .style("left", "37px")
       .style("max-width", "75%");
 
     const legendElIn = legendEl.append("div").attr("class", `legend`);

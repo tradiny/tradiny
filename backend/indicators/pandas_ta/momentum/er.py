@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class ER(Indicator):
-    name = "Efficiency Ratio"
+    name = "Efficiency Ratio (ER)"
     categories = ["Momentum"]
 
     columns = ["close"]

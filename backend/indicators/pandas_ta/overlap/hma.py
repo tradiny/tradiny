@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class HMA(Indicator):
-    name = "Hull Moving Average"
+    name = "Hull Moving Average (HMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

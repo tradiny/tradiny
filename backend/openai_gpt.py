@@ -48,8 +48,8 @@ async def query(
     client = AsyncOpenAI()
 
     messages = []
-    # if system_content:
-    #     messages.append({"role": "system", "content": system_content})
+    if system_content:
+        messages.append({"role": "system", "content": system_content})
 
     messages.append(
         {

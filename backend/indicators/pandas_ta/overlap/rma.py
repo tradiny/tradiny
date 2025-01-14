@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class RMA(Indicator):
-    name = "wildeRs Moving Average"
+    name = "wildeRs Moving Average (RMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class DM(Indicator):
-    name = "Directional Movement"
+    name = "Directional Movement (DM)"
     categories = ["Momentum"]
     mamode = [
         "dema",

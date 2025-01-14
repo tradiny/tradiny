@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class LINREG(Indicator):
-    name = "Linear Regression"
+    name = "Linear Regression (LINREG)"
     categories = ["Overlap"]
 
     columns = ["close"]

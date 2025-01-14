@@ -86,7 +86,9 @@
 .x-axis g.label text {
   fill: white;
 }
-
+.y-axis {
+  z-index: 1;
+}
 .y-axis-volume text {
   fill: #aaa;
 }
@@ -121,6 +123,7 @@
 }
 .controls {
   display: flex;
+  z-index: 1;
   /*align-items: center;*/
 }
 .controls .icon {
@@ -129,6 +132,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: white;
+  cursor: pointer;
 }
 
 .tick line,
@@ -140,7 +145,6 @@
 .controls .grid-picker,
 .controls .draw-picker {
   height: 100%;
-  background: white;
 }
 
 .controls .draw-picker .icon {

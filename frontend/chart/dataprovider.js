@@ -22,6 +22,8 @@ export class DataProvider {
     this.config = config;
     this._updateDataCount();
     this._onReady = [];
+    this._connected = false;
+    this._onConnect = [];
     this._onUpdated = [];
     this._onData = {};
     this._onIndicatorData = {};
@@ -424,6 +426,7 @@ export class DataProvider {
 
     this.ws = new WebSocketManager(this.config.full_url, () => {
       console.log("WebSocket connection established");
+      this.connected();
       this.ws.sendMessage(JSON.stringify(this.config.data));
     });
 
@@ -839,6 +842,22 @@ export class DataProvider {
     } else {
       this.loadingHistory = false;
     }
+  }
+
+  onConnect(fn) {
+    if (this._connected) {
+      fn();
+    } else {
+      this._onConnect.push(fn);
+    }
+  }
+
+  connected() {
+    for (let i = 0; i < this._onConnect.length; i++) {
+      this._onConnect[i]();
+    }
+    this._connected = true;
+    this._onConnect = [];
   }
 
   onReady(fn) {

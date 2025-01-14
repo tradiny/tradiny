@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class PGO(Indicator):
-    name = "Pretty Good Oscillator"
+    name = "Pretty Good Oscillator (PGO)"
     categories = ["Momentum"]
 
     columns = ["high", "low", "close"]

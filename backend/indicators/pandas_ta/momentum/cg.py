@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class CG(Indicator):
-    name = "Center of Gravity"
+    name = "Center of Gravity (CG)"
     categories = ["Momentum"]
 
     columns = ["close"]

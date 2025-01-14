@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class QQE(Indicator):
-    name = "Quantitative Qualitative Estimation"
+    name = "Quantitative Qualitative Estimation (QQE)"
     categories = ["Momentum"]
     mamode = [
         "dema",

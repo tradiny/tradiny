@@ -23,7 +23,7 @@ from indicators.data.indicator import Indicator
 class APO(Indicator):
 
     id = "indicators.pandas_ta.momentum.apo.APO"
-    name = "Absolute Price Oscillator"
+    name = "Absolute Price Oscillator (APO)"
     categories = ["Momentum"]
     mamode = [
         "dema",

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class PVR(Indicator):
-    name = "Price Volume Rank"
+    name = "Price Volume Rank (PVR)"
     categories = ["Volume"]
 
     columns = ["close", "volume"]

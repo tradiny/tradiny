@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class RSI(Indicator):
 
     id = "indicators.pandas_ta.momentum.rsi.RSI"
-    name = "Relative Strength Index"
+    name = "Relative Strength Index (RSI)"
     categories = ["Momentum"]
 
     columns = ["close"]

@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class WILLR(Indicator):
-    name = "William''s Percent R"
+    name = "William''s Percent R (WILLR)"
     categories = ["Momentum"]
 
     columns = ["high", "low", "close"]

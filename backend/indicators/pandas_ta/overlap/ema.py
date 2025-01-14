@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class EMA(Indicator):
-    name = "Exponential Moving Average"
+    name = "Exponential Moving Average (EMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class VWMA(Indicator):
-    name = "Volume Weighted Moving Average"
+    name = "Volume Weighted Moving Average (VWMA)"
     categories = ["Overlap"]
 
     columns = ["close", "volume"]

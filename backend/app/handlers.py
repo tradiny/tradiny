@@ -62,13 +62,13 @@ async def send_historical_data(
         source,
         name,
         interval,
-        count=300,
-        end="now UTC",
+        count,
+        end,
         r=random.randint(1, 999999),
     )
     futures[key] = asyncio.Future()
 
-    count = count if count > 300 else 300
+    # count = count if count > 300 else 300 # minimum
     # count += 300 # for indicators
 
     logging.info(f"requested {count} data points till {end}")
@@ -91,7 +91,7 @@ async def send_historical_data(
     request_recent_data_and_has_last_date = (
         end == "now UTC"
         and not cached_data["cached_df"].empty
-        and len(cached_data["cached_df"]) > 0
+        and len(cached_data["cached_df"]) >= count
         and current_date
         == cached_data["cached_df"].index[-1].strftime("%Y-%m-%d %H:%M:%S")
     )

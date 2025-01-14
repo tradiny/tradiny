@@ -37,6 +37,7 @@ export class GridPicker {
     this.container.style.position = "absolute";
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
+    this.container.style.height = "auto";
 
     const rect = document.createElement("div");
     rect.className = "icon";

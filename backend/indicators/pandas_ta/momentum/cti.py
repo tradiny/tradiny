@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class CTI(Indicator):
-    name = "Correlation Trend Indicator"
+    name = "Correlation Trend Indicator (CTI)"
     categories = ["Momentum"]
 
     columns = ["close"]

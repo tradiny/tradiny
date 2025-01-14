@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class KAMA(Indicator):
-    name = "Kaufmans Adaptive Moving Average"
+    name = "Kaufmans Adaptive Moving Average (KAMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class TRIMA(Indicator):
-    name = "Triangular Moving Average"
+    name = "Triangular Moving Average (TRIMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

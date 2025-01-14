@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class UO(Indicator):
-    name = "Ultimate Oscillator"
+    name = "Ultimate Oscillator (UO)"
     categories = ["Momentum"]
 
     columns = ["high", "low", "close"]

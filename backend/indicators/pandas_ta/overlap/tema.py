@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class TEMA(Indicator):
-    name = "Triple Exponential Moving Average"
+    name = "Triple Exponential Moving Average (TEMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

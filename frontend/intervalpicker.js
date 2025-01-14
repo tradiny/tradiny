@@ -44,6 +44,7 @@ export class IntervalPicker {
     this.container.style.position = "absolute"; // Ensure the position is relative for the interval picker
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
+    this.container.style.height = "auto";
 
     const rect = document.createElement("div");
     rect.className = "icon";

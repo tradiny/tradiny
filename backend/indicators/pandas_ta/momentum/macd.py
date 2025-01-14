@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class MACD(Indicator):
-    name = "Moving Average, Convergence/Divergence"
+    name = "Moving Average, Convergence/Divergence (MACD)"
     categories = ["Momentum"]
 
     columns = ["close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class STDEV(Indicator):
-    name = "Standard Deviation"
+    name = "Standard Deviation (STDEV)"
     categories = ["Statistics"]
 
     columns = ["close"]

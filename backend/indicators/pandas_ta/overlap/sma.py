@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class SMA(Indicator):
-    name = "Simple Moving Average"
+    name = "Simple Moving Average (SMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

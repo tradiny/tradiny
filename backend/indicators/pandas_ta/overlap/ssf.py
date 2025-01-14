@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class SSF(Indicator):
-    name = "Ehlers Super Smoother Filter"
+    name = "Ehlers Super Smoother Filter (SSF)"
     categories = ["Overlap"]
 
     columns = ["close"]

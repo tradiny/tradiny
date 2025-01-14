@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class SINWMA(Indicator):
-    name = "Sine Weighted Moving Average by Everget of TradingView"
+    name = "Sine Weighted Moving Average by Everget of TradingView (SINWMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

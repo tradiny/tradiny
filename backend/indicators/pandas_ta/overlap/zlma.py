@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class ZLMA(Indicator):
-    name = "Zero Lag Moving Average"
+    name = "Zero Lag Moving Average (ZLMA)"
     categories = ["Overlap"]
     mamode = [
         "dema",

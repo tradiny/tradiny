@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class WMA(Indicator):
-    name = "Weighted Moving Average"
+    name = "Weighted Moving Average (WMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

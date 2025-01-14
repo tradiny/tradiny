@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class CFO(Indicator):
 
     id = "indicators.pandas_ta.momentum.cfo.CFO"
-    name = "Chande Forecast Oscillator"
+    name = "Chande Forecast Oscillator (CFO)"
     categories = ["Momentum"]
 
     columns = ["close"]

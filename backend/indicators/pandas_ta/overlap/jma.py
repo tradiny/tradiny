@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class JMA(Indicator):
-    name = "Jurik Moving Average"
+    name = "Jurik Moving Average (JMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

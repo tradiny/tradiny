@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class TDSEQ(Indicator):
     disabled = False  # TODO: disabled because "'AnalysisIndicators' object has no attribute 'td_seq'"
 
-    name = "Tom Demark Sequential"
+    name = "Tom Demark Sequential (TDSEQ)"
     categories = ["Momentum"]
 
     columns = ["close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class FWMA(Indicator):
-    name = "Fibonaccis Weighted Moving Average"
+    name = "Fibonaccis Weighted Moving Average (FWMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

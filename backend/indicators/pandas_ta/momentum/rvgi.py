@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class RVGI(Indicator):
-    name = "Relative Vigor Index"
+    name = "Relative Vigor Index (RVGI)"
     categories = ["Momentum"]
 
     columns = ["open", "high", "low", "close"]

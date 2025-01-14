@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class RSX(Indicator):
-    name = "Relative Strength Xtra"
+    name = "Relative Strength Xtra (RSX)"
     categories = ["Momentum"]
 
     columns = ["close"]

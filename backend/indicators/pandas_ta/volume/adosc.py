@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class ADOSC(Indicator):
-    name = "Accumulation/Distribution Oscillator"
+    name = "Accumulation/Distribution Oscillator (ADOSC)"
     categories = ["Volume"]
 
     columns = ["high", "low", "close", "volume", "open"]

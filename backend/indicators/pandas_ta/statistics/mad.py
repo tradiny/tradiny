@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class MAD(Indicator):
-    name = "Mean Absolute Deviation"
+    name = "Mean Absolute Deviation (MAD)"
     categories = ["Statistics"]
 
     columns = ["close"]

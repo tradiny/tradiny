@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class SQUEEZEPRO(Indicator):
-    disabled = False  # TODO: disabled because it does not work with default settings
+    disabled = True  # TODO: disabled because it does not work with default settings
 
     name = "Squeeze Momentum PRO"
     categories = ["Momentum"]

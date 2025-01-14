@@ -102,6 +102,7 @@ export class DrawPicker {
     this.container.style.position = "absolute";
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
+    this.container.style.height = "auto";
 
     // Iterate over the controls to set up each one
     Object.keys(this.controls).forEach((control) => {

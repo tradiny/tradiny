@@ -53,7 +53,7 @@ export class OperationsHandler {
     this.chart.interactionHandler.setupInteractions(i);
   }
 
-  addData(data, i, axesMap, scalesMap, colorMap) {
+  addData(data, i, axesMap, scalesMap, colorMap, onAdded = undefined) {
     const source = data.details.source;
     const name = data.details.name;
     const interval = this.chart.dataProvider.interval;
@@ -78,6 +78,17 @@ export class OperationsHandler {
       }
 
       let pane;
+
+      const dataReq = {
+        type: "data",
+        source,
+        name,
+        interval,
+      };
+      if (data.count) {
+        this.chart.visiblePoints = parseInt(data.count);
+        dataReq.count = parseInt(data.count);
+      }
 
       switch (data.details.type) {
         case "line":
@@ -125,19 +136,17 @@ export class OperationsHandler {
           };
           this.chart.panes.push(pane);
 
-          this.chart.dataProvider.addData(
-            {
-              type: "data",
-              source,
-              name,
-              interval,
-            },
-            () => {
-              if (isReady) {
-                this.refresh(i);
-              }
-            },
-          );
+          this.chart.dataProvider.addData(dataReq, () => {
+            if (isReady) {
+              this.refresh(i);
+            }
+
+            if (onAdded) {
+              requestAnimationFrame(() => {
+                onAdded();
+              });
+            }
+          });
 
           break;
 
@@ -234,19 +243,17 @@ export class OperationsHandler {
 
           this.chart.panes.push(pane);
 
-          this.chart.dataProvider.addData(
-            {
-              type: "data",
-              source,
-              name,
-              interval,
-            },
-            () => {
-              if (isReady) {
-                this.refresh(i);
-              }
-            },
-          );
+          this.chart.dataProvider.addData(dataReq, () => {
+            if (isReady) {
+              this.refresh(i);
+            }
+
+            if (onAdded) {
+              requestAnimationFrame(() => {
+                onAdded();
+              });
+            }
+          });
 
           break;
       }
@@ -434,6 +441,12 @@ export class OperationsHandler {
               if (isReady) {
                 this.refresh(i);
               }
+
+              if (onAdded) {
+                requestAnimationFrame(() => {
+                  onAdded();
+                });
+              }
             },
           );
           break;
@@ -441,7 +454,16 @@ export class OperationsHandler {
     }
   }
 
-  addIndicator(indicator, i, inputs, axesMap, scalesMap, dataMap, colorMap) {
+  addIndicator(
+    indicator,
+    i,
+    inputs,
+    axesMap,
+    scalesMap,
+    dataMap,
+    colorMap,
+    onAdded = undefined,
+  ) {
     const inputId = Object.entries(inputs)
       .map(([key, value]) => `${key}-${value}`)
       .join("_");
@@ -478,6 +500,12 @@ export class OperationsHandler {
     this.onIndicatorData(settings.render);
     this.chart.dataProvider.addIndicator(settings, () => {
       this.refresh(i);
+
+      if (onAdded) {
+        requestAnimationFrame(() => {
+          onAdded();
+        });
+      }
     });
   }
 

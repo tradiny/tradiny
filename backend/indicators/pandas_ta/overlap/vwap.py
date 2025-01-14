@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class VWAP(Indicator):
-    name = "Volume Weighted Average Price"
+    name = "Volume Weighted Average Price (VWAP)"
     categories = ["Overlap"]
     anchor = [
         "B",

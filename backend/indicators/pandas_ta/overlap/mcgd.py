@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class MCGD(Indicator):
-    name = "McGinley Dynamic Indicator"
+    name = "McGinley Dynamic Indicator (MCGD)"
     categories = ["Overlap"]
 
     columns = ["close"]

@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class KST(Indicator):
-    name = "Know Sure Thing"
+    name = "Know Sure Thing (KST)"
     categories = ["Momentum"]
 
     columns = ["close"]

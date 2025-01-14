@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class CCI(Indicator):
 
     id = "indicators.pandas_ta.momentum.cci.CCI"
-    name = "Commodity Channel Index"
+    name = "Commodity Channel Index (CCI)"
     categories = ["Momentum"]
 
     columns = ["high", "low", "close"]

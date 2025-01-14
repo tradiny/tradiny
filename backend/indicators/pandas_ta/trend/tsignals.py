@@ -20,7 +20,7 @@ from indicators.data.indicator import Indicator
 class TSIGNALS(Indicator):
     # TODO check
 
-    name = "Trend Signals"
+    name = "Trend Signals (TSIGNALS)"
     categories = ["Trend"]
 
     columns = ["trend"]

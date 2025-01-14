@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class PPO(Indicator):
-    name = "Percentage Price Oscillator"
+    name = "Percentage Price Oscillator (PPO)"
     categories = ["Momentum"]
     mamode = [
         "dema",

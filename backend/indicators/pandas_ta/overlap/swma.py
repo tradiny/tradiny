@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class SWMA(Indicator):
-    name = "Symmetric Weighted Moving Average"
+    name = "Symmetric Weighted Moving Average (SWMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

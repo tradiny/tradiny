@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class HWMA(Indicator):
-    name = "HWMA (Holt-Winter Moving Average)"
+    name = "Holt-Winter Moving Average (HWMA)"
     categories = ["Overlap"]
 
     columns = ["close"]

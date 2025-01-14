@@ -18,7 +18,7 @@ from indicators.data.indicator import Indicator
 
 
 class HWC(Indicator):
-    name = "Holt-Winter Channel"
+    name = "Holt-Winter Channel (HWC)"
     categories = ["Volatility"]
 
     columns = ["close"]

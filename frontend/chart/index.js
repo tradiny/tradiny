@@ -44,9 +44,12 @@ export default class TradinyChart {
 
   constructor() {
     this.saveHandler = new SaveHandler(this); // for loading
+
+    this._onRendered = [];
+    this._rendered = false;
   }
 
-  initialize(options, afterCreated) {
+  async initialize(options, afterCreated) {
     this.gridHandler = options.gridHandler || new GridHandler(this);
     this.dataProvider = new DataProvider(this, options.dataProvider);
     this.dataHandler = new DataHandler(this); // please, do not store any state in handlers
@@ -72,7 +75,7 @@ export default class TradinyChart {
       this.gridHandler.options.theme || options.theme || theme || "dark",
     );
 
-    this.addWindow();
+    this.parseArgs();
 
     this.dataProvider.onReady(async () => {
       this.cacheHandler.buildCaches();
@@ -99,6 +102,10 @@ export default class TradinyChart {
       this.dataProvider.onUpdated(
         this.dataHandler.onData.bind(this.dataHandler),
       );
+
+      requestAnimationFrame(() => {
+        this.rendered();
+      });
     });
 
     // attach events to add indicators, initial loading
@@ -122,22 +129,122 @@ export default class TradinyChart {
       }
     }
   }
+  extractIndicators(searchParams) {
+    const indicators = [];
+    let index = 1;
+    let indicator;
 
-  addWindow() {
+    while ((indicator = searchParams.get(`indicator${index}`))) {
+      const params = {};
+      const indicatorPrefix = `indicator${index}-`; // Prefix for the current indicator
+
+      searchParams.forEach((value, key) => {
+        // Match params for the current indicator with the specific index
+        if (key.startsWith(indicatorPrefix)) {
+          const paramName = key.substring(indicatorPrefix.length); // Extract the parameter name after the prefix
+          params[paramName] = value;
+        }
+      });
+
+      indicators.push({
+        name: indicator,
+        params: params,
+      });
+
+      index++;
+    }
+
+    return indicators;
+  }
+
+  async searchData(symbol) {
+    return new Promise((resolve, reject) => {
+      this.dataProvider.searchData(symbol, (data) => {
+        for (let i = 0; i < data.length; i++) {
+          if (data[i].name === symbol) {
+            resolve(data[i]);
+          }
+        }
+      });
+    });
+  }
+  async searchIndicators(name) {
+    return new Promise((resolve, reject) => {
+      this.dataProvider.searchIndicators(name, (data) => {
+        resolve(data[0]);
+      });
+    });
+  }
+  addData(data) {
+    return new Promise((resolve, reject) => {
+      this.DOMHandler.controls.defaultAddData(data, () => {
+        resolve();
+      });
+    });
+  }
+  addIndicator(indicator, indicator_params) {
+    return new Promise((resolve, reject) => {
+      this.DOMHandler.controls.defaultAddIndicator(
+        indicator,
+        indicator_params,
+        () => {
+          resolve();
+        },
+      );
+    });
+  }
+
+  async parseArgs() {
     if (
       !this.options.dataProvider.data ||
       this.options.dataProvider.data.length === 0
     ) {
-      const tabs = ["charts", "data"];
-      if (this.options.gridPosition === "1x1") {
-        tabs.unshift("grids");
+      const currentUrl = window.location.href;
+      const urlObj = new URL(currentUrl);
+      const searchParams = new URLSearchParams(urlObj.search);
+      const symbol = searchParams.get("s");
+      const interval = searchParams.get("i");
+      const count = searchParams.get("c");
+      const indicators = this.extractIndicators(searchParams);
+
+      if (symbol && interval) {
+        this.dataProvider.interval = interval;
+        this.dataProvider.onConnect(async () => {
+          const data = await this.searchData(symbol);
+          if (count) {
+            data.count = count;
+          }
+          // TODO await
+          await this.addData(data);
+
+          for (let i = 0; i < indicators.length; i++) {
+            const indicator_name = indicators[i].name;
+            const indicator_params = indicators[i].params;
+            const indicator = await this.searchIndicators(indicator_name);
+
+            await this.addIndicator(indicator, indicator_params);
+          }
+        });
+      } else {
+        const tabs = ["charts", "data"];
+        if (this.options.gridPosition === "1x1") {
+          tabs.unshift("grids");
+        }
+        this.DOMHandler.controls.addWindow(tabs, true);
       }
-      this.DOMHandler.controls.addWindow(tabs, true);
     }
   }
 
   initializeProperties(options) {
-    this.id = options.id || `Trad${Math.random().toString(16).slice(2)}`;
+    if (options.id) {
+      this.id = options.id;
+    } else {
+      let count = 1;
+      while (window[`Tradiny${count}`] !== undefined) {
+        count++;
+      }
+      this.id = `Tradiny${count}`;
+    }
     window[this.id] = this; // save reference to window object to be able to access it from templates
 
     this.options = options;
@@ -237,9 +344,15 @@ export default class TradinyChart {
     return d3.select("#" + this.elementId).select(selector);
   }
 
-  async toImage() {
-    // return await this.imageHandler.downloadImage(this.elementId, "data", { scale: 5, format: "png", quality: 1 });
+  async downloadImage() {
+    return await this.imageHandler.downloadImage(this.elementId, "data", {
+      scale: 3,
+      format: "png",
+      quality: 1,
+    });
+  }
 
+  async toImage() {
     return await this.imageHandler.getImage(this.elementId, {
       scale: 3,
       format: "png",
@@ -309,5 +422,19 @@ export default class TradinyChart {
     }
 
     return desc;
+  }
+
+  onRendered(cb) {
+    this._onRendered.push(cb);
+    if (this._rendered) {
+      cb();
+    }
+  }
+
+  rendered() {
+    this._rendered = true;
+    for (let i = 0; i < this._onRendered.length; i++) {
+      this._onRendered[i]();
+    }
   }
 }

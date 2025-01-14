@@ -19,7 +19,7 @@ from indicators.data.indicator import Indicator
 
 
 class VIDYA(Indicator):
-    name = "Variable Index Dynamic Average"
+    name = "Variable Index Dynamic Average (VIDYA)"
     categories = ["Overlap"]
 
     columns = ["close"]
