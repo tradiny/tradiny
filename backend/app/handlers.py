@@ -125,6 +125,7 @@ async def send_historical_data(
         if end == "now UTC":
             end_time_query = end
 
+        logging.info(f"Waiting for response from provider")
         providers[source].send_to(
             {
                 "action": "get_history",

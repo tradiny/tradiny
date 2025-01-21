@@ -75,8 +75,6 @@ export default class TradinyChart {
       this.gridHandler.options.theme || options.theme || theme || "dark",
     );
 
-    this.parseArgs();
-
     this.dataProvider.onReady(async () => {
       this.cacheHandler.buildCaches();
       this.DOMHandler.initializeDOMElements();
@@ -102,11 +100,9 @@ export default class TradinyChart {
       this.dataProvider.onUpdated(
         this.dataHandler.onData.bind(this.dataHandler),
       );
-
-      requestAnimationFrame(() => {
-        this.rendered();
-      });
     });
+
+    await this.parseArgs();
 
     // attach events to add indicators, initial loading
     if (options.dataProvider.config) {
@@ -128,6 +124,11 @@ export default class TradinyChart {
         }
       }
     }
+
+    requestAnimationFrame(() => {
+      console.log("rendered");
+      this.rendered();
+    });
   }
   extractIndicators(searchParams) {
     const indicators = [];
@@ -193,6 +194,11 @@ export default class TradinyChart {
       );
     });
   }
+  onConnect() {
+    return new Promise((resolve, reject) => {
+      this.dataProvider.onConnect(resolve);
+    });
+  }
 
   async parseArgs() {
     if (
@@ -209,22 +215,21 @@ export default class TradinyChart {
 
       if (symbol && interval) {
         this.dataProvider.interval = interval;
-        this.dataProvider.onConnect(async () => {
-          const data = await this.searchData(symbol);
-          if (count) {
-            data.count = count;
-          }
-          // TODO await
-          await this.addData(data);
+        await this.onConnect();
 
-          for (let i = 0; i < indicators.length; i++) {
-            const indicator_name = indicators[i].name;
-            const indicator_params = indicators[i].params;
-            const indicator = await this.searchIndicators(indicator_name);
+        const data = await this.searchData(symbol);
+        if (count) {
+          data.count = count;
+        }
+        await this.addData(data);
 
-            await this.addIndicator(indicator, indicator_params);
-          }
-        });
+        for (let i = 0; i < indicators.length; i++) {
+          const indicator_name = indicators[i].name;
+          const indicator_params = indicators[i].params;
+          const indicator = await this.searchIndicators(indicator_name);
+
+          await this.addIndicator(indicator, indicator_params);
+        }
       } else {
         const tabs = ["charts", "data"];
         if (this.options.gridPosition === "1x1") {

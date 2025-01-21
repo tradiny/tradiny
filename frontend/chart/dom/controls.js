@@ -801,8 +801,9 @@ export class DOMControlsHandler {
             continue;
           }
 
-          let selected = key.toLowerCase().includes(colKey.toLowerCase());
-
+          let selected =
+            key.toLowerCase().includes(colKey.toLowerCase()) &&
+            !key.toLowerCase().startsWith("indicators-");
           if (selected) {
             value = key;
           }
@@ -811,7 +812,9 @@ export class DOMControlsHandler {
         for (let j = 0; j < pane.metadata.length; j++) {
           for (let k = 0; k < pane.metadata[j].dataKeys.length; k++) {
             const key = pane.metadata[j].dataKeys[k].dataKey;
-            let selected = key.toLowerCase().includes(colKey.toLowerCase());
+            let selected =
+              key.toLowerCase().includes(colKey.toLowerCase()) &&
+              !key.toLowerCase().startsWith("indicators-");
 
             if (selected) {
               value = key;
@@ -819,7 +822,6 @@ export class DOMControlsHandler {
           }
         }
       }
-      console.log(colKey, value);
 
       const datasource = self.chart.dataProvider.keyToData[value] || {};
       const source = datasource.source;

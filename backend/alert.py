@@ -57,7 +57,11 @@ async def websocket_subscribe(task_queue, alert, i):
             break  # if connection is successful, break the loop
 
         except ConnectionRefusedError:
-            logging.error(f"Connection failed. Retrying... {url}")
+            logging.error(f"Websocket subscribe connection failed. Retrying... {url}")
+            await asyncio.sleep(1)  # wait for 1 second before retrying
+
+        except Exception as e:
+            logging.error(f"Websocket subscribe failed: {e}. Retrying... {url}")
             await asyncio.sleep(1)  # wait for 1 second before retrying
 
     else:

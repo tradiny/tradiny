@@ -108,6 +108,7 @@ async def websocket_endpoint(
         pass
     except Exception as e:
         logging.error(f"WebSocket error: {e}")
+        raise e
     finally:
         if client_ip in ip_conns:
             ip_conns[client_ip] -= 1

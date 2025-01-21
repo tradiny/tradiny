@@ -156,45 +156,50 @@ async def scan(dbconn, d, client_id, websocket):
         if expected_init_messages > 0:
             url = d["dataProviderConfig"]["full_url"]
             # logging.info(f"Connecting to {url}")
-            async with websockets.connect(url) as ws:
 
-                async def receive_data():
-                    nonlocal actual_init_messages, errors
+            try:
+                async with websockets.connect(url) as ws:
 
-                    await ws.send(json.dumps(data_request))
-                    async for message in ws:
-                        message = json.loads(message)
+                    async def receive_data():
+                        nonlocal actual_init_messages, errors
 
-                        if message["type"] == "data_init":
-                            if len(message["data"]) == 0:
-                                errors.append("not enough data")
-                            else:
-                                lastDataPoint.update(message["data"][-1])
-                            actual_init_messages += 1
-                            # logging.info(f"Received {message['type']} for {message['source']}, {message['name']}, {message['interval']}")
-                        elif message["type"] == "no_data":
-                            # logging.info(f"Received {message['type']} for {message}")
-                            break
-                        elif message["type"] == "indicator_init":
-                            if len(message["data"]) == 0:
-                                errors.append("not enough data")
-                            else:
-                                lastDataPoint.update(message["data"][-1])
-                            actual_init_messages += 1
-                            # logging.info(f"Received {message['type']} for {message['id']}")
-                        # else:
-                        #     logging.info(f"Received {message['type']}")
+                        await ws.send(json.dumps(data_request))
+                        async for message in ws:
+                            message = json.loads(message)
 
-                        if actual_init_messages == expected_init_messages:
-                            break
+                            if message["type"] == "data_init":
+                                if len(message["data"]) == 0:
+                                    errors.append("not enough data")
+                                else:
+                                    lastDataPoint.update(message["data"][-1])
+                                actual_init_messages += 1
+                                # logging.info(f"Received {message['type']} for {message['source']}, {message['name']}, {message['interval']}")
+                            elif message["type"] == "no_data":
+                                # logging.info(f"Received {message['type']} for {message}")
+                                break
+                            elif message["type"] == "indicator_init":
+                                if len(message["data"]) == 0:
+                                    errors.append("not enough data")
+                                else:
+                                    lastDataPoint.update(message["data"][-1])
+                                actual_init_messages += 1
+                                # logging.info(f"Received {message['type']} for {message['id']}")
+                            # else:
+                            #     logging.info(f"Received {message['type']}")
 
-                try:
-                    await asyncio.wait_for(receive_data(), timeout)
-                    # logging.info(f"Got data: {lastDataPoint}")
-                except asyncio.TimeoutError:
-                    errors.append(
-                        f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds."
-                    )
+                            if actual_init_messages == expected_init_messages:
+                                break
+
+                    try:
+                        await asyncio.wait_for(receive_data(), timeout)
+                        # logging.info(f"Got data: {lastDataPoint}")
+                    except asyncio.TimeoutError:
+                        errors.append(
+                            f"Timeout reached: did not receive all {expected_init_messages} expected messages in {timeout} seconds."
+                        )
+
+            except Exception as e:
+                errors.append(f"Error: {e}")
 
         if len(errors):
             logging.info(
