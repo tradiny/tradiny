@@ -227,8 +227,11 @@ export default class TradinyChart {
           const indicator_name = indicators[i].name;
           const indicator_params = indicators[i].params;
           const indicator = await this.searchIndicators(indicator_name);
-
-          await this.addIndicator(indicator, indicator_params);
+          if (indicator) {
+            await this.addIndicator(indicator, indicator_params);
+          } else {
+            console.log(`Error: indicator not found ${indicator_name}`)
+          }
         }
       } else {
         const tabs = ["charts", "data"];
