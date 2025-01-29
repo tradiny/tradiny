@@ -315,7 +315,7 @@ class PolygonProvider(Provider):
                                 "volume": volume,
                             }
 
-                        self.send_from(
+                        self.respond(
                             {
                                 "action": "data_update_merge",
                                 "ws_clients": ws_clients,

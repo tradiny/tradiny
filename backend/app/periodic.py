@@ -88,7 +88,7 @@ def send_no_update_to_provider(subscriptions):
         if s in last_update and last_update[s] < now - timedelta(seconds=60):
             last_update[s] = now
 
-            providers[source].send_to(
+            providers[source].request(
                 {
                     "action": "no_update",
                     "args": [name, interval],

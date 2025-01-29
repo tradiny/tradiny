@@ -112,7 +112,11 @@ export class DataHandler {
             // fc.autoBandwidth(fc.seriesWebglBar())
             fc
               .seriesWebglBar()
-              .crossValue((d) => { if (d && d.date) { return d.date } })
+              .crossValue((d) => {
+                if (d && d.date) {
+                  return d.date;
+                }
+              })
               .mainValue((d) => getDataKey(dataKey)(d))
               .decorate(
                 decorateFill(
@@ -130,7 +134,11 @@ export class DataHandler {
           dataKey = metadata.dataKeys[0];
           metadata.series = fc
             .seriesWebglLine()
-            .crossValue((d) => { if (d && d.date) { return d.date } })
+            .crossValue((d) => {
+              if (d && d.date) {
+                return d.date;
+              }
+            })
             .mainValue((d) => getDataKey(dataKey)(d))
             .decorate(decorateStroke(metadata));
           metadata.series.yScale(this.chart.yAxes[i][dataKey.yAxis].scale);

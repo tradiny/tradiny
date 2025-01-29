@@ -213,7 +213,7 @@ async def process_message(
             )
 
             if stream:
-                providers[d.get("source")].send_to(
+                providers[d.get("source")].request(
                     {
                         "action": "start_streaming",
                         "args": (id(websocket), d.get("name"), d.get("interval")),

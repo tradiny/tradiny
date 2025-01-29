@@ -230,7 +230,7 @@ export default class TradinyChart {
           if (indicator) {
             await this.addIndicator(indicator, indicator_params);
           } else {
-            console.log(`Error: indicator not found ${indicator_name}`)
+            console.log(`Error: indicator not found ${indicator_name}`);
           }
         }
       } else {

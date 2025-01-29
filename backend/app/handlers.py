@@ -126,7 +126,7 @@ async def send_historical_data(
             end_time_query = end
 
         logging.info(f"Waiting for response from provider")
-        providers[source].send_to(
+        providers[source].request(
             {
                 "action": "get_history",
                 "args": (name, interval, start_time_query, end_time_query, count),
@@ -302,11 +302,13 @@ def send_indicator_data(
         return json.dumps({"type": message_type, "id": id, "data": data})
 
 
-async def handle_message_from_provider(queue):
+async def handle_message_from_provider(provider):
     loop = asyncio.get_running_loop()
     while True:
         try:
-            message = await loop.run_in_executor(None, queue.get)
+            message = await loop.run_in_executor(
+                None, lambda: provider.response_queue.get(timeout=1)
+            )
 
             if message["action"] == "write_message":
                 for ws_client_key in message["ws_clients"]:
@@ -515,7 +517,7 @@ async def handle_message_from_provider(queue):
             ):
                 futures[message["future_key"]].set_result("Done!")
 
-        except Exception as e:
-            logging.error(f"Error in handle_message_from_provider(): {e} {message}")
         except Empty:
             continue
+        except Exception as e:
+            logging.error(f"Error in handle_message_from_provider(): {e} {message}")

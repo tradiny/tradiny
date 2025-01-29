@@ -157,7 +157,7 @@ class BinanceProvider(Provider):
     def schedule_message(self, delay, message):
         def delayed_execution():
             time.sleep(delay)
-            self.send_to(message)
+            self.respond(message)
 
         thread = threading.Thread(target=delayed_execution)
         thread.start()
@@ -255,7 +255,7 @@ class BinanceProvider(Provider):
                         ],
                     )
 
-                    self.send_from(
+                    self.respond(
                         {
                             "action": "update_in_cache",
                             "args": (BinanceProvider.key, symbol, interval, [data]),
@@ -266,7 +266,7 @@ class BinanceProvider(Provider):
 
                     if len(ws_clients) > 0:
 
-                        self.send_from(
+                        self.respond(
                             {
                                 "action": "write_message",
                                 "ws_clients": ws_clients,

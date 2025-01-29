@@ -32,7 +32,7 @@ class ConnectionManager:
         subscriptions = self.get_data_subscriptions(websocket)
         for source, name, interval in subscriptions:
             if source in providers:
-                providers[source].send_to(
+                providers[source].request(
                     {"action": "on_close", "args": (id(websocket), name, interval)}
                 )
 

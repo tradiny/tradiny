@@ -171,7 +171,7 @@ class CSVProvider(Provider):
     def schedule_message(self, delay, message):
         def delayed_execution():
             time.sleep(delay)
-            self.send_to(message)
+            self.respond(message)
 
         thread = threading.Thread(target=delayed_execution)
         thread.start()
