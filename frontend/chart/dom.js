@@ -105,6 +105,16 @@ export class DOMHandler {
         .html(this.icon.getIcon("add"));
     }
 
+    if (this.chart.features.includes("alert")) {
+      this.chart.controlsEl
+        .append("div")
+        .attr("class", "icon")
+        .on("click", (event) => {
+          this.controls.addAlert();
+        })
+        .html(this.icon.getIcon("alert"));
+    }
+
     if (this.chart.features.includes("drawing")) {
       this.chart.controlsEl
         .append("div")

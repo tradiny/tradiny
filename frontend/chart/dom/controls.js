@@ -319,7 +319,7 @@ export class DOMControlsHandler {
   }
 
   addWindow(
-    render = ["grids", "charts", "data", "indicators", "alert"],
+    render = ["grids", "charts", "data", "indicators"],
     closeDisabled = false,
   ) {
     const grids = this.chart.saveHandler.getGrids();
@@ -428,6 +428,14 @@ export class DOMControlsHandler {
         searchIndicators("");
       },
     );
+  }
+
+  addAlert() {
+    new Renderer().render("alert", { self: this }, (content) => {
+      this._win = new PopupWindow(this.chart.elementId, "auto");
+      this._win.render(content);
+      setTimeout(() => this.addAlertRule(1), 0);
+    });
   }
 
   getYAxesFromOutputs(outputs) {

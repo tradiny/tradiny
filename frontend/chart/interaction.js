@@ -73,6 +73,7 @@ export class InteractionHandler {
     });
 
     this.setupPointer(i);
+    this.setupContextMenu(i);
 
     if (i >= 1) {
       this.chart.delimiterEls[i - 1].call(
@@ -361,5 +362,9 @@ export class InteractionHandler {
       };
       this.chart.renderHandler.render([this.chart.R.CROSSHAIR]);
     };
+  }
+
+  setupContextMenu(i) {
+    // TODO
   }
 }

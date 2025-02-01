@@ -13,6 +13,7 @@
  */
 
 import addTmpl from "./templates/add.html";
+import alertTmpl from "./templates/alert.html";
 import settingsTmpl from "./templates/settings.html";
 
 import dataSearchResultsTmpl from "./templates/data-search-results.html";
@@ -45,6 +46,7 @@ const templateCache = {
   text: textTmpl,
   save: saveTmpl,
 
+  alert: alertTmpl,
   "alert-rule": alertRuleTmpl,
   prompt: promptTmpl,
 };

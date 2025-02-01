@@ -1,0 +1,19 @@
+<div class="alerts">
+    <div class="tab">
+      <button class="active tablinks" onclick="{%=o.self.chart.id%}.renderer.openTab(event, 'tab-alert')">Alert</button>
+    </div>
+    
+    <div class="tab-alert tabcontent active" style="display: block">
+      <div class="input-group">
+          <label>Message</label>
+          <textarea placeholder=""></textarea>
+      </div>
+      <div class="alert-rules rules" style="margin-bottom: 15px"></div>
+      <div style="margin-bottom: 15px">
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.addAlertRule()" value="Add condition">
+      
+          <input type="button" onclick="{%=o.self.chart.id%}.DOMHandler.controls.saveAlert()" value="Submit" style="float: right">
+      </div>
+  
+    </div>
+</div>

@@ -283,6 +283,7 @@ export default class TradinyChart {
       "grid",
       "interval",
       "add",
+      "alert",
       "drawing",
       "back",
       "text",

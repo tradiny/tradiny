@@ -388,7 +388,7 @@ export class DOMRuleHandler {
 
     const inputGroup = this.rules[ruleId].container
       .append("div")
-      .attr("class", "input-group");
+      .attr("class", "input-group optional");
 
     inputGroup.append("label").text("Interval");
 
@@ -521,7 +521,7 @@ export class DOMRuleHandler {
 
     const inputGroup = this.rules[ruleId].container
       .append("div")
-      .attr("class", "input-group");
+      .attr("class", "input-group optional");
 
     inputGroup.append("label").text("Interval");
 
@@ -565,7 +565,7 @@ export class DOMRuleHandler {
 
     const inputGroup = this.rules[ruleId].container
       .append("div")
-      .attr("class", "input-group");
+      .attr("class", "input-group optional");
 
     inputGroup.append("label").text("Data");
 
@@ -694,14 +694,17 @@ export class DOMRuleHandler {
       switch (select.property("value")) {
         case "data":
           this.createSourceEl(ruleId);
+          this.collapse(ruleId);
 
           break;
         case "indicator":
           this.createIndicatorEl(ruleId);
+          this.collapse(ruleId);
 
           break;
         case "value":
           this.createValueEl(ruleId);
+          this.collapse(ruleId);
 
           break;
       }
@@ -814,5 +817,79 @@ export class DOMRuleHandler {
 
     this.createControls(ruleId);
     this.createTypeEl(ruleId);
+
+    this.collapse(ruleId);
+  }
+  collapse(ruleId) {
+    const container = this.rules[ruleId].container.node();
+    const allOptionalElements = Array.from(
+      container.querySelectorAll(".optional"),
+    );
+
+    let start = 0;
+
+    while (start < allOptionalElements.length) {
+      const optionalGroup = [];
+
+      // Collect all consecutive optional elements
+      for (let i = start; i < allOptionalElements.length; i++) {
+        if (
+          i === start ||
+          allOptionalElements[i].previousElementSibling ===
+            allOptionalElements[i - 1]
+        ) {
+          optionalGroup.push(allOptionalElements[i]);
+        } else {
+          break;
+        }
+      }
+
+      if (optionalGroup.length > 0) {
+        const firstOptionalElement = optionalGroup[0];
+        const previousSibling = firstOptionalElement.previousElementSibling;
+
+        // Check if the "..." element already exists before the group
+        if (
+          !(
+            previousSibling &&
+            previousSibling.classList.contains("toggle-element")
+          )
+        ) {
+          const toggleElement = document.createElement("div");
+          toggleElement.textContent = "...";
+          toggleElement.classList.add("input-group");
+          toggleElement.classList.add("toggle-element");
+          toggleElement.innerHTML =
+            '<label>...</label><div style="flex:1"></div>';
+          toggleElement.style.cursor = "pointer";
+          toggleElement.style.lineHeight = "10px";
+          toggleElement.style.fontSize = "10px";
+
+          // Insert the "..." element into the DOM
+          firstOptionalElement.parentNode.insertBefore(
+            toggleElement,
+            firstOptionalElement,
+          );
+
+          // Hide all elements in the group initially
+          optionalGroup.forEach((element) => {
+            element.style.display = "none";
+          });
+
+          // Add a click event listener to toggle visibility of the group
+          toggleElement.addEventListener("click", () => {
+            optionalGroup.forEach((element) => {
+              element.style.display = "flex"; // or 'block', depending on your layout
+            });
+
+            // Remove the "..." element after showing the optional elements
+            toggleElement.parentNode.removeChild(toggleElement);
+          });
+        }
+      }
+
+      // Move start past the current group
+      start += optionalGroup.length || 1;
+    }
   }
 }
