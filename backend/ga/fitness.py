@@ -14,8 +14,10 @@ import websocket
 import logging
 import json
 import time
-import pandas as pd
 import sys
+
+import pandas as pd
+import pandas_ta as ta
 
 
 class OscilatorFitness:
@@ -80,14 +82,33 @@ class OscilatorFitness:
                 "count": self.history + 300,
             },
         )
+        high_key = f"{self.source}-{self.name}-{self.interval}-high"
+        low_key = f"{self.source}-{self.name}-{self.interval}-low"
+        close_key = f"{self.source}-{self.name}-{self.interval}-close"
 
-        indicator_id = self.indicator["id"]
+        df_data = pd.DataFrame(data["data"])
+
+        df_data[high_key] = pd.to_numeric(df_data[high_key], errors="coerce")
+        df_data[low_key] = pd.to_numeric(df_data[low_key], errors="coerce")
+        df_data[close_key] = pd.to_numeric(df_data[close_key], errors="coerce")
+
+        df_data.dropna(inplace=True)
+
+        df_data.sort_values(by="date", inplace=True)
+
+        df_data["ATR"] = ta.atr(
+            df_data[high_key], df_data[low_key], df_data[close_key], length=24
+        )
 
         first_output = ""
         for i, output in enumerate(self.genetic_indicator.outputs):
             first_output = output["name"]
+        indicator_id = self.indicator["id"]
+        indicator_key = f"{indicator_id}-{first_output}"
 
         def fitness_func(pygad_instance, solution, solution_idx):
+            if not data:
+                return -sys.float_info.max
 
             inputs = {}
             for i, input in enumerate(self.genetic_indicator.inputs):
@@ -107,20 +128,10 @@ class OscilatorFitness:
             )
             if data and indicator_data:
                 try:
-                    close_key = f"{self.source}-{self.name}-{self.interval}-close"
-                    indicator_key = f"{indicator_id}-{first_output}"
-
-                    df_data = pd.DataFrame(data["data"])
                     df_indicator_data = pd.DataFrame(indicator_data["data"])
-
-                    # Merge the dataframes on 'date', performing a left join
                     df_merged = pd.merge(
                         df_data, df_indicator_data, on="date", how="left"
                     )
-
-                    # Sort based on the 'date' column
-                    df_merged.sort_values(by="date", inplace=True)
-
                     return self.simulate_trading(df_merged, close_key, indicator_key)
                 except Exception as e:
                     raise e
@@ -129,9 +140,8 @@ class OscilatorFitness:
 
         return fitness_func
 
-    def simulate_trading(self, df, close_key, indicator_key, max_drawdown_percent=1.0):
+    def simulate_trading(self, df, close_key, indicator_key):
 
-        # Initialize variables for simulating trades
         holding = False
         entry_price = 0
         fitness = 0
@@ -140,6 +150,7 @@ class OscilatorFitness:
         for _, row in df.iterrows():
             close_price = float(row[close_key])
             indicator_value = row.get(indicator_key)
+            atr_value = row["ATR"]
 
             # Check buy/sell conditions
             if indicator_value is not None:
@@ -149,21 +160,18 @@ class OscilatorFitness:
                     trades_count += 1
 
                 elif holding:
-                    # Calculate drawdown from the entry price
-                    drawdown = 100 * (entry_price - close_price) / entry_price
+                    # Calculate drawdown based on entry price as a monetary difference
+                    drawdown = close_price - entry_price
+                    max_drawdown_value = -atr_value  # Using ATR as the threshold
 
                     # Execute sell on either indicator condition or drawdown condition
-                    if indicator_value < 30 or drawdown >= max_drawdown_percent:
+                    if indicator_value < 30 or drawdown < max_drawdown_value:
                         holding = False
                         profit_loss = close_price - entry_price
                         fitness += profit_loss
                         trades_count += 1
 
-        # If trades_count is zero or only made one trade, it can't be a full trade cycle
         if trades_count <= 1:
             return -sys.float_info.max
-
-        if fitness > 0:
-            logging.info(f"{indicator_key} profit {fitness}")
 
         return fitness
