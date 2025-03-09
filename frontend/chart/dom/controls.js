@@ -733,6 +733,8 @@ export class DOMControlsHandler {
       );
     }
 
+    const defaultPaneI = this.defaultPane(this._indicator);
+
     new Renderer().render(
       "indicator",
       {
@@ -740,7 +742,7 @@ export class DOMControlsHandler {
         indicator: this._indicator,
         y_axes: this.getYAxesFromOutputs(this._indicator.details.outputs),
         title: this._indicator.name,
-        defaultPane: this.defaultPane(this._indicator),
+        defaultPane: defaultPaneI,
       },
       (content) => {
         this._win = new PopupWindow(this.chart.elementId);
@@ -749,8 +751,77 @@ export class DOMControlsHandler {
         this.onPaneChange(
           this.chart.d3ContainerEl.select("select.pane-select").node(),
         );
+
+        requestAnimationFrame(async () => {
+          const dataMap = this._getDataMap(
+            this.chart.panes[defaultPaneI],
+            this._indicator,
+          );
+          this.chart.dataProvider.calculateIndicatorInputs(
+            {
+              indicator: this._indicator,
+              dataMap,
+              dataProviderConfig: this.chart.dataProvider.config,
+              history: this.chart.dataProvider.data.length,
+            },
+            (data) => {
+              console.log(data.inputs, data.best_fitness);
+            },
+          );
+        });
       },
     );
+  }
+
+  _getDataMap(pane, indicator) {
+    const dataMap = {};
+    for (let m = 0; m < indicator.details.columns.length; m++) {
+      const colKey = indicator.details.columns[m];
+
+      let value;
+      if (!pane) {
+        const keys = Object.keys(this.chart.dataProvider.data[0]);
+        for (let j = 0; j < keys.length; j++) {
+          const key = keys[j];
+          if (["date", "_date", "_dateObj"].includes(key)) {
+            continue;
+          }
+
+          let selected =
+            key.toLowerCase().includes(colKey.toLowerCase()) &&
+            !key.toLowerCase().startsWith("indicators-");
+          if (selected) {
+            value = key;
+          }
+        }
+      } else {
+        for (let j = 0; j < pane.metadata.length; j++) {
+          for (let k = 0; k < pane.metadata[j].dataKeys.length; k++) {
+            const key = pane.metadata[j].dataKeys[k].dataKey;
+            let selected =
+              key.toLowerCase().includes(colKey.toLowerCase()) &&
+              !key.toLowerCase().startsWith("indicators-");
+
+            if (selected) {
+              value = key;
+            }
+          }
+        }
+      }
+      const datasource = this.chart.dataProvider.keyToData[value] || {};
+      const source = datasource.source;
+      const name = datasource.name;
+      const interval = datasource.interval;
+      const dataKey = datasource.key;
+      dataMap[colKey] = {
+        source,
+        name,
+        interval,
+        value,
+        dataKey,
+      };
+    }
+    return dataMap;
   }
 
   defaultAddIndicator(indicator, inputs = {}, onAdded = undefined) {
@@ -795,55 +866,7 @@ export class DOMControlsHandler {
       scalesMap[yAxis.y_axis] = "linear";
     }
 
-    const self = this;
-    const dataMap = {};
-    for (let m = 0; m < indicator.details.columns.length; m++) {
-      const colKey = indicator.details.columns[m];
-
-      let value;
-      if (!pane) {
-        const keys = Object.keys(self.chart.dataProvider.data[0]);
-        for (let j = 0; j < keys.length; j++) {
-          const key = keys[j];
-          if (["date", "_date", "_dateObj"].includes(key)) {
-            continue;
-          }
-
-          let selected =
-            key.toLowerCase().includes(colKey.toLowerCase()) &&
-            !key.toLowerCase().startsWith("indicators-");
-          if (selected) {
-            value = key;
-          }
-        }
-      } else {
-        for (let j = 0; j < pane.metadata.length; j++) {
-          for (let k = 0; k < pane.metadata[j].dataKeys.length; k++) {
-            const key = pane.metadata[j].dataKeys[k].dataKey;
-            let selected =
-              key.toLowerCase().includes(colKey.toLowerCase()) &&
-              !key.toLowerCase().startsWith("indicators-");
-
-            if (selected) {
-              value = key;
-            }
-          }
-        }
-      }
-
-      const datasource = self.chart.dataProvider.keyToData[value] || {};
-      const source = datasource.source;
-      const name = datasource.name;
-      const interval = datasource.interval;
-      const dataKey = datasource.key;
-      dataMap[colKey] = {
-        source,
-        name,
-        interval,
-        value,
-        dataKey,
-      };
-    }
+    const dataMap = this._getDataMap(pane, indicator);
 
     const colorMap = {};
     const cp = new ColorPicker("", document.createElement("div"));

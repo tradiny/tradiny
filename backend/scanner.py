@@ -155,7 +155,6 @@ async def scan(dbconn, d, client_id, websocket):
 
         if expected_init_messages > 0:
             url = d["dataProviderConfig"]["full_url"]
-            # logging.info(f"Connecting to {url}")
 
             try:
                 async with websockets.connect(url) as ws:

@@ -663,6 +663,10 @@ export class DataProvider {
           }
           break;
 
+        case "indicator_inputs":
+          this._onCalculatedIndicatorInputs(message);
+          break;
+
         case "scan_progress":
           if (this._onScanProgress) {
             this._onScanProgress(message.message);
@@ -842,6 +846,12 @@ export class DataProvider {
     } else {
       this.loadingHistory = false;
     }
+  }
+
+  calculateIndicatorInputs(data, _onCalculatedIndicatorInputs) {
+    this._onCalculatedIndicatorInputs = _onCalculatedIndicatorInputs;
+    data.type = "calculate_indicator_inputs";
+    this.ws.sendMessage(JSON.stringify([data]));
   }
 
   onConnect(fn) {

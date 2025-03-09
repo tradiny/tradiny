@@ -37,7 +37,11 @@ from security import register_request, is_request_allowed, is_ip_address_whiteli
 
 from .connection import safe_send_message, conn
 from .globals import dbconn, providers, indicator_fetcher
-from .handlers import send_historical_data, send_indicator_data
+from .handlers import (
+    send_historical_data,
+    send_indicator_data,
+    calculate_indicator_inputs,
+)
 
 
 websocket_router = APIRouter()
@@ -108,6 +112,7 @@ async def websocket_endpoint(
         pass
     except Exception as e:
         logging.error(f"WebSocket error: {e}")
+        raise e
     finally:
         if client_ip in ip_conns:
             ip_conns[client_ip] -= 1
@@ -257,6 +262,24 @@ async def process_message(
                     d.get("dataMap"),
                     d.get("range", None),
                     d.get("count", 300),
+                ),
+            )
+            await safe_send_message(websocket, m)
+
+        elif d.get("type") == "calculate_indicator_inputs":
+            dm = d.get("dataMap")
+            dm_first = dm[next(iter(dm.keys()))]
+
+            m = await indicator_fetcher.fetch(
+                calculate_indicator_inputs,
+                (
+                    dm_first["source"],
+                    dm_first["name"],
+                    dm_first["interval"],
+                    d.get("indicator"),
+                    d.get("dataMap"),
+                    d.get("history", 300),
+                    d.get("dataProviderConfig"),
                 ),
             )
             await safe_send_message(websocket, m)

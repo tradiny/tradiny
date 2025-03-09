@@ -32,6 +32,7 @@ from utils import (
     generate_method_key,
 )
 from db import indicators
+from ga import calculate as ga_calculate
 from .data import update_in_cache, merge_data
 from .globals import (
     providers,
@@ -521,3 +522,27 @@ async def handle_message_from_provider(provider):
             continue
         except Exception as e:
             logging.error(f"Error in handle_message_from_provider(): {e} {message}")
+
+
+def calculate_indicator_inputs(
+    source, name, interval, indicator, data_map, history, data_provider_config
+):
+    best_fitness, inputs = ga_calculate(
+        source,
+        name,
+        interval,
+        indicator,
+        data_map,
+        history,
+        data_provider_config["full_url"],
+    )
+    message = json.dumps(
+        {
+            "type": "indicator_inputs",
+            "indicator": indicator,
+            "data_map": data_map,
+            "best_fitness": best_fitness,
+            "inputs": inputs,
+        }
+    )
+    return message
