@@ -256,6 +256,7 @@ export default class TradinyChart {
     window[this.id] = this; // save reference to window object to be able to access it from templates
 
     this.options = options;
+    this.type = options.type || "webgl";
     this.metadata = options.metadata;
     this.elementId = options.elementId;
     this.panes = options.panes;

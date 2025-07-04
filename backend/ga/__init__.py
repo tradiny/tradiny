@@ -15,6 +15,7 @@ import warnings
 warnings.filterwarnings("ignore", module="pygad\..*")
 import random
 import pygad
+import websocket
 
 from app.fetcher import BlockingFetcher
 
@@ -134,21 +135,28 @@ def calculate(source, name, interval, indicator, data_map, history, ws_url):
                 ip.append(gene.initial_population[i])
         initial_population.append(ip)
 
+    timeout = 10
+    ws = websocket.create_connection(ws_url, timeout=timeout)
+
     fitness = OscilatorFitness(
-        source, name, interval, genetic_indicator, indicator, data_map, history, ws_url
+        source, name, interval, genetic_indicator, indicator, data_map, history, ws
     )
 
-    ga = GA(
-        debug=True,
-        num_generations=num_generations,
-        sol_per_pop=sol_per_pop,
-        mutation_num_genes=mutation_num_genes,
-        gene_space=gene_space,
-        initial_population=initial_population,
-        fitness=fitness,
-    )
+    try:
+        ga = GA(
+            debug=True,
+            num_generations=num_generations,
+            sol_per_pop=sol_per_pop,
+            mutation_num_genes=mutation_num_genes,
+            gene_space=gene_space,
+            initial_population=initial_population,
+            fitness=fitness,
+        )
 
-    ga.run()
+        ga.run()
+
+    finally:
+        ws.close()
 
     inputs = {}
     for i, input in enumerate(genetic_indicator.inputs):

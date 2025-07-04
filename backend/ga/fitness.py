@@ -10,11 +10,11 @@
 #
 # For full details, see the LICENSE.md file in the root directory of this project.
 
-import websocket
 import logging
 import json
 import time
 import sys
+import websocket
 
 import pandas as pd
 import pandas_ta as ta
@@ -32,7 +32,7 @@ class OscilatorFitness:
         indicator,
         data_map,
         history,
-        ws_url,
+        ws,
     ):
         self.source = source
         self.name = name
@@ -41,31 +41,29 @@ class OscilatorFitness:
         self.indicator = indicator
         self.data_map = data_map
         self.history = history
-        self.ws_url = ws_url
+        self.ws = ws
 
     def receive_message(self, expected_message, data_request, timeout=10):
-        ws = websocket.create_connection(self.ws_url, timeout=timeout)
 
         try:
-            ws.send(json.dumps([data_request]))
+            self.ws.send(json.dumps([data_request]))
             start_time = time.time()
 
             while time.time() - start_time < timeout:
-                message = ws.recv()
+                message = self.ws.recv()
+
                 if message:
                     message = json.loads(message)
-
                     if message["type"] == expected_message:
                         return message
 
         except websocket.WebSocketTimeoutException:
+            logging.warning(f"Connection timeouted: {e}")
             return None
 
         except Exception as e:
+            logging.error(f"Error in fitness receive_message(): {e}")
             return None
-
-        finally:
-            ws.close()
 
         return None
 
@@ -82,6 +80,10 @@ class OscilatorFitness:
                 "count": self.history + 300,
             },
         )
+        if data == None:
+            logging.error("Error: cannot get the data")
+            return
+
         high_key = f"{self.source}-{self.name}-{self.interval}-high"
         low_key = f"{self.source}-{self.name}-{self.interval}-low"
         close_key = f"{self.source}-{self.name}-{self.interval}-close"

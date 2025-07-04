@@ -213,7 +213,9 @@ export class DOMHandler {
         let height = this.chart.paneHeights[i];
         let padding = 0;
         if (yAxis.height && yAxis.position === "bottom") {
-          height *= yAxis.height / 100;
+          if (this.chart.type === "webgl") {
+            height *= yAxis.height / 100;
+          }
           padding = this.chart.yAxisPadding;
         }
         this.chart.yAxes[i][yAxis.key].scale.range([height, padding]); // svg height
@@ -655,9 +657,23 @@ export class DOMHandler {
   createChart(i) {
     const pane = this.chart.panes[i];
 
-    const series = [];
-
     this.chart.gridlines[i] = fc.annotationSvgGridline();
+    this.chart.crosshairs[i] = fc.annotationSvgCrosshair();
+
+    if (this.chart.type === "webgl") {
+      this.chart.webglMultiSeries[i] = fc
+        .seriesWebglMulti()
+        .series(this.chart.series);
+    }
+    let series = [this.chart.gridlines[i], this.chart.crosshairs[i]];
+    if (this.chart.type === "svg") {
+      series = series.concat(this.chart.series);
+    }
+    this.chart.svgMultiSeries[i] = fc.seriesSvgMulti().series(series);
+    this.chart.svgMultiSeries[i].mapping((d) => d);
+
+    this.chart.crosshairs[i].xLabel((o) => "").yLabel((o) => "");
+
     this.chart.gridlines[i].xTicks(
       this.chart.axisHandler.getXTicks(this.chart.paneWidth),
     );
@@ -665,22 +681,15 @@ export class DOMHandler {
       this.chart.axisHandler.getYTicks(this.chart.paneHeights[i]),
     );
 
-    this.chart.crosshairs[i] = fc
-      .annotationSvgCrosshair()
-      .xLabel((o) => "")
-      .yLabel((o) => "");
+    const fcChart = fc.chartCartesian({
+      xScale: this.chart.xScale,
+      yScale: this.chart.yAxes[i][this.chart.firstAxisKey[i]].scale,
+    });
 
-    this.chart.svgMultiSeries[i] = fc
-      .seriesSvgMulti()
-      .series([this.chart.gridlines[i], this.chart.crosshairs[i]]);
-
-    const fcChart = fc
-      .chartCartesian({
-        xScale: this.chart.xScale,
-        yScale: this.chart.yAxes[i][this.chart.firstAxisKey[i]].scale, // select first
-      })
-      .webglPlotArea(this.chart.webglMultiSeries[i])
-      .svgPlotArea(this.chart.svgMultiSeries[i]);
+    if (this.chart.webglMultiSeries[i]) {
+      fcChart.webglPlotArea(this.chart.webglMultiSeries[i]);
+    }
+    fcChart.svgPlotArea(this.chart.svgMultiSeries[i]);
 
     this.chart.fcCharts[i] = fcChart;
 
