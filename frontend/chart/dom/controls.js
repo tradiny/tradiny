@@ -751,24 +751,6 @@ export class DOMControlsHandler {
         this.onPaneChange(
           this.chart.d3ContainerEl.select("select.pane-select").node(),
         );
-
-        requestAnimationFrame(async () => {
-          const dataMap = this._getDataMap(
-            this.chart.panes[defaultPaneI],
-            this._indicator,
-          );
-          this.chart.dataProvider.calculateIndicatorInputs(
-            {
-              indicator: this._indicator,
-              dataMap,
-              dataProviderConfig: this.chart.dataProvider.config,
-              history: this.chart.dataProvider.data.length,
-            },
-            (data) => {
-              console.log(data.inputs, data.best_fitness);
-            },
-          );
-        });
       },
     );
   }
@@ -1154,6 +1136,43 @@ export class DOMControlsHandler {
       this.chart.dataProvider.addAlert(alertObj);
       this._win.closePopup();
     }
+  }
+
+  backtestIndicator() {
+    const strategy = this.chart.d3ContainerEl
+      .select("select.strategy-list")
+      .node().value;
+    const defaultPaneI = this.defaultPane(this._indicator);
+    const dataMap = this._getDataMap(
+      this.chart.panes[defaultPaneI],
+      this._indicator,
+    );
+    this.chart.d3ContainerEl
+      .select("div.strategy-result")
+      .html("<p>Loading...</p>");
+    this.chart.d3ContainerEl
+      .select("div.strategy-submit")
+      .style("display", "none");
+
+    this.chart.dataProvider.calculateIndicatorInputs(
+      {
+        strategy,
+        indicator: this._indicator,
+        dataMap,
+        dataProviderConfig: this.chart.dataProvider.config,
+        history: this.chart.dataProvider.data.length,
+      },
+      (data) => {
+        const inputsStr = Object.entries(data.inputs)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(", ");
+        const fitnessStr = data.best_fitness.toFixed(2);
+
+        this.chart.d3ContainerEl
+          .select("div.strategy-result")
+          .html(`<p>${inputsStr}, fitness=${fitnessStr}</p>`);
+      },
+    );
   }
 
   // TODO move to saveHandler

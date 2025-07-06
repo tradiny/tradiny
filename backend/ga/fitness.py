@@ -20,7 +20,7 @@ import pandas as pd
 import pandas_ta as ta
 
 
-class OscilatorFitness:
+class OscillatorFitness:
     best_fitness = None
 
     def __init__(

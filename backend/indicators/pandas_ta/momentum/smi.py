@@ -40,7 +40,7 @@ class SMI(Indicator):
             "y_axis": "smi",
         },
         {
-            "name": "SMI oscilator",
+            "name": "SMI oscillator",
             "y_axis": "smi",
         },
     ]

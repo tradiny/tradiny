@@ -525,9 +525,10 @@ async def handle_message_from_provider(provider):
 
 
 def calculate_indicator_inputs(
-    source, name, interval, indicator, data_map, history, data_provider_config
+    strategy, source, name, interval, indicator, data_map, history, data_provider_config
 ):
     best_fitness, inputs = ga_calculate(
+        strategy,
         source,
         name,
         interval,

@@ -1,8 +1,10 @@
 <div class="add">
     <div class="tab">
         <button class="tablinks active" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-settings')">{%=o.title%}</button>
+        {% if (o.indicator.details.backtest_strategies) { %}
+        <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-backtest')">Backtest</button>
+        {% } %}
         <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-styles')">Styles</button>
-        <!-- <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-preferences')">Settings</button> -->
     </div>
 
     <div class="tab-settings tabcontent active" style="display:block">
@@ -77,6 +79,25 @@
             <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
     </div>
+    {% if (o.indicator.details.backtest_strategies) { %}
+    <div class="tab-backtest tabcontent">
+        <div>
+            <div class="input-group">
+                <label for="">Strategy</label>
+                <select class="strategy-list">
+                    {% for (var i=0; i<o.indicator.details.backtest_strategies.length; i++) { %}
+                    <option value="{%=o.indicator.details.backtest_strategies[i].strategy%}">{%=o.indicator.details.backtest_strategies[i].title%}</option>
+                    {% } %}
+                </select>
+            </div>
+            <div class="strategy-result"></div>
+        </div>
+        <div class="strategy-submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.backtestIndicator()" value="Submit">
+        </div>
+    </div>
+    {% } %}
+    
     <div class="tab-styles tabcontent">
 
         {% for (var i=0; i<o.indicator.details.outputs.length; i++) { %} 
@@ -95,13 +116,6 @@
             <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
 
-    </div>
-    <div class="tab-preferences tabcontent">
-
-
-        <div>
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
-        </div>
     </div>
 
 </div>

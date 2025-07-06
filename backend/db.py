@@ -73,6 +73,8 @@ def populate_database(database_path):
                 ],
                 "outputs": [{**i} for i in indicator["klass"].outputs],
             }
+            if hasattr(indicator["klass"], "backtest_strategies"):
+                d["backtest_strategies"] = indicator["klass"].backtest_strategies
 
             if hasattr(indicator["klass"], "mamode"):
                 d["mamode"] = indicator["klass"].mamode

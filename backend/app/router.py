@@ -273,6 +273,7 @@ async def process_message(
             m = await indicator_fetcher.fetch(
                 calculate_indicator_inputs,
                 (
+                    d.get("strategy"),
                     dm_first["source"],
                     dm_first["name"],
                     dm_first["interval"],

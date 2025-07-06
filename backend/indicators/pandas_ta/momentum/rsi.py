@@ -22,6 +22,13 @@ class RSI(Indicator):
     id = "indicators.pandas_ta.momentum.rsi.RSI"
     name = "Relative Strength Index (RSI)"
     categories = ["Momentum"]
+    backtest_strategies = [
+        {
+            "strategy": "oscillator",
+            "title": "Oscillator; buy < 30, sell > 70",
+            "settings": {},
+        }
+    ]
 
     columns = ["close"]
 
