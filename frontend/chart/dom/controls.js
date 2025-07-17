@@ -1138,10 +1138,60 @@ export class DOMControlsHandler {
     }
   }
 
-  backtestIndicator() {
-    const strategy = this.chart.d3ContainerEl
-      .select("select.strategy-list")
-      .node().value;
+  optimizationEvents() {
+    const strategyListEl = this.chart.d3ContainerEl.select(
+      "select.strategy-list",
+    );
+    const strategy = strategyListEl.node().value;
+    let strategy_settings = {};
+    for (
+      var i = 0;
+      i < this._indicator.details.optimization_strategies.length;
+      i++
+    ) {
+      const s = this._indicator.details.optimization_strategies[i];
+      if (s.strategy === strategy) {
+        strategy_settings = s.settings;
+      }
+    }
+
+    strategyListEl
+      .on("change", (event) => {
+        const newStrategy = event.target.value;
+        const strategySetting =
+          this._indicator.details.optimization_strategies.find(
+            (item) => item.strategy === newStrategy,
+          );
+
+        const strategySettingsEl = this.chart.d3ContainerEl.select(
+          "div.strategy-settings",
+        );
+        strategySettingsEl.html("");
+        for (const [key, value] of Object.entries(strategySetting.settings)) {
+          const group = document.createElement("div");
+          group.className = "input-group";
+
+          const label = document.createElement("label");
+          label.textContent = key;
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = value;
+          input.setAttribute("data-key", key);
+
+          group.append(label, input);
+          strategySettingsEl.node().appendChild(group);
+        }
+      })
+      .dispatch("change");
+  }
+
+  optimizeIndicator() {
+    const strategyListEl = this.chart.d3ContainerEl.select(
+      "select.strategy-list",
+    );
+    const strategy = strategyListEl.node().value;
+
     const defaultPaneI = this.defaultPane(this._indicator);
     const dataMap = this._getDataMap(
       this.chart.panes[defaultPaneI],
@@ -1154,9 +1204,27 @@ export class DOMControlsHandler {
       .select("div.strategy-submit")
       .style("display", "none");
 
-    this.chart.dataProvider.calculateIndicatorInputs(
+    let strategySettings = {};
+    for (
+      var i = 0;
+      i < this._indicator.details.optimization_strategies.length;
+      i++
+    ) {
+      const s = this._indicator.details.optimization_strategies[i];
+      if (s.strategy === strategy) {
+        strategySettings = s.settings;
+      }
+    }
+    for (const [key, value] of Object.entries(strategySettings)) {
+      strategySettings[key] = this.chart.d3ContainerEl
+        .select(`div.strategy-settings input[data-key="${key}"]`)
+        .property("value");
+    }
+
+    this.chart.dataProvider.optimizeIndicatorParams(
       {
         strategy,
+        strategySettings,
         indicator: this._indicator,
         dataMap,
         dataProviderConfig: this.chart.dataProvider.config,
@@ -1166,11 +1234,23 @@ export class DOMControlsHandler {
         const inputsStr = Object.entries(data.inputs)
           .map(([k, v]) => `${k}=${v}`)
           .join(", ");
-        const fitnessStr = data.best_fitness.toFixed(2);
+        const fitnessStr = data.best_fitness;
 
         this.chart.d3ContainerEl
           .select("div.strategy-result")
-          .html(`<p>${inputsStr}, fitness=${fitnessStr}</p>`);
+          .html(`<p>${inputsStr}, fitness=${fitnessStr}</p>`)
+
+          .append("input")
+          .attr("type", "button")
+          .attr("value", "Use")
+          .on("click", (event) => {
+            this.chart.renderer.openTab(event, "tab-settings");
+            for (const [key, value] of Object.entries(data.inputs)) {
+              this.chart.d3ContainerEl
+                .select(`.tab-settings input[data-key="${key}"]`)
+                .property("value", value);
+            }
+          });
       },
     );
   }

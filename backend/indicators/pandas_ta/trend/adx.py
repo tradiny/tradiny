@@ -50,18 +50,9 @@ class ADX(Indicator):
     ]
 
     outputs = [
-        {
-            "name": "ADX",
-            "y_axis": "adx",
-        },
-        {
-            "name": "DMP",
-            "y_axis": "adx",
-        },
-        {
-            "name": "DMN",
-            "y_axis": "adx",
-        },
+        {"name": "ADX", "y_axis": "adx", "render": {"color": "#0bb4ff"}},
+        {"name": "DMP", "y_axis": "adx", "render": {"color": "#8be04e"}},
+        {"name": "DMN", "y_axis": "adx", "render": {"color": "#ea5545"}},
     ]
 
     def calc(self, data, length, lensig, mamode, scalar, drift):

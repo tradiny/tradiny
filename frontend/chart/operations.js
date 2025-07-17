@@ -86,7 +86,9 @@ export class OperationsHandler {
         interval,
       };
       if (data.count) {
-        this.chart.visiblePoints = parseInt(data.count);
+        if (data.count < this.chart.visiblePoints) {
+          this.chart.visiblePoints = parseInt(data.count);
+        }
         dataReq.count = parseInt(data.count);
       }
 
@@ -497,8 +499,11 @@ export class OperationsHandler {
       JSON.stringify(settings),
     );
 
-    this.onIndicatorData(settings.render);
-    this.chart.dataProvider.addIndicator(settings, () => {
+    this.chart.dataProvider.setKeysToAxisBasedOnIndicatorSettings(
+      settings.render,
+    );
+    this.chart.dataProvider.addIndicator(settings, (newKeys) => {
+      this.onIndicatorData(settings.render, newKeys);
       this.refresh(i);
 
       if (onAdded) {
@@ -509,7 +514,7 @@ export class OperationsHandler {
     });
   }
 
-  onIndicatorData(options) {
+  onIndicatorData(options, newKeys) {
     const indicatorId = options.indicatorId;
     const indicator = options.indicator;
     const inputs = options.inputs;
@@ -570,7 +575,12 @@ export class OperationsHandler {
       const axisKey = indicator.details.outputs[j].y_axis;
       const axis = axesMap[axisKey];
 
-      const color = colorMap[dataKey];
+      const staticColor =
+        indicator.details.outputs[j].render &&
+        indicator.details.outputs[j].render.color
+          ? indicator.details.outputs[j].render.color
+          : null;
+      const color = staticColor || colorMap[dataKey];
 
       if (axis === "New right axis" || axis === "New left axis") {
         const scale = scalesMap[axisKey];
@@ -596,35 +606,46 @@ export class OperationsHandler {
       }
 
       if (axis !== "Disable") {
-        const m = {
-          type: "line",
-          legend: [
-            {
+        const baseKey = `${indicatorId}-${dataKey}`;
+        let first = undefined;
+        for (let k = 0; k < newKeys.length; k++) {
+          const dk = newKeys[k];
+          let legend = [];
+          if (!dk.startsWith(baseKey)) {
+            continue;
+          }
+          if (!first) {
+            legend.push({
               icon: this.chart.DOMHandler.icon.getIcon("line"),
               label: `${indicator.details.categories[0]} / ${indicator.name} ${dataKey} ${inputText}`,
               color: color,
-            },
-          ],
-          dataKeys: [
-            {
-              dataKey: `${indicatorId}-${dataKey}`,
-              key: axisKey,
-              yAxis:
-                axis === "New right axis" || axis === "New left axis"
-                  ? axisKey
-                  : axis,
-            },
-          ],
-          color: color,
-        };
-        pane.metadata.push(m);
-
-        if (this.chart.panes && i < this.chart.panes.length) {
-          const rmMetadata = (i, m) => () => {
-            const idx = this.chart.panes[i].metadata.indexOf(m);
-            this.chart.panes[i].metadata.splice(idx, 1);
+            });
+            first = true;
+          }
+          const m = {
+            type: "line",
+            legend: legend,
+            dataKeys: [
+              {
+                dataKey: dk, //`${indicatorId}-${dataKey}`,
+                key: axisKey,
+                yAxis:
+                  axis === "New right axis" || axis === "New left axis"
+                    ? axisKey
+                    : axis,
+              },
+            ],
+            color: color,
           };
-          removeActions.push(rmMetadata(i, m));
+          pane.metadata.push(m);
+
+          if (this.chart.panes && i < this.chart.panes.length) {
+            const rmMetadata = (i, m) => () => {
+              const idx = this.chart.panes[i].metadata.indexOf(m);
+              this.chart.panes[i].metadata.splice(idx, 1);
+            };
+            removeActions.push(rmMetadata(i, m));
+          }
         }
       }
     }

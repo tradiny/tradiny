@@ -165,7 +165,7 @@ export class DataProvider {
     this.data = mergedData;
     this.dateToIndexMap = newDateToIndexMap;
 
-    return { data: this.data, newIndexesAdded, shift, keysUpdated };
+    return { data: this.data, newIndexesAdded, shift, keysUpdated, newKeys };
   }
 
   revertDivision(datapoint, keys, copyData = true) {
@@ -291,6 +291,16 @@ export class DataProvider {
     return resultStr.replace(/\.?0+$/, "");
   }
 
+  setKeysToAxisBasedOnIndicatorSettings(options) {
+    const indicatorId = options.indicatorId;
+    const indicator = options.indicator;
+    for (let j = 0; j < indicator.details.outputs.length; j++) {
+      const dataKey = indicator.details.outputs[j].name;
+      const baseKey = `${indicatorId}-${dataKey}`;
+      this.keyToAxis[baseKey] = indicator.details.outputs[j].y_axis;
+    }
+  }
+
   setDividers(data) {
     // To prevent display errors at high values, we must account for the 16-bit unsigned integer limit of 65,535.
     // Values exceeding this limit, such as 65,536, wrap around to 0.
@@ -322,7 +332,16 @@ export class DataProvider {
       }
 
       // Determine the divider based on the maximum value found
-      const axis = this.keyToAxis[key];
+      // const axis = this.keyToAxis[key];
+
+      // Iterate over the configured keys and pick the first one that
+      // is a prefix of the incoming `key`.
+      const matchedKey = Object.keys(this.keyToAxis).find((mappingKey) =>
+        key.startsWith(mappingKey),
+      );
+
+      const axis = matchedKey ? this.keyToAxis[matchedKey] : undefined;
+
       if (axis) {
         if (this.dividersPerAxis[axis]) {
           this.dividers[key] = this.dividersPerAxis[axis];
@@ -502,7 +521,7 @@ export class DataProvider {
             const cb = this._onIndicatorData[cbKey];
             delete this._onIndicatorData[cbKey];
 
-            cb();
+            cb(obj.newKeys);
           }
 
           this.updated(
@@ -627,7 +646,7 @@ export class DataProvider {
           let lastDate = null;
           for (
             let k = this.data.length - 1;
-            k >= Math.max(0, this.data.length - 15);
+            k >= Math.max(0, this.data.length - 33);
             k--
           ) {
             if (this.data[k]._date === message.data.date) {
@@ -848,9 +867,9 @@ export class DataProvider {
     }
   }
 
-  calculateIndicatorInputs(data, _onCalculatedIndicatorInputs) {
+  optimizeIndicatorParams(data, _onCalculatedIndicatorInputs) {
     this._onCalculatedIndicatorInputs = _onCalculatedIndicatorInputs;
-    data.type = "calculate_indicator_inputs";
+    data.type = "optimize_indicator_params";
     this.ws.sendMessage(JSON.stringify([data]));
   }
 

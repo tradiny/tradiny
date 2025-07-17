@@ -11,6 +11,7 @@
 # For full details, see the LICENSE.md file in the root directory of this project.
 
 import threading
+from multiprocessing import Manager
 
 import db
 from config import Config
@@ -19,8 +20,11 @@ from .fetcher import BlockingFetcher
 
 dbconn = db.create_connection(Config.DB)
 
-historical_data_cache = {}
+_manager = Manager()
+historical_data_cache = _manager.dict()
+
 last_update = {}
+last_date = {}
 
 providers = {}
 clients = {}
@@ -30,4 +34,7 @@ lock = threading.Lock()
 startup_actions = []
 periodic_tasks = []
 
-indicator_fetcher = BlockingFetcher(int(Config.INDICATOR_WORKERS))
+indicator_fetcher = BlockingFetcher(
+    int(Config.INDICATOR_WORKERS),
+    shared_cache=historical_data_cache,
+)

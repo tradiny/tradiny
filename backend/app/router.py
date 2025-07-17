@@ -40,7 +40,9 @@ from .globals import dbconn, providers, indicator_fetcher
 from .handlers import (
     send_historical_data,
     send_indicator_data,
-    calculate_indicator_inputs,
+    optimize_indicator_params,
+    _do_indicator,
+    _do_optimize_indicator_params,
 )
 
 
@@ -252,9 +254,10 @@ async def process_message(
             else:
                 message_type = "indicator_history"
 
-            m = await indicator_fetcher.fetch(
-                send_indicator_data,
-                (
+            asyncio.create_task(
+                _do_indicator(
+                    websocket,
+                    indicator_fetcher,
                     message_type,
                     d.get("id"),
                     d.get("indicator"),
@@ -262,18 +265,19 @@ async def process_message(
                     d.get("dataMap"),
                     d.get("range", None),
                     d.get("count", 300),
-                ),
+                )
             )
-            await safe_send_message(websocket, m)
 
-        elif d.get("type") == "calculate_indicator_inputs":
+        elif d.get("type") == "optimize_indicator_params":
             dm = d.get("dataMap")
             dm_first = dm[next(iter(dm.keys()))]
 
-            m = await indicator_fetcher.fetch(
-                calculate_indicator_inputs,
-                (
+            asyncio.create_task(
+                _do_optimize_indicator_params(
+                    websocket,
+                    indicator_fetcher,
                     d.get("strategy"),
+                    d.get("strategySettings"),
                     dm_first["source"],
                     dm_first["name"],
                     dm_first["interval"],
@@ -281,9 +285,8 @@ async def process_message(
                     d.get("dataMap"),
                     d.get("history", 300),
                     d.get("dataProviderConfig"),
-                ),
+                )
             )
-            await safe_send_message(websocket, m)
 
         elif d.get("type") == "alert":
 

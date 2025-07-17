@@ -74,7 +74,7 @@ class ICHIMOKU(Indicator):
         tenkan_sen = df.columns[-3]
         kijun_sen = df.columns[-2]
         chikou_span = df.columns[-1]
-        df.dropna()
+        # df.dropna()
         # help(df.ta)
 
         return [

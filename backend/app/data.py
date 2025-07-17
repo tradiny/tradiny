@@ -28,6 +28,8 @@ def merge_data(source, name, interval, cached_data, new_klines):
     if len(new_klines) == 0:
         return  # nothing to update
 
+    cache_key = (source, name, interval)
+
     new_df = pd.DataFrame(new_klines)
     new_df.columns = list(new_klines[0].keys())
     new_df.date = pd.to_datetime(new_df.date)
@@ -44,6 +46,8 @@ def merge_data(source, name, interval, cached_data, new_klines):
         if not cached_df.empty and cached_df.index[-1] == new_df.index[-1]:
             cached_df.iloc[-1] = new_df.iloc[-1]
             cached_data["cached_df"] = cached_df
+
+            historical_data_cache[cache_key] = cached_data
             return
 
     # Concatenate cached_df and new_df and then drop duplicates, keeping the latest entry
@@ -52,11 +56,11 @@ def merge_data(source, name, interval, cached_data, new_klines):
     merged_df.sort_index(inplace=True)
 
     # Update the cached data with the merged DataFrame
-
-    cache_key = (source, name, interval)
     if cache_key not in historical_data_cache:
-        historical_data_cache[cache_key] = {
+        cached_data = {
             "cached_df": pd.DataFrame(),
             "last_fetched_time": datetime.now(timezone.utc),
         }
-    historical_data_cache[cache_key]["cached_df"] = merged_df
+
+    cached_data["cached_df"] = merged_df
+    historical_data_cache[cache_key] = cached_data

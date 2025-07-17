@@ -22,11 +22,18 @@ class RSI(Indicator):
     id = "indicators.pandas_ta.momentum.rsi.RSI"
     name = "Relative Strength Index (RSI)"
     categories = ["Momentum"]
-    backtest_strategies = [
+
+    optimization_strategies = [
         {
             "strategy": "oscillator",
-            "title": "Oscillator; buy < 30, sell > 70",
-            "settings": {},
+            "title": "Oscillator; LONG/BUY < oversold, SHORT/SELL > overbought",
+            "settings": {
+                "output": "RSI",
+                "oversold": 30,
+                "overbought": 70,
+                "max_drawdown_atr": 1,
+                "max_drawdown_atr_length": 24,
+            },
         }
     ]
 

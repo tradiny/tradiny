@@ -25,6 +25,7 @@ class OscillatorFitness:
 
     def __init__(
         self,
+        settings,
         source,
         name,
         interval,
@@ -34,6 +35,7 @@ class OscillatorFitness:
         history,
         ws,
     ):
+        self.settings = settings
         self.source = source
         self.name = name
         self.interval = interval
@@ -99,14 +101,22 @@ class OscillatorFitness:
         df_data.sort_values(by="date", inplace=True)
 
         df_data["ATR"] = ta.atr(
-            df_data[high_key], df_data[low_key], df_data[close_key], length=24
+            df_data[high_key],
+            df_data[low_key],
+            df_data[close_key],
+            length=int(self.settings["max_drawdown_atr_length"]),
         )
 
-        first_output = ""
+        selected_output = ""
         for i, output in enumerate(self.genetic_indicator.outputs):
             first_output = output["name"]
+            selected_output = first_output
+        for i, output in enumerate(self.genetic_indicator.outputs):
+            if output["name"] == self.settings["output"]:
+                selected_output = output["name"]
+                break
         indicator_id = self.indicator["id"]
-        indicator_key = f"{indicator_id}-{first_output}"
+        indicator_key = f"{indicator_id}-{selected_output}"
 
         def fitness_func(pygad_instance, solution, solution_idx):
             if not data:
@@ -143,10 +153,10 @@ class OscillatorFitness:
         return fitness_func
 
     def simulate_trading(self, df, close_key, indicator_key):
-
-        holding = False
-        entry_price = 0
-        fitness = 0
+        # 0 = flat,  1 = long,  -1 = short
+        position = 0
+        entry_price = 0.0
+        fitness = 0.0
         trades_count = 0
 
         for _, row in df.iterrows():
@@ -154,25 +164,56 @@ class OscillatorFitness:
             indicator_value = row.get(indicator_key)
             atr_value = row["ATR"]
 
-            # Check buy/sell conditions
-            if indicator_value is not None:
-                if not holding and indicator_value > 70:
-                    holding = True
-                    entry_price = close_price
-                    trades_count += 1
+            if indicator_value is None:
+                continue
 
-                elif holding:
-                    # Calculate drawdown based on entry price as a monetary difference
-                    drawdown = close_price - entry_price
-                    max_drawdown_value = -atr_value  # Using ATR as the threshold
+            # ---------------- LONG ENTRY ----------------
+            if position == 0 and indicator_value > int(self.settings["overbought"]):
+                position = 1
+                entry_price = close_price
+                trades_count += 1
+                continue  # nothing else to do this bar
 
-                    # Execute sell on either indicator condition or drawdown condition
-                    if indicator_value < 30 or drawdown < max_drawdown_value:
-                        holding = False
-                        profit_loss = close_price - entry_price
-                        fitness += profit_loss
+            # ---------------- SHORT ENTRY ----------------
+            if position == 0 and indicator_value < int(self.settings["oversold"]):
+                position = -1
+                entry_price = close_price
+                trades_count += 1
+                continue
+
+            # ---------------- EXIT / REVERSAL ------------
+            if position != 0:
+                drawdown = (close_price - entry_price) * position  # sign-aware P/L
+                stop_threshold = -atr_value * int(self.settings["max_drawdown_atr"])
+
+                # close or reverse
+                exit_signal = (
+                    (position == 1 and indicator_value < int(self.settings["oversold"]))
+                    or (
+                        position == -1
+                        and indicator_value > int(self.settings["overbought"])
+                    )
+                    or (drawdown < stop_threshold)
+                )
+
+                if exit_signal:
+                    profit_loss = (close_price - entry_price) * position
+                    fitness += profit_loss
+                    position = 0  # flat for now
+
+                    # immediately reverse when indicator crosses opposite zone
+                    if indicator_value < int(self.settings["oversold"]):
+                        position = -1
+                        entry_price = close_price
                         trades_count += 1
+                    elif indicator_value > int(self.settings["overbought"]):
+                        position = 1
+                        entry_price = close_price
+                        trades_count += 1
+                    else:
+                        trades_count += 1  # plain exit
 
+        # penalise if we never managed to close at least one pos-pair
         if trades_count <= 1:
             return -sys.float_info.max
 

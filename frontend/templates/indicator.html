@@ -1,8 +1,8 @@
 <div class="add">
     <div class="tab">
         <button class="tablinks active" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-settings')">{%=o.title%}</button>
-        {% if (o.indicator.details.backtest_strategies) { %}
-        <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-backtest')">Backtest</button>
+        {% if (o.indicator.details.optimization_strategies) { %}
+        <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-optimization');{%=o.self.id%}.DOMHandler.controls.optimizationEvents()">Optimization</button>
         {% } %}
         <button class="tablinks" onclick="{%=o.self.id%}.renderer.openTab(event, 'tab-styles')">Styles</button>
     </div>
@@ -79,21 +79,25 @@
             <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.addIndicator()" value="Submit">
         </div>
     </div>
-    {% if (o.indicator.details.backtest_strategies) { %}
-    <div class="tab-backtest tabcontent">
+    {% if (o.indicator.details.optimization_strategies) { %}
+    <div class="tab-optimization tabcontent">
+        <div>
+            <p class="info" style="margin-top:0">Genetic-algorithm optimization of the indicator parameters on historical data.</p>
+        </div>
         <div>
             <div class="input-group">
                 <label for="">Strategy</label>
                 <select class="strategy-list">
-                    {% for (var i=0; i<o.indicator.details.backtest_strategies.length; i++) { %}
-                    <option value="{%=o.indicator.details.backtest_strategies[i].strategy%}">{%=o.indicator.details.backtest_strategies[i].title%}</option>
+                    {% for (var i=0; i<o.indicator.details.optimization_strategies.length; i++) { %}
+                    <option value="{%=o.indicator.details.optimization_strategies[i].strategy%}">{%=o.indicator.details.optimization_strategies[i].title%}</option>
                     {% } %}
                 </select>
             </div>
+            <div class="strategy-settings"></div>
             <div class="strategy-result"></div>
         </div>
         <div class="strategy-submit">
-            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.backtestIndicator()" value="Submit">
+            <input type="button" onclick="{%=o.self.id%}.DOMHandler.controls.optimizeIndicator()" value="Submit">
         </div>
     </div>
     {% } %}

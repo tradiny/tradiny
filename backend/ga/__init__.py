@@ -21,7 +21,7 @@ from app.fetcher import BlockingFetcher
 
 from ga.gene import Gene
 from ga.genetic_indicator import GeneticIndicatorFactory
-from ga.fitness import OscillatorFitness
+from ga.fitness.oscillator import OscillatorFitness
 
 
 class GA:
@@ -110,7 +110,9 @@ class GA:
         self.ga_instance.run()
 
 
-def calculate(strategy, source, name, interval, indicator, data_map, history, ws_url):
+def calculate(
+    strategy, settings, source, name, interval, indicator, data_map, history, ws_url
+):
     num_generations = 50
     sol_per_pop = 4
     mutation_num_genes = 1
@@ -139,7 +141,15 @@ def calculate(strategy, source, name, interval, indicator, data_map, history, ws
 
     if strategy == "oscillator":
         fitness = OscillatorFitness(
-            source, name, interval, genetic_indicator, indicator, data_map, history, ws
+            settings,
+            source,
+            name,
+            interval,
+            genetic_indicator,
+            indicator,
+            data_map,
+            history,
+            ws,
         )
     else:
         return None

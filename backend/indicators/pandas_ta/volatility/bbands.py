@@ -39,6 +39,21 @@ class BBANDS(Indicator):
         "zlma",
     ]
 
+    # TODO
+    # optimization_strategies = [
+    #     {
+    #         "strategy": "band_mean",
+    #         "title": "Band mean-reversion; LONG near lower, SHORT near upper",
+    #         "settings": {
+    #             "upper_band_output": "BBANDS Upper",
+    #             "lower_band_output": "BBANDS Lower",
+    #             "band_width_proximity_percent": 5,
+    #             "max_drawdown_atr": 1,
+    #             "max_drawdown_atr_length": 24
+    #         },
+    #     }
+    # ]
+
     columns = ["close"]
 
     inputs = [
@@ -48,23 +63,23 @@ class BBANDS(Indicator):
     ]
     outputs = [
         {
-            "name": "Bollinger Bands (BBANDS) Lower",
+            "name": "BBANDS Lower",
             "y_axis": "price",
         },
         {
-            "name": "Bollinger Bands (BBANDS) Mid",
+            "name": "BBANDS Mid",
             "y_axis": "price",
         },
         {
-            "name": "Bollinger Bands (BBANDS) Upper",
+            "name": "BBANDS Upper",
             "y_axis": "price",
         },
         {
-            "name": "Bollinger Bands (BBANDS) Bandwidth",
+            "name": "BBANDS Bandwidth",
             "y_axis": "bbands_bandwidth",
         },
         {
-            "name": "Bollinger Bands (BBANDS) Percent",
+            "name": "BBANDS Percent",
             "y_axis": "bbands_percent",
         },
     ]

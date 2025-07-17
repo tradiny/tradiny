@@ -44,16 +44,17 @@ For more details, refer to the LICENSE file in the root directory of this projec
       const url = `${window.location.hostname}:8000`,
         source = "Binance",
         name = "BTCUSDT",
-        interval = "5m",
+        interval = "15m",
         bullishColor = "#8be04eff",
-        bearishColor = "#ea5545ff";
+        bearishColor = "#ea5545ff",
+        count = 5400;
 
       TradinyChart.initialize({
         elementId: "chart",
         grid: "1x1",
         size: "small",
         theme: "dark",
-        type: "svg",
+        // type: "svg",
         charts: [
           {
             dataProvider: {
@@ -64,12 +65,12 @@ For more details, refer to the LICENSE file in the root directory of this projec
                   source: source,
                   name: name,
                   interval: interval,
-                  count: 300,
+                  count: count,
                 },
                 {
-                  count: 300,
+                  count: count,
                   type: "indicator",
-                  id: "indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-5m-close",
+                  id: `indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-${interval}-close`,
                   indicator: {
                     id: "indicators.pandas_ta.overlap.ema.EMA",
                     name: "Exponential Moving Average",
@@ -87,14 +88,13 @@ For more details, refer to the LICENSE file in the root directory of this projec
                     close: {
                       source: "Binance",
                       name: "BTCUSDT",
-                      interval: "5m",
-                      value: "Binance-BTCUSDT-5m-close",
+                      interval: interval,
+                      value: `Binance-BTCUSDT-${interval}-close`,
                       dataKey: "close",
                     },
                   },
                   render: {
-                    indicatorId:
-                      "indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-5m-close",
+                    indicatorId: `indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-${interval}-close`,
                     indicator: {
                       id: "indicators.pandas_ta.overlap.ema.EMA",
                       name: "Exponential Moving Average",
@@ -109,14 +109,14 @@ For more details, refer to the LICENSE file in the root directory of this projec
                     },
                     inputs: { length: "50" },
                     paneIdx: 0,
-                    axesMap: { price: "Binance-BTCUSDT-5m-price" },
+                    axesMap: { price: `Binance-BTCUSDT-${interval}-price` },
                     scalesMap: { price: "linear" },
                     colorMap: { EMA: "#e60049" },
                   },
                 },
               ],
             },
-            visiblePoints: 250,
+            visiblePoints: 300,
             gridPosition: "1x1",
             panes: [
               {
@@ -218,7 +218,7 @@ For more details, refer to the LICENSE file in the root directory of this projec
                     ],
                     dataKeys: [
                       {
-                        dataKey: `indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-5m-close-EMA`,
+                        dataKey: `indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-${interval}-close-EMA`,
                         yAxis: `${source}-${name}-${interval}-price`,
                       },
                     ],

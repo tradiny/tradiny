@@ -73,11 +73,18 @@ def populate_database(database_path):
                 ],
                 "outputs": [{**i} for i in indicator["klass"].outputs],
             }
-            if hasattr(indicator["klass"], "backtest_strategies"):
-                d["backtest_strategies"] = indicator["klass"].backtest_strategies
+            if hasattr(indicator["klass"], "optimization_strategies"):
+                d["optimization_strategies"] = indicator[
+                    "klass"
+                ].optimization_strategies
 
             if hasattr(indicator["klass"], "mamode"):
                 d["mamode"] = indicator["klass"].mamode
+
+            if hasattr(indicator["klass"], "update_on"):
+                d["update_on"] = indicator["klass"].update_on
+
+            print(d)
 
             data_entity = {
                 "id": indicator["path"],

@@ -211,7 +211,7 @@ export class DataHandler {
   }
 
   onData(dataKeys, addedFromLeft, addedFromRight, shift, newKeys = false) {
-    // console.log(`updated keys ${JSON.stringify(dataKeys)}, added from left ${addedFromLeft}, shift=${shift}`)
+    // console.log(`updated keys ${JSON.stringify(dataKeys)}, added from left ${addedFromLeft}, added from right ${addedFromRight}, shift=${shift}`)
 
     const currentDomain = this.chart.xScale.domain();
     if (addedFromRight === 1) {
