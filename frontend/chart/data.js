@@ -226,7 +226,7 @@ export class DataHandler {
         currentDomain[0] + shift,
         currentDomain[1] + shift,
       ]);
-      this.chart.drawingHandler.shift(shift);
+      // this.chart.drawingHandler.shift(shift); TODO check if needed
     }
 
     if (

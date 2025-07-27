@@ -63,6 +63,10 @@ export class DataProvider {
     }
   }
 
+  prepareAnnotations(annotations) {
+    this.chart.drawingData = this.chart.saveHandler.unserializeDrawing(annotations)
+  }
+
   prepareData(data) {
     let newIndexesAdded = 0;
     let shift = 0;
@@ -515,6 +519,9 @@ export class DataProvider {
 
         case "indicator_init":
           obj = this.prepareData(message.data);
+          if (message.annotations) {
+            this.prepareAnnotations(message.annotations);
+          }
           cbKey = `${message["id"]}`;
 
           if (this._onIndicatorData[cbKey]) {

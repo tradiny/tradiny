@@ -581,6 +581,7 @@ export class OperationsHandler {
           ? indicator.details.outputs[j].render.color
           : null;
       const color = staticColor || colorMap[dataKey];
+      const showStaticLegend = indicator.details.outputs[j].render.hasOwnProperty("legend")
 
       if (axis === "New right axis" || axis === "New left axis") {
         const scale = scalesMap[axisKey];
@@ -607,6 +608,8 @@ export class OperationsHandler {
 
       if (axis !== "Disable") {
         const baseKey = `${indicatorId}-${dataKey}`;
+
+
         let first = undefined;
         for (let k = 0; k < newKeys.length; k++) {
           const dk = newKeys[k];
@@ -615,11 +618,22 @@ export class OperationsHandler {
             continue;
           }
           if (!first) {
-            legend.push({
-              icon: this.chart.DOMHandler.icon.getIcon("line"),
-              label: `${indicator.details.categories[0]} / ${indicator.name} ${dataKey} ${inputText}`,
-              color: color,
-            });
+            if (showStaticLegend) {
+              if (indicator.details.outputs[j].render.legend) {
+                legend.push({
+                  icon: this.chart.DOMHandler.icon.getIcon("line"),
+                  label: indicator.details.outputs[j].render.legend,
+                  color: color,
+                });
+              }
+            } else {
+
+              legend.push({
+                icon: this.chart.DOMHandler.icon.getIcon("line"),
+                label: `${indicator.details.categories[0]} / ${indicator.name} ${dataKey} ${inputText}`,
+                color: color,
+              });
+            }
             first = true;
           }
           const m = {

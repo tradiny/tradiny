@@ -39,7 +39,6 @@ from .connection import safe_send_message, conn
 from .globals import dbconn, providers, indicator_fetcher
 from .handlers import (
     send_historical_data,
-    send_indicator_data,
     optimize_indicator_params,
     _do_indicator,
     _do_optimize_indicator_params,

@@ -22,6 +22,7 @@ dbconn = db.create_connection(Config.DB)
 
 _manager = Manager()
 historical_data_cache = _manager.dict()
+indicator_cache = _manager.dict()
 
 last_update = {}
 last_date = {}
