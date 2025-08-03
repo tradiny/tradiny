@@ -37,6 +37,8 @@ export class DataProvider {
     this.interval = null;
     this.subscription = null;
     this.disable = false;
+    this._indicatorsOnDataInitAdded = false;
+    this.indicatorsToAddOnDataInit = [];
 
     if (config && config.data) {
       // extract interval
@@ -243,7 +245,10 @@ export class DataProvider {
       result = numerator / denominator / Math.pow(10, -exponentDiff);
     }
 
-    return result;
+    /* --- trim IEEE-754 noise ---------------------------------- */
+    // IEEE-754 double precision keeps ~15-17 significant figures.
+    // Using toPrecision removes the trailing 1 (or 9) artefacts.
+    return +result.toPrecision(15);
   }
 
   preciseMultiply(a, b) {
@@ -444,13 +449,38 @@ export class DataProvider {
     this.ws.sendMessage(JSON.stringify([d]));
   }
 
+  addIndicatorsOnDataInit() {
+    for (let i = 0; i < this.indicatorsToAddOnDataInit.length; i++) {
+      const item = this.indicatorsToAddOnDataInit[i]
+      this.chart.operationsHandler.addIndicator(
+        item.indicator,
+        item.render.paneIdx,
+        item.inputs,
+        item.render.axesMap,
+        item.render.scalesMap,
+        item.dataMap,
+        item.render.colorMap
+      );
+    }
+  }
+
   initServerConnection() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
     this.ws = new WebSocketManager(this.config.full_url, () => {
       console.log("WebSocket connection established");
       this.connected();
-      this.ws.sendMessage(JSON.stringify(this.config.data));
+      const datas = [];
+      for (let i = 0; i < this.config.data.length; i++) {
+        const item = this.config.data[i];
+        if (item.type === "data") {
+          datas.push(item);
+        }
+
+        if (item.type === "indicator") {
+          this.indicatorsToAddOnDataInit.push(item)
+        }
+      }
+      this.ws.sendMessage(JSON.stringify(datas));
     });
 
     this.ws.onMessage((message) => {
@@ -630,6 +660,12 @@ export class DataProvider {
               );
             }
           }
+
+          if (!this._indicatorsOnDataInitAdded) {
+            this._indicatorsOnDataInitAdded = true;
+            this.addIndicatorsOnDataInit();
+          }
+
           break;
 
         case "data_update":

@@ -437,6 +437,7 @@ export class DOMHandler {
                     datapoint = dp[key.dataKey];
                     if (datapoint) break;
                   }
+                  // console.log(datapointBeforeDivision, datapoint)
 
                   const last300Points = this.chart.dataProvider.data.slice(
                     Math.max(this.chart.dataProvider.data.length - 300, 0),
@@ -482,6 +483,7 @@ export class DOMHandler {
                     !this.chart.yAxesPrecision[axis.key] ||
                     this.chart.yAxesPrecision[axis.key] < p
                   ) {
+                    // console.log(axis.key, p, datapoint, key.dataKey)
                     this.chart.yAxesPrecision[axis.key] = p;
                   }
 

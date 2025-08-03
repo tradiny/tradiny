@@ -581,7 +581,7 @@ export class OperationsHandler {
           ? indicator.details.outputs[j].render.color
           : null;
       const color = staticColor || colorMap[dataKey];
-      const showStaticLegend = indicator.details.outputs[j].render.hasOwnProperty("legend")
+      const showStaticLegend = indicator.details.outputs[j].render ? indicator.details.outputs[j].render.hasOwnProperty("legend") : false
 
       if (axis === "New right axis" || axis === "New left axis") {
         const scale = scalesMap[axisKey];

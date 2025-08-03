@@ -84,8 +84,6 @@ def populate_database(database_path):
             if hasattr(indicator["klass"], "update_on"):
                 d["update_on"] = indicator["klass"].update_on
 
-            print(d)
-
             data_entity = {
                 "id": indicator["path"],
                 "name": indicator["name"],

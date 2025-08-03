@@ -212,7 +212,6 @@ export class DataHandler {
 
   onData(dataKeys, addedFromLeft, addedFromRight, shift, newKeys = false) {
     // console.log(`updated keys ${JSON.stringify(dataKeys)}, added from left ${addedFromLeft}, added from right ${addedFromRight}, shift=${shift}`)
-
     const currentDomain = this.chart.xScale.domain();
     if (addedFromRight === 1) {
       // maintain the position of last data point on screen (shift=1) if the last data point is visible
@@ -226,7 +225,7 @@ export class DataHandler {
         currentDomain[0] + shift,
         currentDomain[1] + shift,
       ]);
-      // this.chart.drawingHandler.shift(shift); TODO check if needed
+      this.chart.drawingHandler.shift(shift);// TODO check if needed
     }
 
     if (

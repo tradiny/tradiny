@@ -188,7 +188,8 @@ export default class TradinyChart {
       this.DOMHandler.controls.defaultAddIndicator(
         indicator,
         indicator_params,
-        () => {
+        (newKeys) => {
+          this.operationsHandler.onIndicatorData(indicator.render, newKeys);
           resolve();
         },
       );

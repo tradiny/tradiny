@@ -206,24 +206,7 @@ For more details, refer to the LICENSE file in the root directory of this projec
                       open: `${source}-${name}-${interval}-open`,
                       close: `${source}-${name}-${interval}-close`,
                     },
-                  },
-                  {
-                    type: "line",
-                    legend: [
-                      {
-                        icon: "&nbsp;",
-                        label: `EMA length=50`,
-                        color: "#e60049",
-                      },
-                    ],
-                    dataKeys: [
-                      {
-                        dataKey: `indicators-pandas_ta-overlap-ema-EMA_length-50_close-Binance-BTCUSDT-${interval}-close-EMA`,
-                        yAxis: `${source}-${name}-${interval}-price`,
-                      },
-                    ],
-                    color: "#e60049",
-                  },
+                  }
                 ],
               },
             ],
