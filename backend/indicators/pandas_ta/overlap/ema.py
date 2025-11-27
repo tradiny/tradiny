@@ -21,6 +21,21 @@ class EMA(Indicator):
     name = "Exponential Moving Average (EMA)"
     categories = ["Overlap"]
 
+    # TODO
+    # optimization_strategies = [
+    #     {
+    #         "strategy": "bounce",
+    #         "title": "Zig-zag bounces",
+    #         "settings": {
+    #             "output": "EMA",
+    #             "extreme_proximity_percent": 1,
+    #             "must_break_previous_extreme": 0,
+    #             "zig_zag_depth": 10,
+    #             "zig_zag_dev_threshold": 0.5
+    #         },
+    #     }
+    # ]
+
     columns = ["close"]
 
     inputs = [{"name": "length", "space": list(range(2, 300)), "default": [10]}]

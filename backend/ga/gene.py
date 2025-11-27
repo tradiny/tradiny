@@ -10,32 +10,18 @@
 #
 # For full details, see the LICENSE.md file in the root directory of this project.
 
-import threading
-from multiprocessing import Manager
 
-import db
-from config import Config
+class Gene:
+    def __init__(self, name=None, initial_population=None, gene_space=None):
+        if name is None:
+            raise NotImplementedError
 
-from .fetcher import BlockingFetcher
+        if initial_population is None:
+            raise NotImplementedError
 
-dbconn = db.create_connection(Config.DB)
+        if gene_space is None:
+            raise NotImplementedError
 
-_manager = Manager()
-historical_data_cache = _manager.dict()
-indicator_cache = _manager.dict()
-
-last_update = {}
-last_date = {}
-
-providers = {}
-clients = {}
-
-lock = threading.Lock()
-
-startup_actions = []
-periodic_tasks = []
-
-indicator_fetcher = BlockingFetcher(
-    int(Config.INDICATOR_WORKERS),
-    shared_cache=historical_data_cache,
-)
+        self.name = name
+        self.initial_population = initial_population
+        self.gene_space = gene_space

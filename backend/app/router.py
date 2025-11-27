@@ -37,7 +37,12 @@ from security import register_request, is_request_allowed, is_ip_address_whiteli
 
 from .connection import safe_send_message, conn
 from .globals import dbconn, providers, indicator_fetcher
-from .handlers import send_historical_data, send_indicator_data
+from .handlers import (
+    send_historical_data,
+    optimize_indicator_params,
+    _do_indicator,
+    _do_optimize_indicator_params,
+)
 
 
 websocket_router = APIRouter()
@@ -108,6 +113,7 @@ async def websocket_endpoint(
         pass
     except Exception as e:
         logging.error(f"WebSocket error: {e}")
+        raise e
     finally:
         if client_ip in ip_conns:
             ip_conns[client_ip] -= 1
@@ -247,9 +253,10 @@ async def process_message(
             else:
                 message_type = "indicator_history"
 
-            m = await indicator_fetcher.fetch(
-                send_indicator_data,
-                (
+            asyncio.create_task(
+                _do_indicator(
+                    websocket,
+                    indicator_fetcher,
                     message_type,
                     d.get("id"),
                     d.get("indicator"),
@@ -257,9 +264,28 @@ async def process_message(
                     d.get("dataMap"),
                     d.get("range", None),
                     d.get("count", 300),
-                ),
+                )
             )
-            await safe_send_message(websocket, m)
+
+        elif d.get("type") == "optimize_indicator_params":
+            dm = d.get("dataMap")
+            dm_first = dm[next(iter(dm.keys()))]
+
+            asyncio.create_task(
+                _do_optimize_indicator_params(
+                    websocket,
+                    indicator_fetcher,
+                    d.get("strategy"),
+                    d.get("strategySettings"),
+                    dm_first["source"],
+                    dm_first["name"],
+                    dm_first["interval"],
+                    d.get("indicator"),
+                    d.get("dataMap"),
+                    d.get("history", 300),
+                    d.get("dataProviderConfig"),
+                )
+            )
 
         elif d.get("type") == "alert":
 
@@ -339,7 +365,7 @@ async def process_message(
                 """,
                 f"""{prompt}""",
                 img,
-                model="gpt-4o",
+                model="gpt-5.1",
                 max_tokens=1000,
                 on_chunk=send_message_in_parts(websocket),
             )
@@ -353,7 +379,7 @@ async def process_message(
                 client_ip,
                 conversation_id,
                 f"""{prompt}""",
-                model="gpt-4o",
+                model="gpt-5.1",
                 max_tokens=1000,
                 on_chunk=send_message_in_parts(websocket),
             )

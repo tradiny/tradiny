@@ -47,6 +47,27 @@ export class DrawingHandler {
     this.activeTool = null;
     this.lineId = 0;
 
+    // NEW: track when fonts are loaded to avoid label snap
+    this.fontsLoaded = !(
+      document.fonts &&
+      document.fonts.status &&
+      document.fonts.status !== "loaded"
+    );
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        this.fontsLoaded = true;
+        // Redraw all panes once to render labels with correct metrics
+        if (this.chart && this.chart.panes) {
+          for (let pi = 0; pi < this.chart.panes.length; pi++) {
+            if (this.chart.drawingCanvases && this.chart.drawingCanvases[pi]) {
+              this._redraw(pi, null);
+            }
+          }
+        }
+      });
+    }
+
     this.renderLine = d3
       .line()
       .x((d) => {
@@ -265,6 +286,11 @@ export class DrawingHandler {
       .attr("fill", "none")
       .attr("pointer-events", "all")
       .style("touch-action", "none");
+
+    // Ensure an initial redraw after fonts load so label bboxes are correct
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => this._redraw(i, null));
+    }
   }
 
   disableInteractions(i) {
@@ -885,7 +911,7 @@ export class DrawingHandler {
 
     allLineRects.exit().remove();
 
-    // Label handling (existing code)
+    // Label handling (updated ordering)
     const labelData = this.chart.drawingData[i].lines.flatMap((d) => {
       d.labels.forEach((label, index) => {
         label.line = d;
@@ -903,8 +929,8 @@ export class DrawingHandler {
     labelEnter
       .append("rect")
       .attr("class", "label-bg")
-      .attr("rx", 1) // Rounded corners, optional
-      .attr("ry", 1); // Rounded corners, optional
+      .attr("rx", 1)
+      .attr("ry", 1);
 
     labelEnter
       .append("text")
@@ -926,13 +952,16 @@ export class DrawingHandler {
 
     const labelsMerge = labels.merge(labelEnter);
 
-    const ls = labelsMerge.select(".label");
+    // 1) Update text content first so getBBox measures the correct glyphs
+    const ls = labelsMerge.select(".label").text((d) => d.text(d));
 
+    // 2) Then measure bbox after text is in the DOM with correct styles
     ls.each(function (d) {
       const bbox = this.getBBox();
       d.bbox = { width: bbox.width, height: bbox.height };
     });
 
+    // 3) Now position background and text using the freshly measured bbox
     labelsMerge
       .select(".label-bg")
       .attr("x", (d) => x(d.coordinates(d)[0]) - 2)
@@ -940,11 +969,10 @@ export class DrawingHandler {
       .attr("width", (d) => d.bbox.width + 4)
       .attr("height", (d) => d.bbox.height + 4);
 
-    ls.text((d) => d.text(d))
-      .attr("x", (d) => x(d.coordinates(d)[0]))
+    ls.attr("x", (d) => x(d.coordinates(d)[0]))
       .attr("y", (d) => y(d.coordinates(d)[1]))
       .each(function () {
-        d3.select(this).raise(); // Bring the box to the front during redraw
+        d3.select(this).raise();
       });
 
     labels.exit().remove();

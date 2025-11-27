@@ -50,6 +50,10 @@ export class InteractionHandler {
     this.chart.svgMultiSeries[i].mapping(this.seriesMapping(i));
 
     var chartEl = this.chart.d3ChartEls[i];
+    console.assert(
+      Array.isArray(this.chart.dataProvider.data),
+      "Expected plain array for bar-series",
+    );
     var updateSelection = chartEl.datum(this.chart.dataProvider.data);
     var enterSelection = updateSelection.enter().append("g"); // Adjust tag as necessary
     enterSelection.call(this.chart.fcCharts[i]);
@@ -327,11 +331,13 @@ export class InteractionHandler {
 
   seriesMapping(i) {
     return (data, index, series) => {
-      if (index === 0) {
-        // gridline
+      if (
+        this.chart.enableGridLines &&
+        series[index] === this.chart.gridlines[i]
+      ) {
         return data[index];
       }
-      if (index === 1) {
+      if (series[index] === this.chart.crosshairs[i]) {
         // crosshair
         if (!this.chart.mousePosition || !this.chart.mousePosition.position) {
           return [{ x: -5, y: -5 }]; // hide because mouse is outside
@@ -342,8 +348,7 @@ export class InteractionHandler {
           return [{ x: this.chart.mousePosition.position.x, y: -5 }];
         }
       }
-
-      return data[index]; // default
+      return data;
     };
   }
 

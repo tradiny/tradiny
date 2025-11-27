@@ -37,6 +37,8 @@ export class DataProvider {
     this.interval = null;
     this.subscription = null;
     this.disable = false;
+    this._indicatorsOnDataInitAdded = false;
+    this.indicatorsToAddOnDataInit = [];
 
     if (config && config.data) {
       // extract interval
@@ -61,6 +63,11 @@ export class DataProvider {
       this.config.full_url = `${protocol}//${config.url}/websocket/`;
       this.initServerConnection();
     }
+  }
+
+  prepareAnnotations(annotations) {
+    this.chart.drawingData =
+      this.chart.saveHandler.unserializeDrawing(annotations);
   }
 
   prepareData(data) {
@@ -165,7 +172,7 @@ export class DataProvider {
     this.data = mergedData;
     this.dateToIndexMap = newDateToIndexMap;
 
-    return { data: this.data, newIndexesAdded, shift, keysUpdated };
+    return { data: this.data, newIndexesAdded, shift, keysUpdated, newKeys };
   }
 
   revertDivision(datapoint, keys, copyData = true) {
@@ -239,7 +246,10 @@ export class DataProvider {
       result = numerator / denominator / Math.pow(10, -exponentDiff);
     }
 
-    return result;
+    /* --- trim IEEE-754 noise ---------------------------------- */
+    // IEEE-754 double precision keeps ~15-17 significant figures.
+    // Using toPrecision removes the trailing 1 (or 9) artefacts.
+    return +result.toPrecision(15);
   }
 
   preciseMultiply(a, b) {
@@ -291,6 +301,16 @@ export class DataProvider {
     return resultStr.replace(/\.?0+$/, "");
   }
 
+  setKeysToAxisBasedOnIndicatorSettings(options) {
+    const indicatorId = options.indicatorId;
+    const indicator = options.indicator;
+    for (let j = 0; j < indicator.details.outputs.length; j++) {
+      const dataKey = indicator.details.outputs[j].name;
+      const baseKey = `${indicatorId}-${dataKey}`;
+      this.keyToAxis[baseKey] = indicator.details.outputs[j].y_axis;
+    }
+  }
+
   setDividers(data) {
     // To prevent display errors at high values, we must account for the 16-bit unsigned integer limit of 65,535.
     // Values exceeding this limit, such as 65,536, wrap around to 0.
@@ -322,7 +342,16 @@ export class DataProvider {
       }
 
       // Determine the divider based on the maximum value found
-      const axis = this.keyToAxis[key];
+      // const axis = this.keyToAxis[key];
+
+      // Iterate over the configured keys and pick the first one that
+      // is a prefix of the incoming `key`.
+      const matchedKey = Object.keys(this.keyToAxis).find((mappingKey) =>
+        key.startsWith(mappingKey),
+      );
+
+      const axis = matchedKey ? this.keyToAxis[matchedKey] : undefined;
+
       if (axis) {
         if (this.dividersPerAxis[axis]) {
           this.dividers[key] = this.dividersPerAxis[axis];
@@ -421,13 +450,38 @@ export class DataProvider {
     this.ws.sendMessage(JSON.stringify([d]));
   }
 
+  addIndicatorsOnDataInit() {
+    for (let i = 0; i < this.indicatorsToAddOnDataInit.length; i++) {
+      const item = this.indicatorsToAddOnDataInit[i];
+      this.chart.operationsHandler.addIndicator(
+        item.indicator,
+        item.render.paneIdx,
+        item.inputs,
+        item.render.axesMap,
+        item.render.scalesMap,
+        item.dataMap,
+        item.render.colorMap,
+      );
+    }
+  }
+
   initServerConnection() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
     this.ws = new WebSocketManager(this.config.full_url, () => {
       console.log("WebSocket connection established");
       this.connected();
-      this.ws.sendMessage(JSON.stringify(this.config.data));
+      const datas = [];
+      for (let i = 0; i < this.config.data.length; i++) {
+        const item = this.config.data[i];
+        if (item.type === "data") {
+          datas.push(item);
+        }
+
+        if (item.type === "indicator") {
+          this.indicatorsToAddOnDataInit.push(item);
+        }
+      }
+      this.ws.sendMessage(JSON.stringify(datas));
     });
 
     this.ws.onMessage((message) => {
@@ -496,13 +550,16 @@ export class DataProvider {
 
         case "indicator_init":
           obj = this.prepareData(message.data);
+          if (message.annotations) {
+            this.prepareAnnotations(message.annotations);
+          }
           cbKey = `${message["id"]}`;
 
           if (this._onIndicatorData[cbKey]) {
             const cb = this._onIndicatorData[cbKey];
             delete this._onIndicatorData[cbKey];
 
-            cb();
+            cb(obj.newKeys);
           }
 
           this.updated(
@@ -604,6 +661,12 @@ export class DataProvider {
               );
             }
           }
+
+          if (!this._indicatorsOnDataInitAdded) {
+            this._indicatorsOnDataInitAdded = true;
+            this.addIndicatorsOnDataInit();
+          }
+
           break;
 
         case "data_update":
@@ -627,7 +690,7 @@ export class DataProvider {
           let lastDate = null;
           for (
             let k = this.data.length - 1;
-            k >= Math.max(0, this.data.length - 15);
+            k >= Math.max(0, this.data.length - 33);
             k--
           ) {
             if (this.data[k]._date === message.data.date) {
@@ -661,6 +724,10 @@ export class DataProvider {
           if (this.onSearchDone) {
             this.onSearchDone(message.data);
           }
+          break;
+
+        case "indicator_inputs":
+          this._onCalculatedIndicatorInputs(message);
           break;
 
         case "scan_progress":
@@ -842,6 +909,12 @@ export class DataProvider {
     } else {
       this.loadingHistory = false;
     }
+  }
+
+  optimizeIndicatorParams(data, _onCalculatedIndicatorInputs) {
+    this._onCalculatedIndicatorInputs = _onCalculatedIndicatorInputs;
+    data.type = "optimize_indicator_params";
+    this.ws.sendMessage(JSON.stringify([data]));
   }
 
   onConnect(fn) {

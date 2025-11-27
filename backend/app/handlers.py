@@ -31,18 +31,22 @@ from utils import (
     resource_path,
     generate_method_key,
 )
+from cache import cached
 from db import indicators
+from ga import calculate as ga_calculate
 from .data import update_in_cache, merge_data
 from .globals import (
     providers,
     clients,
     historical_data_cache,
+    indicator_cache,
     last_update,
+    last_date,
     lock,
     indicator_fetcher,
 )
 from .connection import safe_send_message
-
+from .fetcher import get_shared_cache
 
 futures = {}
 
@@ -180,6 +184,86 @@ async def send_historical_data(
             del futures[key]
 
 
+async def _do_indicator(
+    ws,
+    fetcher,
+    message_type: str,
+    id_: str,
+    indicator: dict,
+    inputs: dict,
+    data_map: dict,
+    range: int | None = None,
+    count: int = 600,
+) -> None:
+    """
+    Runs `send_indicator_data(...)` in the process pool and pushes its result
+    back to *this* websocket.
+    """
+    result = await fetcher.fetch(
+        send_indicator_data,
+        (
+            message_type,
+            id_,
+            indicator,
+            inputs,
+            data_map,
+            range,
+            count,
+        ),
+    )
+    await safe_send_message(ws, result)
+
+
+def _is_fresh(payload, args, kwargs):
+    indicator = args[2]
+    has_update_on_close = (
+        "update_on" in indicator["details"]
+        and indicator["details"]["update_on"] == "close"
+    )
+    if not has_update_on_close:
+        return False
+
+    payload_json = json.loads(payload)
+    has_cache = payload_json.get("data", None) and len(payload_json["data"]) > 0
+    if not has_cache:
+        return False
+
+    historical_data_cache = get_shared_cache()
+    data_map = args[4]
+    for output, datasource in data_map.items():
+        source = datasource["source"]
+        name = datasource["name"]
+        interval = datasource["interval"]
+        cache_key = (source, name, interval)
+        cached_data = historical_data_cache.get(cache_key, None)
+        has_df = cache_key is not None and not cached_data["cached_df"].empty
+        if has_df:
+
+            last_date_in_system = (
+                cached_data["cached_df"].index[-1].strftime("%Y-%m-%d %H:%M:%S")
+            )
+            if (
+                "last_dates" in payload_json
+                and f"{source}-{name}-{interval}" in payload_json["last_dates"]
+            ):
+                last_date_in_cache = payload_json["last_dates"][
+                    f"{source}-{name}-{interval}"
+                ]
+                if str(last_date_in_system) == str(last_date_in_cache):
+                    pass
+                else:
+                    return False
+            else:
+                # print(f"last dates do not have key {source}-{name}-{interval}")
+                return False
+        else:
+            # print("does not have DF in cache")
+            return False
+
+    return True
+
+
+@cached(maxsize=100, ttl=60 * 20, validator=_is_fresh, shared_dict=indicator_cache)
 def send_indicator_data(
     message_type, id, indicator, inputs, data_map, range=None, count=600
 ):
@@ -192,6 +276,8 @@ def send_indicator_data(
     ):  # case when there is no length, we need to calculate from the whole dataset
         count = 300
 
+    last_dates = {}
+
     df = pd.DataFrame()
     for output, datasource in data_map.items():
         source = datasource["source"]
@@ -199,9 +285,19 @@ def send_indicator_data(
         interval = datasource["interval"]
         column = datasource["value"]
         cache_key = (source, name, interval)
+        historical_data_cache = get_shared_cache()
         cached_data = historical_data_cache.get(cache_key, None)
-        if cached_data is None:
+        if cached_data is None or (
+            cache_key is not None and cached_data["cached_df"].empty
+        ):
             return json.dumps({"type": "no_data", "id": id})
+
+        last_dates[f"{source}-{name}-{interval}"] = (
+            cached_data["cached_df"]
+            .index[-1]
+            .to_pydatetime()
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
 
         if range:
             f = datetime.strptime(range[0], "%Y-%m-%d %H:%M:%S")
@@ -252,20 +348,42 @@ def send_indicator_data(
     obj = cls()
 
     try:
-        outputs = obj.calc(df.values, **inputs)
+        ret = obj.calc(df.values, **inputs)
+
+        # Accept either a single object or a (outputs, annotations) tuple.
+        if isinstance(ret, tuple):
+            outputs = ret[0]
+            annotations = ret[1] if len(ret) > 1 else None
+        else:
+            outputs = ret
+            annotations = None
     except Exception as e:
         logging.error(f"Error calculating indicator: {e}")
-        return
+        return None
 
     df = pd.DataFrame()
-    for i, output in enumerate(outputs):
-        idf = pd.DataFrame(output)
-        if not idf.empty:
-            idf.columns = ["date", f"{id}-{obj.outputs[i]['name']}"]
-            if df.empty:
-                df = idf
-            else:
-                df = pd.merge(df, idf, on=["date"], how="inner")
+    for i, output_description in enumerate(obj.outputs):
+        if "multi" in output_description and output_description["multi"]:
+            for output_description_with_data in outputs[i]:
+                idf = pd.DataFrame(output_description_with_data["data"])
+                if not idf.empty:
+                    idf.columns = [
+                        "date",
+                        f"{id}-{output_description['name']}-{output_description_with_data['name']}",
+                    ]
+                    if df.empty:
+                        df = idf
+                    else:
+                        df = pd.merge(df, idf, on=["date"], how="outer")
+        else:
+            output = outputs[i]
+            idf = pd.DataFrame(output)
+            if not idf.empty:
+                idf.columns = ["date", f"{id}-{output_description['name']}"]
+                if df.empty:
+                    df = idf
+                else:
+                    df = pd.merge(df, idf, on=["date"], how="outer")
 
     df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
     # df = df.dropna()
@@ -275,7 +393,15 @@ def send_indicator_data(
             data = {}
         else:
             data = df.to_dict(orient="records")[-1]
-        return json.dumps({"type": message_type, "id": id, "data": data})
+        return json.dumps(
+            {
+                "type": message_type,
+                "id": id,
+                "data": data,
+                "annotations": annotations,
+                "last_dates": last_dates,
+            }
+        )
 
     else:
         X = 0
@@ -284,11 +410,15 @@ def send_indicator_data(
         Y = 0  # select from the end
 
         if range:
+            last_dt = df["date"].iat[-1]
+            end_date = (
+                last_dt
+                if not df.empty
+                else datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            )
             df.date = pd.to_datetime(df.date)
             df = df.set_index("date")
-            df = filter_df(
-                df, range[0], datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-            )  # range[1]
+            df = filter_df(df, range[0], end_date)  # range[1]
         else:
             # count
             Y = count
@@ -299,7 +429,15 @@ def send_indicator_data(
             # df_sorted = df.sort_values(by='date').reset_index(drop=True)
             data = df.to_dict(orient="records")[X:][-Y:]
 
-        return json.dumps({"type": message_type, "id": id, "data": data})
+        return json.dumps(
+            {
+                "type": message_type,
+                "id": id,
+                "data": data,
+                "annotations": annotations,
+                "last_dates": last_dates,
+            }
+        )
 
 
 async def handle_message_from_provider(provider):
@@ -324,31 +462,48 @@ async def handle_message_from_provider(provider):
                             clients[ws_client_key]["websocket"], *message["args"]
                         )
 
+                        data = json.loads(message["args"][0])
+                        is_new_date = True
+                        if data["type"] == "data_update":
+                            current_date = data["data"]["date"]
+                            if key in last_date:
+                                is_new_date = last_date[key] != current_date
+                            last_date[key] = current_date
+
                         for indicator in clients[ws_client_key]["subscriptions"][
                             "indicators"
                         ]:
-                            for key, d in indicator.get("dataMap").items():
-                                if (
-                                    d["source"] == source
-                                    and d["name"] == name
-                                    and d["interval"] == interval
-                                ):
+                            update = True
+                            if (
+                                indicator.get("indicator")
+                                .get("details")
+                                .get("update_on", None)
+                                == "close"
+                            ):
+                                if not is_new_date:
+                                    update = False
 
-                                    m = await indicator_fetcher.fetch(
-                                        send_indicator_data,
-                                        (
-                                            "indicator_update",
-                                            indicator.get("id"),
-                                            indicator.get("indicator"),
-                                            indicator.get("inputs"),
-                                            indicator.get("dataMap"),
-                                            None,
-                                            1,
-                                        ),
-                                    )
-                                    await safe_send_message(
-                                        clients[ws_client_key]["websocket"], m
-                                    )
+                            if update:
+                                for key, d in indicator.get("dataMap").items():
+                                    if (
+                                        d["source"] == source
+                                        and d["name"] == name
+                                        and d["interval"] == interval
+                                    ):
+                                        asyncio.create_task(
+                                            _do_indicator(
+                                                clients[ws_client_key]["websocket"],
+                                                indicator_fetcher,
+                                                "indicator_update",
+                                                indicator.get("id"),
+                                                indicator.get("indicator"),
+                                                indicator.get("inputs"),
+                                                indicator.get("dataMap"),
+                                                None,  # range
+                                                1,  # count
+                                            )
+                                        )
+                                        break  # update once
 
             elif message["action"] == "data_update_merge":
                 for ws_client_key in message["ws_clients"]:
@@ -431,20 +586,18 @@ async def handle_message_from_provider(provider):
                                     and d["interval"] == interval
                                 ):
 
-                                    m = await indicator_fetcher.fetch(
-                                        send_indicator_data,
-                                        (
-                                            "indicator_update",
+                                    asyncio.create_task(
+                                        _do_indicator(
+                                            clients[ws_client_key]["websocket"],
+                                            indicator_fetcher,
+                                            "indicator_update",  # ⟵ message_type
                                             indicator.get("id"),
                                             indicator.get("indicator"),
                                             indicator.get("inputs"),
                                             indicator.get("dataMap"),
-                                            None,
-                                            1,
-                                        ),
-                                    )
-                                    await safe_send_message(
-                                        clients[ws_client_key]["websocket"], m
+                                            None,  # range
+                                            1,  # count
+                                        )
                                     )
 
             elif message["action"] == "history":
@@ -521,3 +674,67 @@ async def handle_message_from_provider(provider):
             continue
         except Exception as e:
             logging.error(f"Error in handle_message_from_provider(): {e} {message}")
+
+
+async def _do_optimize_indicator_params(
+    ws,
+    fetcher,
+    strategy,
+    settings,
+    source,
+    name,
+    interval,
+    indicator,
+    data_map,
+    history,
+    data_provider_config,
+):
+    result = await fetcher.fetch(
+        optimize_indicator_params,
+        (
+            strategy,
+            settings,
+            source,
+            name,
+            interval,
+            indicator,
+            data_map,
+            history,
+            data_provider_config,
+        ),
+    )
+    await safe_send_message(ws, result)
+
+
+def optimize_indicator_params(
+    strategy,
+    settings,
+    source,
+    name,
+    interval,
+    indicator,
+    data_map,
+    history,
+    data_provider_config,
+):
+    best_fitness, inputs = ga_calculate(
+        strategy,
+        settings,
+        source,
+        name,
+        interval,
+        indicator,
+        data_map,
+        history,
+        data_provider_config["full_url"],
+    )
+    message = json.dumps(
+        {
+            "type": "indicator_inputs",
+            "indicator": indicator,
+            "data_map": data_map,
+            "best_fitness": best_fitness,
+            "inputs": inputs,
+        }
+    )
+    return message

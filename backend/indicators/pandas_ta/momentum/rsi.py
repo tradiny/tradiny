@@ -23,6 +23,20 @@ class RSI(Indicator):
     name = "Relative Strength Index (RSI)"
     categories = ["Momentum"]
 
+    optimization_strategies = [
+        {
+            "strategy": "oscillator",
+            "title": "Oscillator; LONG/BUY < oversold, SHORT/SELL > overbought",
+            "settings": {
+                "output": "RSI",
+                "oversold": 30,
+                "overbought": 70,
+                "max_drawdown_atr": 1,
+                "max_drawdown_atr_length": 24,
+            },
+        }
+    ]
+
     columns = ["close"]
 
     inputs = [

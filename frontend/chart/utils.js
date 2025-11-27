@@ -309,7 +309,7 @@ export class Utils {
     return translated;
   }
 
-  static unserializeRelativePoints(points, xA, yA, data, interval) {
+  static unserializeRelativePoints(points, xA, yA, data, interval, divider) {
     const parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S");
     const formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S");
 
@@ -350,7 +350,7 @@ export class Utils {
       }
 
       const xVal = x.x + x.diffDate / candleSizeInDate;
-      translated.push([xVal, pt[1]]);
+      translated.push([xVal, divider(pt[1])]);
     }
     return translated;
   }

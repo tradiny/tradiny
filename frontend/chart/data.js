@@ -32,7 +32,7 @@ export class DataHandler {
       }
     };
     const getDataKey = (dataKey) => {
-      return (d) => d[dataKey.dataKey];
+      return (d) => (d ? d[dataKey.dataKey] : d);
     };
     const pane = this.chart.panes[i];
 
@@ -49,7 +49,24 @@ export class DataHandler {
           }
         }
       };
-      const decorateFill = (metadata) => {
+      const decorateSvgFill = (metadata) => {
+        let color;
+        if (metadata.color.bullish && metadata.color.bearish) {
+          color = (d) => {
+            if (d[metadata.color.open] < d[metadata.color.close]) {
+              return metadata.color.bullish;
+            } else {
+              return metadata.color.bearish;
+            }
+          };
+        } else {
+          color = (d) => metadata.color.color;
+        }
+        return (sel) => {
+          sel.attr("stroke", (d) => color(d)).attr("fill", (d) => color(d));
+        };
+      };
+      const decorateWebglFill = (metadata) => {
         let color;
         if (metadata.color.bullish && metadata.color.bearish) {
           const bullishColor = Utils.webglColor(metadata.color.bullish);
@@ -71,7 +88,7 @@ export class DataHandler {
           );
         };
       };
-      const decorateStroke = (metadata) => {
+      const decorateWebglStroke = (metadata) => {
         const color = Utils.webglColor(metadata.color);
         return (program) => {
           fc
@@ -80,25 +97,44 @@ export class DataHandler {
             .value((d) => color)(program);
         };
       };
+      const decorateSvgStroke = (metadata) => {
+        const color = metadata.color;
+        return (sel) => {
+          sel.attr("stroke", color);
+        };
+      };
 
       let dataKey;
       switch (metadata.type) {
         case "candlestick":
-          metadata.series =
-            // fc.autoBandwidth(fc.seriesWebglCandlestick())
-            fc
-              .seriesWebglCandlestick()
-              .openValue(findDataKey(metadata.dataKeys, "open"))
-              .highValue(findDataKey(metadata.dataKeys, "high"))
-              .lowValue(findDataKey(metadata.dataKeys, "low"))
-              .closeValue(findDataKey(metadata.dataKeys, "close"))
-              .decorate(
-                decorateFill(
-                  metadata,
-                  findDataKey(metadata.dataKeys, "open"),
-                  findDataKey(metadata.dataKeys, "close"),
-                ),
-              );
+          if (this.chart.type === "webgl") {
+            metadata.series = fc.seriesWebglCandlestick();
+          } else if (this.chart.type === "svg") {
+            metadata.series = fc.seriesSvgCandlestick();
+          }
+          metadata.series
+            .openValue(findDataKey(metadata.dataKeys, "open"))
+            .highValue(findDataKey(metadata.dataKeys, "high"))
+            .lowValue(findDataKey(metadata.dataKeys, "low"))
+            .closeValue(findDataKey(metadata.dataKeys, "close"));
+
+          if (this.chart.type === "webgl") {
+            metadata.series.decorate(
+              decorateWebglFill(
+                metadata,
+                findDataKey(metadata.dataKeys, "open"),
+                findDataKey(metadata.dataKeys, "close"),
+              ),
+            );
+          } else if (this.chart.type === "svg") {
+            metadata.series.decorate(
+              decorateSvgFill(
+                metadata,
+                findDataKey(metadata.dataKeys, "open"),
+                findDataKey(metadata.dataKeys, "close"),
+              ),
+            );
+          }
 
           dataKey = metadata.dataKeys[0];
           metadata.series.yScale(this.chart.yAxes[i][dataKey.yAxis].scale);
@@ -108,23 +144,37 @@ export class DataHandler {
 
         case "bar":
           dataKey = metadata.dataKeys[0];
-          metadata.series =
-            // fc.autoBandwidth(fc.seriesWebglBar())
-            fc
-              .seriesWebglBar()
-              .crossValue((d) => {
-                if (d && d.date) {
-                  return d.date;
-                }
-              })
-              .mainValue((d) => getDataKey(dataKey)(d))
-              .decorate(
-                decorateFill(
-                  metadata,
-                  findDataKey(metadata.dataKeys, "open"),
-                  findDataKey(metadata.dataKeys, "close"),
-                ),
-              );
+
+          if (this.chart.type === "webgl") {
+            metadata.series = fc.seriesWebglBar();
+          } else if (this.chart.type === "svg") {
+            metadata.series = fc.seriesSvgBar();
+          }
+          metadata.series
+            .crossValue((d) => {
+              if (d && d.date) {
+                return d.date;
+              }
+            })
+            .mainValue((d) => getDataKey(dataKey)(d));
+
+          if (this.chart.type === "webgl") {
+            metadata.series.decorate(
+              decorateWebglFill(
+                metadata,
+                findDataKey(metadata.dataKeys, "open"),
+                findDataKey(metadata.dataKeys, "close"),
+              ),
+            );
+          } else if (this.chart.type === "svg") {
+            metadata.series.decorate(
+              decorateSvgFill(
+                metadata,
+                findDataKey(metadata.dataKeys, "open"),
+                findDataKey(metadata.dataKeys, "close"),
+              ),
+            );
+          }
           metadata.series.yScale(this.chart.yAxes[i][dataKey.yAxis].scale);
           metadata.series.yScale = () => {};
           series.push(metadata.series);
@@ -132,28 +182,36 @@ export class DataHandler {
 
         case "line":
           dataKey = metadata.dataKeys[0];
-          metadata.series = fc
-            .seriesWebglLine()
+
+          if (this.chart.type === "webgl") {
+            metadata.series = fc.seriesWebglLine();
+          } else if (this.chart.type === "svg") {
+            metadata.series = fc.seriesSvgLine();
+          }
+          metadata.series
             .crossValue((d) => {
               if (d && d.date) {
                 return d.date;
               }
             })
-            .mainValue((d) => getDataKey(dataKey)(d))
-            .decorate(decorateStroke(metadata));
+            .mainValue((d) => getDataKey(dataKey)(d));
+
+          if (this.chart.type === "webgl") {
+            metadata.series.decorate(decorateWebglStroke(metadata));
+          } else if (this.chart.type === "svg") {
+            metadata.series.decorate(decorateSvgStroke(metadata));
+          }
           metadata.series.yScale(this.chart.yAxes[i][dataKey.yAxis].scale);
           metadata.series.yScale = () => {};
           series.push(metadata.series);
           break;
       }
     }
-
-    this.chart.webglMultiSeries[i] = fc.seriesWebglMulti().series(series);
+    this.chart.series = series;
   }
 
   onData(dataKeys, addedFromLeft, addedFromRight, shift, newKeys = false) {
-    // console.log(`updated keys ${JSON.stringify(dataKeys)}, added from left ${addedFromLeft}, shift=${shift}`)
-
+    // console.log(`updated keys ${JSON.stringify(dataKeys)}, added from left ${addedFromLeft}, added from right ${addedFromRight}, shift=${shift}`)
     const currentDomain = this.chart.xScale.domain();
     if (addedFromRight === 1) {
       // maintain the position of last data point on screen (shift=1) if the last data point is visible
@@ -167,12 +225,13 @@ export class DataHandler {
         currentDomain[0] + shift,
         currentDomain[1] + shift,
       ]);
-      this.chart.drawingHandler.shift(shift);
+      this.chart.drawingHandler.shift(shift); // TODO check if needed
     }
 
     if (
-      this.chart.dataProvider.dataCount > 1 &&
-      (addedFromRight > 0 || addedFromLeft > 0)
+      (this.chart.dataProvider.dataCount > 1 &&
+        (addedFromRight > 0 || addedFromLeft > 0)) ||
+      addedFromLeft > 0 // this handles also the case when a new indicator is added so addedFromLeft is > 0
     ) {
       this.chart.cacheHandler.buildCaches(
         null,

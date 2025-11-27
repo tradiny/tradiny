@@ -213,7 +213,9 @@ export class DOMHandler {
         let height = this.chart.paneHeights[i];
         let padding = 0;
         if (yAxis.height && yAxis.position === "bottom") {
-          height *= yAxis.height / 100;
+          if (this.chart.type === "webgl") {
+            height *= yAxis.height / 100;
+          }
           padding = this.chart.yAxisPadding;
         }
         this.chart.yAxes[i][yAxis.key].scale.range([height, padding]); // svg height
@@ -249,7 +251,7 @@ export class DOMHandler {
 
         yAxis.axis.ticks(this.chart.axisHandler.getYTicks(h));
       });
-      if (this.chart.gridlines[i]) {
+      if (this.chart.enableGridLines && this.chart.gridlines[i]) {
         this.chart.gridlines[i].xTicks(
           this.chart.axisHandler.getXTicks(this.chart.paneWidth),
         );
@@ -435,6 +437,7 @@ export class DOMHandler {
                     datapoint = dp[key.dataKey];
                     if (datapoint) break;
                   }
+                  // console.log(datapointBeforeDivision, datapoint)
 
                   const last300Points = this.chart.dataProvider.data.slice(
                     Math.max(this.chart.dataProvider.data.length - 300, 0),
@@ -480,6 +483,7 @@ export class DOMHandler {
                     !this.chart.yAxesPrecision[axis.key] ||
                     this.chart.yAxesPrecision[axis.key] < p
                   ) {
+                    // console.log(axis.key, p, datapoint, key.dataKey)
                     this.chart.yAxesPrecision[axis.key] = p;
                   }
 
@@ -655,32 +659,48 @@ export class DOMHandler {
   createChart(i) {
     const pane = this.chart.panes[i];
 
-    const series = [];
+    if (this.chart.enableGridLines) {
+      this.chart.gridlines[i] = fc.annotationSvgGridline();
+    }
+    this.chart.crosshairs[i] = fc.annotationSvgCrosshair();
 
-    this.chart.gridlines[i] = fc.annotationSvgGridline();
-    this.chart.gridlines[i].xTicks(
-      this.chart.axisHandler.getXTicks(this.chart.paneWidth),
-    );
-    this.chart.gridlines[i].yTicks(
-      this.chart.axisHandler.getYTicks(this.chart.paneHeights[i]),
-    );
+    if (this.chart.type === "webgl") {
+      this.chart.webglMultiSeries[i] = fc
+        .seriesWebglMulti()
+        .series(this.chart.series);
+    }
+    let series = [];
+    if (this.chart.enableGridLines) {
+      series.push(this.chart.gridlines[i]);
+    }
+    series.push(this.chart.crosshairs[i]);
 
-    this.chart.crosshairs[i] = fc
-      .annotationSvgCrosshair()
-      .xLabel((o) => "")
-      .yLabel((o) => "");
+    if (this.chart.type === "svg") {
+      series = series.concat(this.chart.series);
+    }
+    this.chart.svgMultiSeries[i] = fc.seriesSvgMulti().series(series);
+    this.chart.svgMultiSeries[i].mapping((d) => d);
 
-    this.chart.svgMultiSeries[i] = fc
-      .seriesSvgMulti()
-      .series([this.chart.gridlines[i], this.chart.crosshairs[i]]);
+    this.chart.crosshairs[i].xLabel((o) => "").yLabel((o) => "");
 
-    const fcChart = fc
-      .chartCartesian({
-        xScale: this.chart.xScale,
-        yScale: this.chart.yAxes[i][this.chart.firstAxisKey[i]].scale, // select first
-      })
-      .webglPlotArea(this.chart.webglMultiSeries[i])
-      .svgPlotArea(this.chart.svgMultiSeries[i]);
+    if (this.chart.enableGridLines) {
+      this.chart.gridlines[i].xTicks(
+        this.chart.axisHandler.getXTicks(this.chart.paneWidth),
+      );
+      this.chart.gridlines[i].yTicks(
+        this.chart.axisHandler.getYTicks(this.chart.paneHeights[i]),
+      );
+    }
+
+    const fcChart = fc.chartCartesian({
+      xScale: this.chart.xScale,
+      yScale: this.chart.yAxes[i][this.chart.firstAxisKey[i]].scale,
+    });
+
+    if (this.chart.webglMultiSeries[i]) {
+      fcChart.webglPlotArea(this.chart.webglMultiSeries[i]);
+    }
+    fcChart.svgPlotArea(this.chart.svgMultiSeries[i]);
 
     this.chart.fcCharts[i] = fcChart;
 
