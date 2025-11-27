@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", module="pygad\..*")
 import random
 import pygad
 import websocket
+import logging
 
 from app.fetcher import BlockingFetcher
 
@@ -34,7 +35,7 @@ class GA:
         gene_space,
         initial_population,
         fitness,
-        parallel_processing=["thread", 2],
+        parallel_processing=["thread", 4],
         other_settings={},
         log=None,
         debug=True,
@@ -69,17 +70,12 @@ class GA:
 
         def on_generation(ga_instance):
             if self.debug and self.log:
+                best_solution, best_fitness, _ = ga_instance.best_solution()
                 self.log(
-                    "Generation : "
-                    + str(ga_instance.generations_completed)
-                    + "/"
-                    + str(self.num_generations)
+                    f"Generation {ga_instance.generations_completed}/{self.num_generations} | "
+                    f"Best fitness: {best_fitness} | "
+                    f"Best solution: {best_solution}"
                 )
-                self.log(
-                    "Fitness of the best solution :"
-                    + str(ga_instance.best_solution()[1])
-                )
-                self.log("Best solution" + str(ga_instance.best_solution()[0]))
 
             best_solution = ga_instance.best_solution()[0]
             fitness = ga_instance.best_solution()[1]
@@ -157,6 +153,7 @@ def calculate(
     try:
         ga = GA(
             debug=True,
+            log=logging.info,
             num_generations=num_generations,
             sol_per_pop=sol_per_pop,
             mutation_num_genes=mutation_num_genes,

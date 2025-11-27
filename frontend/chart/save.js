@@ -271,7 +271,6 @@ export class SaveHandler {
   unserializeDrawing(drawingData) {
     const unserializedDrawing = JSON.parse(JSON.stringify(drawingData)); // deep copy
     if (unserializedDrawing) {
-
       for (let i = 0; i < unserializedDrawing.length; i++) {
         const ddata = unserializedDrawing[i];
 
@@ -283,11 +282,14 @@ export class SaveHandler {
 
           const divider = () => {
             // TODO just taking first key
-            const key = Object.keys(this.chart.dataProvider.dividers)[0]
+            const key = Object.keys(this.chart.dataProvider.dividers)[0];
             return (value) => {
-              return this.chart.dataProvider.preciseDivide(value, this.chart.dataProvider.dividers[key])
-            }
-          }
+              return this.chart.dataProvider.preciseDivide(
+                value,
+                this.chart.dataProvider.dividers[key],
+              );
+            };
+          };
 
           d.points = Utils.unserializeRelativePoints(
             d.points,
@@ -295,7 +297,7 @@ export class SaveHandler {
             y,
             this.chart.dataProvider.data,
             this.chart.dataProvider.interval,
-            divider()
+            divider(),
           );
           switch (d.type) {
             case "ruler":
@@ -364,7 +366,7 @@ export class SaveHandler {
         serializedDrawing = null;
       }
     }
-    console.log(serializedDrawing)
+    console.log(serializedDrawing);
     return serializedDrawing;
   }
 

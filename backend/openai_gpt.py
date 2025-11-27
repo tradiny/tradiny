@@ -32,7 +32,7 @@ async def query(
     system_content,
     user_content,
     img,
-    model="gpt-4o",
+    model="gpt-5.1",
     max_tokens=64,
     on_chunk=None,
 ):
@@ -67,7 +67,7 @@ async def query(
         response = await client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=max_tokens,
+            # max_tokens=max_tokens, # not supported for gpt-5.1
             temperature=0,
             top_p=1,
             stream=True,  # Enable streaming mode
@@ -97,7 +97,7 @@ async def query_reply(
     client_ip,
     conversation_id,
     user_content,
-    model="gpt-4o",
+    model="gpt-5.1",
     max_tokens=64,
     on_chunk=None,
 ):
@@ -123,7 +123,7 @@ async def query_reply(
         response = await client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=max_tokens,
+            # max_tokens=max_tokens, # not supported for gpt-5.1
             temperature=0,
             top_p=1,
             stream=True,  # Enable streaming mode

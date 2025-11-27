@@ -331,7 +331,10 @@ export class InteractionHandler {
 
   seriesMapping(i) {
     return (data, index, series) => {
-      if (series[index] === this.chart.gridlines[i]) {
+      if (
+        this.chart.enableGridLines &&
+        series[index] === this.chart.gridlines[i]
+      ) {
         return data[index];
       }
       if (series[index] === this.chart.crosshairs[i]) {

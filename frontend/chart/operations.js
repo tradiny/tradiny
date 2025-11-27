@@ -581,7 +581,9 @@ export class OperationsHandler {
           ? indicator.details.outputs[j].render.color
           : null;
       const color = staticColor || colorMap[dataKey];
-      const showStaticLegend = indicator.details.outputs[j].render ? indicator.details.outputs[j].render.hasOwnProperty("legend") : false
+      const showStaticLegend = indicator.details.outputs[j].render
+        ? indicator.details.outputs[j].render.hasOwnProperty("legend")
+        : false;
 
       if (axis === "New right axis" || axis === "New left axis") {
         const scale = scalesMap[axisKey];
@@ -609,7 +611,6 @@ export class OperationsHandler {
       if (axis !== "Disable") {
         const baseKey = `${indicatorId}-${dataKey}`;
 
-
         let first = undefined;
         for (let k = 0; k < newKeys.length; k++) {
           const dk = newKeys[k];
@@ -627,7 +628,6 @@ export class OperationsHandler {
                 });
               }
             } else {
-
               legend.push({
                 icon: this.chart.DOMHandler.icon.getIcon("line"),
                 label: `${indicator.details.categories[0]} / ${indicator.name} ${dataKey} ${inputText}`,

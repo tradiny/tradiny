@@ -1,4 +1,3 @@
-
 # This software is licensed under a dual-license model:
 # 1. Under the Affero General Public License (AGPL) for open-source use.
 # 2. With additional terms tailored to individual users (e.g., traders and investors):
@@ -26,6 +25,7 @@ def _serialize_params(*args, **kwargs) -> str:
     Convert (args, kwargs) into a deterministic, hashable string.
     Falls back to str(obj) when json can’t handle the object.
     """
+
     def to_jsonable(o):
         try:
             json.dumps(o)
@@ -44,7 +44,7 @@ def cached(
     maxsize: int = 1024,
     ttl: int | None = 600,
     validator: Callable[[Any, tuple, dict], bool] | None = None,
-    shared_dict: "dict[str, Any] | None" = None,        # ← NEW PARAM
+    shared_dict: "dict[str, Any] | None" = None,  # ← NEW PARAM
 ):
     """
     Decorator factory (now multi-process aware):
@@ -57,27 +57,34 @@ def cached(
                   the original per-process cachetools cache.
     """
 
+    # Ensure a sentinel exists for both code paths
+    _MISS = object()
+
     # ---------- choose backend ----------
-    if shared_dict is None:                                # ORIGINAL PATH
+    if shared_dict is None:  # ORIGINAL PATH
         cache = (
             TTLCache(maxsize=maxsize, ttl=ttl)
             if ttl is not None
             else LRUCache(maxsize=maxsize)
         )
 
-        def _get(k):      return cache.get(k, _MISS)
-        def _put(k, v):   cache[k] = v
-        def _size():      return len(cache)
+        def _get(k):
+            return cache.get(k, _MISS)
 
-    else:                                                   # SHARED PATH
-        _MISS = object()
+        def _put(k, v):
+            cache[k] = v
+
+        def _size():
+            return len(cache)
+
+    else:  # SHARED PATH
 
         def _get(k):
             try:
                 exp, val = shared_dict[k]
             except KeyError:
                 return _MISS
-            if exp is not None and exp < time.time():      # expired
+            if exp is not None and exp < time.time():  # expired
                 shared_dict.pop(k, None)
                 return _MISS
             return val
@@ -85,11 +92,24 @@ def cached(
         def _put(k, v):
             exp = None if ttl is None else time.time() + ttl
             shared_dict[k] = (exp, v)
-            # naive size cap (no strict LRU)
+            # naive size cap (no strict LRU) — avoid iterating the proxy
             if maxsize and len(shared_dict) > maxsize:
-                shared_dict.pop(next(iter(shared_dict)), None)
+                try:
+                    # Prefer server-side removal
+                    shared_dict.popitem()
+                except Exception:
+                    # Fallback: pop first available key without using __iter__
+                    try:
+                        keys = list(shared_dict.keys())
+                        if keys:
+                            shared_dict.pop(keys[0], None)
+                    except Exception:
+                        # Manager may be shutting down; ignore eviction
+                        pass
 
-        def _size():      return len(shared_dict)
+        def _size():
+            return len(shared_dict)
+
     # ------------------------------------
 
     def decorator(func):
@@ -107,5 +127,7 @@ def cached(
             val = func(*args, **kwargs)
             _put(key, val)
             return val
+
         return wrapper
+
     return decorator

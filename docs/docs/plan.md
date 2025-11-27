@@ -11,7 +11,7 @@ What's next? To continue supporting and developing Tradiny, we offer [commercial
 
 # Development Plan
 
-## Q1 2025
+## 2026-2027
 
 - **Data Grouping**: Combine your data/assets into logical categories.
 
@@ -20,8 +20,6 @@ What's next? To continue supporting and developing Tradiny, we offer [commercial
     Parse RSS, download articles using Selenium, classify and summarize by ChatGPT, include the summaries in the chat as context.
 
 - **CoinGecko Data Source Integration**
-
-## Q2-Q4 2025
 
 - **Chart Types**: Support for Renko and Volume Profile.
 

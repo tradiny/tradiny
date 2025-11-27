@@ -32,7 +32,7 @@ export class DataHandler {
       }
     };
     const getDataKey = (dataKey) => {
-      return (d) => d[dataKey.dataKey];
+      return (d) => (d ? d[dataKey.dataKey] : d);
     };
     const pane = this.chart.panes[i];
 
@@ -225,12 +225,13 @@ export class DataHandler {
         currentDomain[0] + shift,
         currentDomain[1] + shift,
       ]);
-      this.chart.drawingHandler.shift(shift);// TODO check if needed
+      this.chart.drawingHandler.shift(shift); // TODO check if needed
     }
 
     if (
-      this.chart.dataProvider.dataCount > 1 &&
-      (addedFromRight > 0 || addedFromLeft > 0)
+      (this.chart.dataProvider.dataCount > 1 &&
+        (addedFromRight > 0 || addedFromLeft > 0)) ||
+      addedFromLeft > 0 // this handles also the case when a new indicator is added so addedFromLeft is > 0
     ) {
       this.chart.cacheHandler.buildCaches(
         null,

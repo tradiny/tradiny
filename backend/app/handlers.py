@@ -216,8 +216,11 @@ async def _do_indicator(
 
 def _is_fresh(payload, args, kwargs):
     indicator = args[2]
-    has_update_on_close = "update_on" in indicator["details"] and indicator["details"]["update_on"] == "close"
-    if not has_update_on_close: 
+    has_update_on_close = (
+        "update_on" in indicator["details"]
+        and indicator["details"]["update_on"] == "close"
+    )
+    if not has_update_on_close:
         return False
 
     payload_json = json.loads(payload)
@@ -236,9 +239,16 @@ def _is_fresh(payload, args, kwargs):
         has_df = cache_key is not None and not cached_data["cached_df"].empty
         if has_df:
 
-            last_date_in_system = cached_data["cached_df"].index[-1].strftime("%Y-%m-%d %H:%M:%S")
-            if "last_dates" in payload_json and f"{source}-{name}-{interval}" in payload_json["last_dates"]:
-                last_date_in_cache = payload_json["last_dates"][f"{source}-{name}-{interval}"]
+            last_date_in_system = (
+                cached_data["cached_df"].index[-1].strftime("%Y-%m-%d %H:%M:%S")
+            )
+            if (
+                "last_dates" in payload_json
+                and f"{source}-{name}-{interval}" in payload_json["last_dates"]
+            ):
+                last_date_in_cache = payload_json["last_dates"][
+                    f"{source}-{name}-{interval}"
+                ]
                 if str(last_date_in_system) == str(last_date_in_cache):
                     pass
                 else:
@@ -282,7 +292,12 @@ def send_indicator_data(
         ):
             return json.dumps({"type": "no_data", "id": id})
 
-        last_dates[f"{source}-{name}-{interval}"] = cached_data["cached_df"].index[-1].to_pydatetime().strftime("%Y-%m-%d %H:%M:%S")
+        last_dates[f"{source}-{name}-{interval}"] = (
+            cached_data["cached_df"]
+            .index[-1]
+            .to_pydatetime()
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
 
         if range:
             f = datetime.strptime(range[0], "%Y-%m-%d %H:%M:%S")
@@ -378,7 +393,15 @@ def send_indicator_data(
             data = {}
         else:
             data = df.to_dict(orient="records")[-1]
-        return json.dumps({"type": message_type, "id": id, "data": data, "annotations": annotations, "last_dates": last_dates})
+        return json.dumps(
+            {
+                "type": message_type,
+                "id": id,
+                "data": data,
+                "annotations": annotations,
+                "last_dates": last_dates,
+            }
+        )
 
     else:
         X = 0
@@ -406,7 +429,15 @@ def send_indicator_data(
             # df_sorted = df.sort_values(by='date').reset_index(drop=True)
             data = df.to_dict(orient="records")[X:][-Y:]
 
-        return json.dumps({"type": message_type, "id": id, "data": data, "annotations": annotations, "last_dates": last_dates})
+        return json.dumps(
+            {
+                "type": message_type,
+                "id": id,
+                "data": data,
+                "annotations": annotations,
+                "last_dates": last_dates,
+            }
+        )
 
 
 async def handle_message_from_provider(provider):
@@ -472,7 +503,7 @@ async def handle_message_from_provider(provider):
                                                 1,  # count
                                             )
                                         )
-                                        break # update once
+                                        break  # update once
 
             elif message["action"] == "data_update_merge":
                 for ws_client_key in message["ws_clients"]:

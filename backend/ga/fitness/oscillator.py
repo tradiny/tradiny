@@ -45,6 +45,8 @@ class OscillatorFitness:
         self.history = history
         self.ws = ws
 
+        self._last_logged_generation = 0
+
     def receive_message(self, expected_message, data_request, timeout=10):
 
         try:

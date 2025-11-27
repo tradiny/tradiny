@@ -66,7 +66,8 @@ export class DataProvider {
   }
 
   prepareAnnotations(annotations) {
-    this.chart.drawingData = this.chart.saveHandler.unserializeDrawing(annotations)
+    this.chart.drawingData =
+      this.chart.saveHandler.unserializeDrawing(annotations);
   }
 
   prepareData(data) {
@@ -451,7 +452,7 @@ export class DataProvider {
 
   addIndicatorsOnDataInit() {
     for (let i = 0; i < this.indicatorsToAddOnDataInit.length; i++) {
-      const item = this.indicatorsToAddOnDataInit[i]
+      const item = this.indicatorsToAddOnDataInit[i];
       this.chart.operationsHandler.addIndicator(
         item.indicator,
         item.render.paneIdx,
@@ -459,7 +460,7 @@ export class DataProvider {
         item.render.axesMap,
         item.render.scalesMap,
         item.dataMap,
-        item.render.colorMap
+        item.render.colorMap,
       );
     }
   }
@@ -477,7 +478,7 @@ export class DataProvider {
         }
 
         if (item.type === "indicator") {
-          this.indicatorsToAddOnDataInit.push(item)
+          this.indicatorsToAddOnDataInit.push(item);
         }
       }
       this.ws.sendMessage(JSON.stringify(datas));

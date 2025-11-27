@@ -189,7 +189,7 @@ export default class TradinyChart {
         indicator,
         indicator_params,
         (newKeys) => {
-          this.operationsHandler.onIndicatorData(indicator.render, newKeys);
+          // this.operationsHandler.onIndicatorData(indicator.render, newKeys);
           resolve();
         },
       );
@@ -212,6 +212,10 @@ export default class TradinyChart {
       const symbol = searchParams.get("s");
       const interval = searchParams.get("i");
       const count = searchParams.get("c");
+      const theme = searchParams.get("t");
+      if (theme) {
+        this.DOMHandler.controls.setTheme(theme);
+      }
       const indicators = this.extractIndicators(searchParams);
 
       if (symbol && interval) {
@@ -273,6 +277,7 @@ export default class TradinyChart {
     this.paddingPixels = options.paddingPixels || 10;
     this.dynamicYAxis = options.dynamicYAxis || true;
     this.visiblePoints = options.visiblePoints || 300;
+    this.enableGridLines = options.gridLines === false ? false : true;
     this.pointSpacingFactor = options.pointSpacingFactor || 0.2;
     let calculatedSize = "large";
     if (window.innerWidth < 844) {
