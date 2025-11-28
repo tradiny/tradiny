@@ -10,7 +10,7 @@ COPY frontend/ .
 
 RUN npm run build
 
-FROM python:3.11.9-slim AS backend
+FROM python:3.12-slim AS backend
 
 ARG POPULATE=false
 
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
 
 COPY backend/requirements.txt ./
-RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt
 
 COPY backend/ .
 

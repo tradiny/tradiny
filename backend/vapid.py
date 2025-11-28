@@ -17,6 +17,7 @@ from py_vapid import Vapid
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from base64 import urlsafe_b64encode
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from config import Config
 
@@ -44,10 +45,10 @@ def generate():
 
     private_key_path = get_private_key_path()
     if not os.path.isfile(private_key_path):
-        vapid = Vapid()
-        vapid.generate_keys()
+        # Generate the key directly with cryptography to avoid py_vapid.generate_keys() bug
+        private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
 
-        private_key_string = vapid.private_key.private_bytes(
+        private_key_string = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
@@ -56,13 +57,13 @@ def generate():
         with open(private_key_path, "wb") as f:
             f.write(private_key_string)
 
+        # Build a Vapid instance from the PEM
+        vapid = Vapid.from_pem(private_key_string)
         logging.info("New VAPID keys generated and saved.")
     else:
         with open(private_key_path, "rb") as f:
             private_key_string = f.read()
-        vapid = Vapid.from_pem(
-            private_key_string
-        )  # parse the string to get the key object
+        vapid = Vapid.from_pem(private_key_string)
         logging.info("VAPID keys loaded.")
 
     return vapid

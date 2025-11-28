@@ -7,12 +7,13 @@ typing-inspect
 python-dotenv
 SQLAlchemy
 pywebpush
-openai
+openai>=1.0.0,<2
 httpx[http2]
 pygad
 
 python-binance==1.0.19
 polygon-api-client
 pyti
-git+https://github.com/twopirllc/pandas-ta.git@development#egg=pandas-ta
+pandas-ta @ https://www.pandas-ta.dev/assets/zip/pandas_ta-0.4.25b0.tar.gz
 setuptools
+cachetools
