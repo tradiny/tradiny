@@ -74,6 +74,9 @@ export class DataProvider {
     let newIndexesAdded = 0;
     let shift = 0;
 
+    // Keep only items with a defined, non-null "date"
+    data = (data || []).filter((item) => (item?.date == null ? false : true));
+
     // Initialize or update the dateToIndexMap and data array
     if (!this.data) {
       this.dateToIndexMap = new Map();

@@ -44,7 +44,9 @@ export class DataHandler {
         for (let k = 0; k < dataKeys.length; k++) {
           if (dataKeys[k].key === key) {
             return (d) => {
-              return d[dataKeys[k].dataKey];
+              if (d) {
+                return d[dataKeys[k].dataKey];
+              }
             };
           }
         }
@@ -113,6 +115,11 @@ export class DataHandler {
             metadata.series = fc.seriesSvgCandlestick();
           }
           metadata.series
+            .crossValue((d) => {
+              if (d && d.date) {
+                return d.date;
+              }
+            })
             .openValue(findDataKey(metadata.dataKeys, "open"))
             .highValue(findDataKey(metadata.dataKeys, "high"))
             .lowValue(findDataKey(metadata.dataKeys, "low"))

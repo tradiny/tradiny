@@ -662,7 +662,18 @@ export class DOMHandler {
     if (this.chart.enableGridLines) {
       this.chart.gridlines[i] = fc.annotationSvgGridline();
     }
-    this.chart.crosshairs[i] = fc.annotationSvgCrosshair();
+    this.chart.crosshairs[i] = fc
+      .annotationSvgCrosshair()
+      .y((d) => {
+        if (d) {
+          return d.y;
+        }
+      })
+      .x((d) => {
+        if (d) {
+          return d.x;
+        }
+      });
 
     if (this.chart.type === "webgl") {
       this.chart.webglMultiSeries[i] = fc
@@ -713,8 +724,57 @@ export class DOMHandler {
       .style("left", "37px")
       .style("max-width", "75%");
 
-    const legendElIn = legendEl.append("div").attr("class", `legend`);
+    const legendWrapper = legendEl
+      .append("div")
+      .attr("class", "legend legend-collapsible");
 
+    const toggleBtn = legendWrapper
+      .append("div")
+      .attr("class", "legend-toggle")
+      .attr("role", "button")
+      .attr("tabindex", 0)
+      .attr("aria-expanded", "false")
+      .attr("title", "Toggle legend")
+      .style("cursor", "pointer")
+      .style("margin-left", "4px")
+      .style("opacity", 0.5);
+
+    // Use a generic icon if a dedicated one doesn't exist
+    // Define icons for collapsed/expanded states
+    const collapsedIconHtml = this.icon.getIcon("dots");
+    const expandedIconHtml = this.icon.getIcon("dots");
+    toggleBtn.html(collapsedIconHtml);
+
+    // Content container that we show/hide
+    const legendContentEl = legendWrapper
+      .append("div")
+      .attr("class", "legend-content")
+      .style("display", "none");
+
+    // Pure JS toggle handlers
+    const toggleNode = toggleBtn.node();
+    const contentNode = legendContentEl.node();
+    const setExpanded = (expanded) => {
+      toggleBtn.attr("aria-expanded", expanded ? "true" : "false");
+      contentNode.style.display = expanded ? "" : "none";
+      toggleBtn.html(expanded ? expandedIconHtml : collapsedIconHtml); // swap icon
+      toggleBtn.attr("title", expanded ? "Collapse legend" : "Expand legend"); // optional
+    };
+
+    toggleNode.addEventListener("click", () => {
+      const expanded = toggleBtn.attr("aria-expanded") !== "true";
+      setExpanded(expanded);
+    });
+
+    toggleNode.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const expanded = toggleBtn.attr("aria-expanded") !== "true";
+        setExpanded(expanded);
+      }
+    });
+
+    // Build rows inside the collapsible content
     for (let j = 0; j < pane.metadata.length; j++) {
       const metadata = pane.metadata[j];
       if (!metadata.legend) {
@@ -724,7 +784,7 @@ export class DOMHandler {
       for (let k = 0; k < metadata.legend.length; k++) {
         const legend = metadata.legend[k];
 
-        const rowEl = legendElIn.append("div").attr("class", "row");
+        const rowEl = legendContentEl.append("div").attr("class", "row");
         if (legend.color) {
           rowEl.style("color", legend.color);
         }
@@ -743,7 +803,6 @@ export class DOMHandler {
         }
 
         const labelText = this.toLabelText(legend.label);
-
         rowEl.append("div").attr("class", "label").text(labelText);
       }
     }
