@@ -656,6 +656,38 @@ export class DOMHandler {
     return templateRows;
   }
 
+  loading(i, key) {
+    if (!this.chart.loadingKeys[i]) {
+      this.chart.loadingKeys[i] = [];
+    }
+    if (key) {
+      if (!this.chart.loadingKeys[i].includes(key)) {
+        this.chart.loadingKeys[i].push(key);
+      }
+    }
+    if (this.chart.loadingKeys[i].length && this.chart.d3ChartEls[i]) {
+      const toggleBtn = this.chart.d3ChartEls[i].select(`.legend-toggle-${i}`);
+      if (toggleBtn) {
+        toggleBtn.html(this.icon.getIcon("dots-loading"));
+      }
+    }
+  }
+
+  stopLoading(i, key) {
+    // remove the key from loadingKeys (removes a single occurrence)
+    if (key !== undefined) {
+      const idx = this.chart.loadingKeys[i].indexOf(key);
+      if (idx !== -1) this.chart.loadingKeys[i].splice(idx, 1);
+    }
+
+    if (this.chart.loadingKeys[i].length === 0 && this.chart.d3ChartEls[i]) {
+      const toggleBtn = this.chart.d3ChartEls[i].select(`.legend-toggle-${i}`);
+      if (toggleBtn) {
+        toggleBtn.html(this.icon.getIcon("down"));
+      }
+    }
+  }
+
   createChart(i) {
     const pane = this.chart.panes[i];
 
@@ -730,19 +762,33 @@ export class DOMHandler {
 
     const toggleBtn = legendWrapper
       .append("div")
-      .attr("class", "legend-toggle")
+      .attr("class", `legend-toggle legend-toggle-${i}`)
       .attr("role", "button")
       .attr("tabindex", 0)
       .attr("aria-expanded", "false")
       .attr("title", "Toggle legend")
       .style("cursor", "pointer")
-      .style("margin-left", "4px")
       .style("opacity", 0.5);
+    if (i > 0) {
+      legendEl.style("left", "7px");
+    }
 
     // Use a generic icon if a dedicated one doesn't exist
     // Define icons for collapsed/expanded states
-    const collapsedIconHtml = this.icon.getIcon("dots");
-    const expandedIconHtml = this.icon.getIcon("dots");
+    let collapsedIconHtml;
+    if (
+      !this.chart.loadingKeys[i] ||
+      (this.chart.loadingKeys[i] && this.chart.loadingKeys[i].length === 0)
+    ) {
+      collapsedIconHtml = this.icon.getIcon("down");
+    } else {
+      collapsedIconHtml = this.icon.getIcon("dots-loading");
+    }
+    if (!this.chart.loadingKeys[i]) {
+      this.chart.loadingKeys[i] = [];
+    }
+
+    const expandedIconHtml = this.icon.getIcon("up");
     toggleBtn.html(collapsedIconHtml);
 
     // Content container that we show/hide
@@ -757,7 +803,7 @@ export class DOMHandler {
     const setExpanded = (expanded) => {
       toggleBtn.attr("aria-expanded", expanded ? "true" : "false");
       contentNode.style.display = expanded ? "" : "none";
-      toggleBtn.html(expanded ? expandedIconHtml : collapsedIconHtml); // swap icon
+      toggleBtn.html(expanded ? expandedIconHtml : this.icon.getIcon("down")); // swap icon
       toggleBtn.attr("title", expanded ? "Collapse legend" : "Expand legend"); // optional
     };
 

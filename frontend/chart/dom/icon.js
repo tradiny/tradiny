@@ -20,15 +20,15 @@ export class DOMIconHandler {
     const iconSizes = {
       dots: {
         large: 12,
-        small: 16,
+        small: 12,
       },
       down: {
         large: 12,
-        small: 16,
+        small: 12,
       },
       up: {
         large: 12,
-        small: 16,
+        small: 12,
       },
       back: {
         large: 16,
@@ -99,13 +99,26 @@ export class DOMIconHandler {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.dots[this.chart.size]}" height="${iconSizes.dots[this.chart.size]}" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16">
   <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
 </svg>`;
+      case "dots-loading":
+        // Remove stroke to avoid “thick” look; keep small filled circles
+        return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' width="${iconSizes.dots[this.chart.size]}" height="${iconSizes.dots[this.chart.size]}" fill="currentColor">
+    <circle r='15' cx='40' cy='65'>
+      <animate attributeName='cy' calcMode='spline' dur='2' values='65;135;65;' keySplines='.5 0 .5 1;.5 0 .5 1' repeatCount='indefinite' begin='-.4'></animate>
+    </circle>
+    <circle r='15' cx='100' cy='65'>
+      <animate attributeName='cy' calcMode='spline' dur='2' values='65;135;65;' keySplines='.5 0 .5 1;.5 0 .5 1' repeatCount='indefinite' begin='-.2'></animate>
+    </circle>
+    <circle r='15' cx='160' cy='65'>
+      <animate attributeName='cy' calcMode='spline' dur='2' values='65;135;65;' keySplines='.5 0 .5 1;.5 0 .5 1' repeatCount='indefinite' begin='0'></animate>
+    </circle>
+  </svg>`;
       case "down":
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.down[this.chart.size]}" height="${iconSizes.down[this.chart.size]}" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
-  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.down[this.chart.size]}" height="${iconSizes.down[this.chart.size]}" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
 </svg>`;
       case "up":
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.up[this.chart.size]}" height="${iconSizes.up[this.chart.size]}" fill="currentColor" class="bi bi-caret-up-fill" viewBox="0 0 16 16">
-  <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.up[this.chart.size]}" height="${iconSizes.up[this.chart.size]}" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z"/>
 </svg>`;
       case "back":
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSizes.back[this.chart.size]}" height="${iconSizes.back[this.chart.size]}" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">

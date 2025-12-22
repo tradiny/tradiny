@@ -347,6 +347,8 @@ export default class TradinyChart {
     this.drawingData = [];
     this.drawingCanvases = [];
     this.drawingDrags = [];
+
+    this.loadingKeys = [];
   }
 
   afterCreated(cb) {

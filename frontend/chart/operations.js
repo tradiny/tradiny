@@ -478,6 +478,13 @@ export class OperationsHandler {
       indicator,
     });
 
+    let loadingOnPane = i;
+    if (!this.chart.panes || i === this.chart.panes.length) {
+      // new page
+      loadingOnPane = 0;
+    }
+    this.chart.DOMHandler.loading(loadingOnPane, indicator.id);
+
     const settings = {
       type: "indicator",
       id: indicatorId,
@@ -505,6 +512,7 @@ export class OperationsHandler {
     this.chart.dataProvider.addIndicator(settings, (newKeys) => {
       this.onIndicatorData(settings.render, newKeys);
       this.refresh(i);
+      this.chart.DOMHandler.stopLoading(loadingOnPane, indicator.id);
 
       if (onAdded) {
         requestAnimationFrame(() => {

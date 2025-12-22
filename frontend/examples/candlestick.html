@@ -49,10 +49,10 @@ For more details, refer to the LICENSE file in the root directory of this projec
         bearishColor = "#ea5545ff",
         count = 6100;
 
-      TradinyChart.initialize({
+      const chart = TradinyChart.initialize({
         elementId: "chart",
         grid: "1x1",
-        size: "small",
+        // size: "small",
         theme: "dark",
         // type: "svg",
         charts: [
@@ -213,6 +213,9 @@ For more details, refer to the LICENSE file in the root directory of this projec
           },
         ],
       });
+      chart
+        .getChart()
+        .DOMHandler.loading(0, `indicators.pandas_ta.overlap.ema.EMA`);
     </script>
   </body>
 </html>
