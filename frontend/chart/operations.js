@@ -588,7 +588,7 @@ export class OperationsHandler {
         indicator.details.outputs[j].render.color
           ? indicator.details.outputs[j].render.color
           : null;
-      const color = staticColor || colorMap[dataKey];
+      let color = staticColor || colorMap[dataKey];
       const showStaticLegend = indicator.details.outputs[j].render
         ? indicator.details.outputs[j].render.hasOwnProperty("legend")
         : false;
@@ -626,6 +626,15 @@ export class OperationsHandler {
           if (!dk.startsWith(baseKey)) {
             continue;
           }
+
+          // try to find id in colorMap
+          for (const [key, value] of Object.entries(colorMap)) {
+            if (dk.includes(key)) {
+              color = value;
+              break;
+            }
+          }
+
           if (!first) {
             if (showStaticLegend) {
               if (indicator.details.outputs[j].render.legend) {

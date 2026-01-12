@@ -71,9 +71,9 @@ class PolygonProvider(Provider):
     streams_scheduled = {}
     symbol_intervals_map = {}
     cache = {}
+    _thread_local = threading.local()
 
     def init(self):
-        PolygonProvider.client = RESTClient(api_key=Config.POLYGON_IO_API_KEY)
         PolygonProvider.wsclient = WebSocketClient(
             api_key=Config.POLYGON_IO_API_KEY, feed="delayed.polygon.io"
         )
@@ -86,9 +86,16 @@ class PolygonProvider(Provider):
         wsclient_thread = threading.Thread(target=run_wsclient)
         wsclient_thread.start()
 
+    def _get_rest_client(self):
+        if not hasattr(PolygonProvider._thread_local, "client"):
+            PolygonProvider._thread_local.client = RESTClient(
+                api_key=Config.POLYGON_IO_API_KEY
+            )
+        return PolygonProvider._thread_local.client
+
     def get_dataset(self):
         tickers = []
-        PolygonProvider.client = RESTClient(api_key=Config.POLYGON_IO_API_KEY)
+        client = self._get_rest_client()
 
         def to_ticker(t):
             return {
@@ -149,9 +156,7 @@ class PolygonProvider(Provider):
         for key, value in markets.items():
             if key in data:
                 logging.info(f'{value["message"]}')
-                for t in PolygonProvider.client.list_tickers(
-                    limit=limit, **value["params"]
-                ):
+                for t in client.list_tickers(limit=limit, **value["params"]):
                     tickers.append(to_ticker(t))
 
         logging.info("Done fetching tickers from Polygon.")
@@ -217,9 +222,11 @@ class PolygonProvider(Provider):
                 "volume": a.volume,
             }
 
+        client = self._get_rest_client()
+
         return [
             self.format_datapoint(ticker, interval, to_dict(a))
-            for a in PolygonProvider.client.list_aggs(
+            for a in client.list_aggs(
                 ticker,
                 PolygonProvider.interval_map[interval]["multiplier"],
                 PolygonProvider.interval_map[interval]["timespan"],

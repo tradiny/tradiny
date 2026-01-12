@@ -665,25 +665,26 @@ export class DOMHandler {
         this.chart.loadingKeys[i].push(key);
       }
     }
-    if (this.chart.loadingKeys[i].length && this.chart.d3ChartEls[i]) {
-      const toggleBtn = this.chart.d3ChartEls[i].select(`.legend-toggle-${i}`);
-      if (toggleBtn) {
-        toggleBtn.html(this.icon.getIcon("dots-loading"));
-      }
-    }
+    this.refreshLoading(i);
   }
 
   stopLoading(i, key) {
-    // remove the key from loadingKeys (removes a single occurrence)
     if (key !== undefined) {
       const idx = this.chart.loadingKeys[i].indexOf(key);
       if (idx !== -1) this.chart.loadingKeys[i].splice(idx, 1);
     }
+    this.refreshLoading(i);
+  }
 
-    if (this.chart.loadingKeys[i].length === 0 && this.chart.d3ChartEls[i]) {
+  refreshLoading(i) {
+    if (this.chart.d3ChartEls[i]) {
       const toggleBtn = this.chart.d3ChartEls[i].select(`.legend-toggle-${i}`);
       if (toggleBtn) {
-        toggleBtn.html(this.icon.getIcon("down"));
+        if (this.chart.loadingKeys[i].length === 0) {
+          toggleBtn.html(this.icon.getIcon("down"));
+        } else if (this.chart.loadingKeys[i].length) {
+          toggleBtn.html(this.icon.getIcon("dots-loading"));
+        }
       }
     }
   }
@@ -803,7 +804,11 @@ export class DOMHandler {
     const setExpanded = (expanded) => {
       toggleBtn.attr("aria-expanded", expanded ? "true" : "false");
       contentNode.style.display = expanded ? "" : "none";
-      toggleBtn.html(expanded ? expandedIconHtml : this.icon.getIcon("down")); // swap icon
+      if (expanded) {
+        toggleBtn.html(expandedIconHtml);
+      } else {
+        this.refreshLoading(i);
+      }
       toggleBtn.attr("title", expanded ? "Collapse legend" : "Expand legend"); // optional
     };
 

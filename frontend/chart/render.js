@@ -191,9 +191,13 @@ export class RenderHandler {
       // charts
       for (let i = 0; i < this.chart.panes.length; i++) {
         if (this.chart.d3ChartEls[i]) {
-          this.chart.d3ChartEls[i]
-            .datum(this.chart.dataProvider.data)
-            .call(this.chart.fcCharts[i]);
+          try {
+            this.chart.d3ChartEls[i]
+              .datum(this.chart.dataProvider.data)
+              .call(this.chart.fcCharts[i]);
+          } catch (e) {
+            // silently drop errors, probably due to datum()?
+          }
         }
       }
     }
