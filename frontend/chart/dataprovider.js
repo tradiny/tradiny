@@ -375,7 +375,64 @@ export class DataProvider {
     });
   }
 
-  determineDivider(maxValue, minValue) {
+  // Groups adjacent base-10 exponents into buckets of size 2:
+  // ... {-4,-3}, {-2,-1}, {0}, {1,2}, {3,4}, {5,6}, ...
+  // Rule:
+  // - If values are within one exponent step of an existing divider's bucket, keep it.
+  // - If they drift by 2 or more, move to the new bucket.
+  // - Without an existing divider, pick the bucket based on the largest magnitude.
+  determineDivider(maxValue, minValue, existingDivider) {
+    // Collect finite, non-zero magnitudes from inputs
+    const vals = [maxValue, minValue]
+      .map((v) => (Number.isFinite(v) ? Math.abs(v) : NaN))
+      .filter((v) => Number.isFinite(v) && v !== 0);
+
+    // If no usable values, or only zeros, default to 1
+    if (vals.length === 0) return 1;
+
+    // Get order-of-magnitude exponent via toExponential (robust around exact powers of 10)
+    const toExp = (v) => {
+      // v > 0 assumed
+      const parts = v.toExponential().split("e");
+      return parseInt(parts[1], 10);
+    };
+
+    // Compute the exponent for the largest magnitude in the dataset
+    const maxMag = Math.max(...vals);
+    const eMax = toExp(maxMag);
+
+    // Map an exponent to its 2-wide "anchor" bucket:
+    // positives: 2->1, 4->3, 6->5; negatives: -2->-1, -4->-3; zero stays 0
+    const anchorExp = (e) => {
+      if (e === 0) return 0;
+      if (e > 0) return e % 2 === 0 ? e - 1 : e;
+      // e < 0
+      return e % 2 === 0 ? e + 1 : e;
+    };
+
+    const newAnchor = anchorExp(eMax);
+
+    // If we have an existing divider, apply hysteresis:
+    // keep current divider if the new bucket is at most one bucket away.
+    if (Number.isFinite(existingDivider) && existingDivider !== 0) {
+      const eCur = toExp(Math.abs(existingDivider));
+      const curAnchor = anchorExp(eCur);
+      if (Math.abs(newAnchor - curAnchor) <= 1) {
+        return existingDivider;
+      }
+    }
+
+    // Otherwise, adopt the bucket implied by current data
+    return Math.pow(10, newAnchor);
+  }
+
+  oldDetermineDivider(maxValue, minValue) {
+    return 1;
+    // Disabled, reason:
+    // 1. Mobile uses svg, so no webgl optimization needed
+    // 2. Estimation did not work as expected for ranges around 7000 and around 13000, which
+    //    should be the same divider, but it is not
+
     let divider = null; // Default value
 
     if (maxValue >= 1) {

@@ -729,6 +729,7 @@ export class DrawingHandler {
           this.chart.drawingData[i].lines[j].points[k][0] += s;
         }
       }
+      // this._redraw(i, this.chart.drawingData[i].lines)
     }
   }
 

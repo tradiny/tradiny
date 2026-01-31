@@ -44,10 +44,10 @@ For more details, refer to the LICENSE file in the root directory of this projec
       const url = `${window.location.hostname}:8000`,
         source = "Binance",
         name = "BTCUSDT",
-        interval = "15m",
+        interval = "1m",
         bullishColor = "#8be04eff",
         bearishColor = "#ea5545ff",
-        count = 6100;
+        count = 1000;
 
       const chart = TradinyChart.initialize({
         elementId: "chart",
@@ -149,7 +149,7 @@ For more details, refer to the LICENSE file in the root directory of this projec
                         label: {
                           source: "Binance",
                           name: "BTCUSDT",
-                          interval: "5m",
+                          interval: interval,
                         },
                       },
                     ],

@@ -588,10 +588,16 @@ export class OperationsHandler {
         indicator.details.outputs[j].render.color
           ? indicator.details.outputs[j].render.color
           : null;
+      const width =
+        indicator.details.outputs[j].render &&
+        indicator.details.outputs[j].render.width
+          ? indicator.details.outputs[j].render.width
+          : 1;
       let color = staticColor || colorMap[dataKey];
       const showStaticLegend = indicator.details.outputs[j].render
         ? indicator.details.outputs[j].render.hasOwnProperty("legend")
         : false;
+      const isMulti = indicator.details.outputs[j].multi;
 
       if (axis === "New right axis" || axis === "New left axis") {
         const scale = scalesMap[axisKey];
@@ -626,12 +632,22 @@ export class OperationsHandler {
           if (!dk.startsWith(baseKey)) {
             continue;
           }
+          if (!isMulti && !dk.endsWith(dataKey)) {
+            continue;
+          }
 
           // try to find id in colorMap
           for (const [key, value] of Object.entries(colorMap)) {
-            if (dk.includes(key)) {
-              color = value;
-              break;
+            if (!isMulti) {
+              if (key.includes(dk)) {
+                color = value;
+                break;
+              }
+            } else {
+              if (dk.includes(key)) {
+                color = value;
+                break;
+              }
             }
           }
 
@@ -667,6 +683,7 @@ export class OperationsHandler {
               },
             ],
             color: color,
+            width: width,
           };
           pane.metadata.push(m);
 

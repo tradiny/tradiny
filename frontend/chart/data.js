@@ -192,8 +192,12 @@ export class DataHandler {
 
           if (this.chart.type === "webgl") {
             metadata.series = fc.seriesWebglLine();
+            const width = metadata.width ?? 1;
+            metadata.series.lineWidth(width);
           } else if (this.chart.type === "svg") {
             metadata.series = fc.seriesSvgLine();
+            const width = metadata.width ?? 1;
+            metadata.series.lineWidth(width);
           }
           metadata.series
             .crossValue((d) => {
@@ -232,7 +236,9 @@ export class DataHandler {
         currentDomain[0] + shift,
         currentDomain[1] + shift,
       ]);
-      this.chart.drawingHandler.shift(shift); // TODO check if needed
+      if (addedFromLeft) {
+        this.chart.drawingHandler.shift(shift);
+      }
     }
 
     if (
