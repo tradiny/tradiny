@@ -25,7 +25,7 @@ class VP(Indicator):
     columns = ["close", "volume"]
 
     inputs = [
-        {"name": "", "space": list(range(1, 300)), "default": [10]},
+        {"name": "width", "space": list(range(1, 300)), "default": [10]},
         {"name": "percent", "space": list(range(1, 300)), "default": [1]},
     ]
 
