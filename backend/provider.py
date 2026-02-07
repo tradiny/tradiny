@@ -203,34 +203,40 @@ def register_provider(provider):
     asyncio.ensure_future(handle_message_from_provider(provider))
 
 
-def initialize_provider(config_key, provider_module, provider_class):
-    if getattr(Config, config_key):
-        provider_cls = getattr(
-            __import__(provider_module, fromlist=[provider_class]), provider_class
-        )
-        logging.info(f"Starting process for provider {provider_cls.key}.")
+def initialize_provider(
+    config_key, provider_module, provider_class, require_api_key=True
+):
+    if require_api_key:
+        if not getattr(Config, config_key):
+            return None
 
-        # Start monitoring process with provider class
-        monitor = MonitoringThread(provider_cls, config_key)
-        monitor.start()
+    provider_cls = getattr(
+        __import__(provider_module, fromlist=[provider_class]), provider_class
+    )
+    logging.info(f"Starting process for provider {provider_cls.key}.")
 
-        monitor.wait_for_provider_start()
+    # Start monitoring process with provider class
+    monitor = MonitoringThread(provider_cls, config_key)
+    monitor.start()
 
-        return monitor
-    else:
-        return None
+    monitor.wait_for_provider_start()
+
+    return monitor
 
 
 def initialize_providers():
     _providers = []
     provider_configs = [
-        ("CSV_FOLDER_PATH", "data_providers.csv", "CSVProvider"),
-        ("POLYGON_IO_API_KEY", "data_providers.polygon", "PolygonProvider"),
-        ("BINANCE_API_KEY", "data_providers.binance", "BinanceProvider"),
+        ("CSV_FOLDER_PATH", "data_providers.csv", "CSVProvider", True),
+        ("POLYGON_IO_API_KEY", "data_providers.polygon", "PolygonProvider", True),
+        ("BINANCE_API_KEY", "data_providers.binance", "BinanceProvider", True),
+        ("dummy", "data_providers.hyperliquid", "HyperliquidProvider", False),
     ]
 
-    for env_key, config_path, provider_class in provider_configs:
-        provider = initialize_provider(env_key, config_path, provider_class)
+    for env_key, config_path, provider_class, require_api_key in provider_configs:
+        provider = initialize_provider(
+            env_key, config_path, provider_class, require_api_key
+        )
         if provider:
             _providers.append(provider)
 
