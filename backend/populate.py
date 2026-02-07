@@ -1,4 +1,3 @@
-# This software is licensed under a dual-license model:
 # 1. Under the Affero General Public License (AGPL) for open-source use.
 # 2. With additional terms tailored to individual users (e.g., traders and investors):
 #
@@ -31,6 +30,10 @@ def main():
         (Config.CSV_FOLDER_PATH, "data_providers.csv.CSVProvider"),
         (Config.POLYGON_IO_API_KEY, "data_providers.polygon.PolygonProvider"),
         (Config.BINANCE_API_KEY, "data_providers.binance.BinanceProvider"),
+        (
+            "dummy",
+            "data_providers.hyperliquid.HyperliquidProvider",
+        ),  # Dummy key since Hyperliquid doesn't require API for public data
     ]
 
     for api_key, provider_path in providers:
