@@ -58,7 +58,8 @@ class ConnectionManager:
 
 async def safe_send_message(websocket: WebSocket, message: str):
     try:
-        await websocket.send_text(message)
+        if websocket.client_state == WebSocketState.CONNECTED:
+            await websocket.send_text(message)
     except WebSocketDisconnect:
         logging.error("Attempted to write to a disconnected WebSocket.")
     except Exception as e:

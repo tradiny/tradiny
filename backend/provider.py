@@ -30,13 +30,24 @@ HANDLER_WORKERS = 5
 
 
 class MonitoringThread(Thread):
-    def __init__(self, provider_class, provider_config, threshold=HANDLER_WORKERS + 1):
+    def __init__(
+        self,
+        provider_class,
+        provider_config,
+        threshold=HANDLER_WORKERS + 1,
+        no_response_timeout=15 * 60,  # configurable, default 15 mins
+        check_interval=60,
+    ):
         super(MonitoringThread, self).__init__()
         self.provider_class = provider_class
         self.provider_config = provider_config
         self.threshold = threshold
+        self.no_response_timeout = no_response_timeout
+        self.check_interval = check_interval
+
         self.provider = None
         self.provider_started_event = Event()
+        self.last_response_time = None
 
         self.create_queues()
 
@@ -50,20 +61,44 @@ class MonitoringThread(Thread):
     def run(self):
         self.provider = self.initialize_provider()
         self.provider_started_event.set()
+        self.last_response_time = time.time()
 
         while True:
-            time.sleep(60)
+            time.sleep(self.check_interval)
 
             try:
                 self.monitoring_request_queue.put("get_active_requests")
                 active_requests = self.monitoring_response_queue.get(timeout=10)
+
+                # We got a response, so update the last successful response time
+                self.last_response_time = time.time()
+
                 if active_requests > self.threshold:
                     logging.info(
                         f"Active requests {active_requests} reached threshold {self.threshold}. Restarting provider."
                     )
                     self.restart_provider()
+
             except Empty:
-                logging.error("No response received for active requests.")
+
+                # If we have not received anything for too long, restart anyway
+                if self.last_response_time is not None:
+                    elapsed = time.time() - self.last_response_time
+                    if elapsed >= self.no_response_timeout:
+                        logging.warning(
+                            f"No response received for {elapsed:.0f} seconds "
+                            f"(timeout={self.no_response_timeout}s). Restarting provider."
+                        )
+                        self.restart_provider()
+                        self.last_response_time = time.time()
+                else:
+                    # Safety fallback if we never got a response at all
+                    logging.warning(
+                        "Never received a response from provider. Restarting."
+                    )
+                    self.restart_provider()
+                    self.last_response_time = time.time()
+
             except Exception as e:
                 logging.error(f"Error: {e}")
 

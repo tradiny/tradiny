@@ -11,7 +11,7 @@ openai>=1.0.0,<2
 httpx[http2]
 pygad
 
-python-binance==1.0.19
+python-binance
 polygon-api-client
 pyti
 pandas-ta @ https://www.pandas-ta.dev/assets/zip/pandas_ta-0.4.25b0.tar.gz

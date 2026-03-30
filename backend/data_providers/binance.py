@@ -30,19 +30,24 @@ import asyncio
 
 
 async def start_listener(self, socket, path: str, callback):
-    async with socket as s:
-        while path in self._socket_running and self._socket_running[path]:
-            try:
-                msg = await asyncio.wait_for(s.recv(), 3)
-            except asyncio.TimeoutError:
-                ...
-                continue
-            else:
+    try:
+        async with socket as s:
+            while self._socket_running.get(path, False):
+                try:
+                    msg = await asyncio.wait_for(s.recv(), 3)
+                except asyncio.TimeoutError:
+                    continue
+
                 if not msg:
                     continue
+
                 callback(msg)
-    if path in self._socket_running:  # fix KeyError
-        del self._socket_running[path]
+
+    except Exception as e:
+        logging.error(f"Listener crashed for {path}: {e}")
+
+    finally:
+        self._socket_running.pop(path, None)
 
 
 ThreadedWebsocketManager.start_listener = start_listener
