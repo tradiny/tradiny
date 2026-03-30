@@ -385,9 +385,8 @@ def send_indicator_data(
                 else:
                     df = pd.merge(df, idf, on=["date"], how="outer")
 
-
     df = df.replace([np.inf, -np.inf], np.nan)
-    df = df.where(pd.notna(df), None)
+    df = df.astype(object).where(pd.notnull(df), None)
     # df = df.dropna()
 
     if message_type == "indicator_update":
