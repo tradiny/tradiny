@@ -197,7 +197,9 @@ export class DataHandler {
           } else if (this.chart.type === "svg") {
             metadata.series = fc.seriesSvgLine();
             const width = metadata.width ?? 1;
-            metadata.series.lineWidth(width);
+            metadata.series.decorate((selection) => {
+              selection.attr("stroke-width", width);
+            });
           }
           metadata.series
             .crossValue((d) => {

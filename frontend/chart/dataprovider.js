@@ -349,8 +349,9 @@ export class DataProvider {
 
       // Iterate over the configured keys and pick the first one that
       // is a prefix of the incoming `key`.
-      const matchedKey = Object.keys(this.keyToAxis).find((mappingKey) =>
-        key.startsWith(mappingKey),
+      const matchedKey = Object.keys(this.keyToAxis).find(
+        (mappingKey) =>
+          key.startsWith(mappingKey) || key.includes(mappingKey + "-"),
       );
 
       const axis = matchedKey ? this.keyToAxis[matchedKey] : undefined;
