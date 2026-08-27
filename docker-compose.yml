@@ -1,0 +1,63 @@
+# Start the whole Tradiny stack with one command:
+#
+#     docker compose up --build
+#
+# Services:
+#   * tradiny      -> backend + frontend, served together, on :8000
+#   * tradiny-mcp  -> MCP server (async, 6 tools) on :9010
+#
+# Endpoints once running:
+#   * Chart UI (frontend):   http://localhost:8000
+#   * MCP (streamable HTTP): http://localhost:9010/mcp
+services:
+  # Backend + frontend. Reuses the existing root Dockerfile, which builds the
+  # frontend and bakes it into the backend image, then serves both on :8000.
+  tradiny:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # On a fresh clone (no backend/db.sqlite3 present) set POPULATE=true to
+      # seed the asset/indicator catalog. Leave false to use the DB copied in
+      # from your working tree (the default here).
+      args:
+        POPULATE: "false"
+    image: tradiny-charts:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist state across rebuilds (VAPID key, logs, relocated DB). See
+      # docs/docs/docker.md → "Preserving Changes".
+      - ./host:/app/host
+    # Provider keys (Binance, Polygon, OpenAI, ...) come from backend/.env,
+    # which is copied into the image at build time. To override without
+    # rebuilding, set them here, e.g.:
+    #   environment:
+    #     OPENAI_API_KEY: "sk-..."
+    restart: unless-stopped
+
+  # MCP server. Needs the tradiny service reachable by service name; the
+  # browser inside renders the frontend, so it also needs DNS for `tradiny`.
+  tradiny-mcp:
+    build:
+      context: .
+      dockerfile: tradiny_mcp/Dockerfile
+    image: tradiny-mcp:latest
+    ports:
+      - "9010:9010"
+    environment:
+      # Both point at the `tradiny` service (compose DNS name). Backend drives
+      # ws://tradiny:8000/websocket/; the chart renderer loads http://tradiny:8000.
+      BACKEND_URL: "http://tradiny:8000"
+      FRONTEND_URL: "http://tradiny:8000"
+      MCP_TRANSPORT: "http"
+      MCP_HOST: "0.0.0.0"
+      MCP_PORT: "9010"
+      OUTPUT_DIR: "/app/output"
+    volumes:
+      - mcp-output:/app/output
+    depends_on:
+      - tradiny
+    restart: unless-stopped
+
+volumes:
+  mcp-output:

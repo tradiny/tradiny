@@ -854,7 +854,11 @@ export class DOMControlsHandler {
     const cp = new ColorPicker("", document.createElement("div"));
     for (let j = 0; j < indicator.details.outputs.length; j++) {
       const output = indicator.details.outputs[j];
-      colorMap[output.name] = cp.colors[j];
+      // Start from the picker's cycled "next color" (advancing per output) so
+      // each indicator added programmatically/deep-link gets a distinct color,
+      // matching the interactive picker path (which uses cp.defaultColor).
+      colorMap[output.name] =
+        cp.colors[(ColorPicker.default + j) % cp.colors.length];
     }
 
     this.chart.operationsHandler.addIndicator(

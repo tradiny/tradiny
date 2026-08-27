@@ -169,7 +169,15 @@ export class ImageHandler {
             const font = `${style.fontSize} ${style.fontFamily}`;
             ctxt.font = font;
             ctxt.textBaseline = "top"; // Aligning text from the top
-            ctxt.fillStyle = "black";
+
+            // Legend rows show each series' actual line color (set inline on the
+            // .row element); every other label stays black on the white canvas.
+            let fillStyle = "black";
+            const legendRow = element.closest(".legend .row");
+            if (legendRow && legendRow.style.color) {
+              fillStyle = legendRow.style.color;
+            }
+            ctxt.fillStyle = fillStyle;
 
             let x = elementRect.left - svgSize.left;
             let y = elementRect.top - svgSize.top;

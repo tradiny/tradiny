@@ -14,6 +14,6 @@ pygad
 python-binance
 polygon-api-client
 pyti
-pandas-ta @ https://www.pandas-ta.dev/assets/zip/pandas_ta-0.4.25b0.tar.gz
+pandas-ta-classic
 setuptools
 cachetools

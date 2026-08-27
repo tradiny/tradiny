@@ -16,14 +16,20 @@ import os
 import sys
 
 from config import Config
-
-from app import app
-from app.startup import register_startup_actions
-from app.periodic import register_periodic_task, periodic_task
 from log import setup_logging
 
 
 def main(on_startup=None):
+    # Python >= 3.14 changed the default POSIX multiprocessing start method from
+    # "fork" to "forkserver". app/globals.py builds shared managers at import
+    # time, which only works under "fork", so pin it before importing the app.
+    import multiprocessing
+
+    multiprocessing.set_start_method("fork", force=True)
+
+    from app import app
+    from app.startup import register_startup_actions
+    from app.periodic import register_periodic_task, periodic_task
 
     setup_logging()
     register_startup_actions(on_startup)

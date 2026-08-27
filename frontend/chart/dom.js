@@ -766,7 +766,10 @@ export class DOMHandler {
       .attr("class", `legend-toggle legend-toggle-${i}`)
       .attr("role", "button")
       .attr("tabindex", 0)
-      .attr("aria-expanded", "false")
+      .attr(
+        "aria-expanded",
+        this.chart.legendExpandedDefault ? "true" : "false",
+      )
       .attr("title", "Toggle legend")
       .style("cursor", "pointer")
       .style("opacity", 0.5);
@@ -790,13 +793,15 @@ export class DOMHandler {
     }
 
     const expandedIconHtml = this.icon.getIcon("up");
-    toggleBtn.html(collapsedIconHtml);
+    toggleBtn.html(
+      this.chart.legendExpandedDefault ? expandedIconHtml : collapsedIconHtml,
+    );
 
     // Content container that we show/hide
     const legendContentEl = legendWrapper
       .append("div")
       .attr("class", "legend-content")
-      .style("display", "none");
+      .style("display", this.chart.legendExpandedDefault ? "" : "none");
 
     // Pure JS toggle handlers
     const toggleNode = toggleBtn.node();

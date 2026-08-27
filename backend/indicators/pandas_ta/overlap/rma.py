@@ -11,7 +11,7 @@
 # For full details, see the LICENSE.md file in the root directory of this project.
 
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 
 import numpy as np
 

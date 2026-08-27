@@ -219,6 +219,9 @@ export default class TradinyChart {
       const indicators = this.extractIndicators(searchParams);
 
       if (symbol && interval) {
+        // Deep-link load (?s=&i=&...): render the legend uncollapsed by default
+        // (honoured by the DOM legend builder) instead of leaving it collapsed.
+        this.legendExpandedDefault = true;
         this.dataProvider.interval = interval;
         await this.onConnect();
 

@@ -1,0 +1,15 @@
+# Keep image build contexts lean and free of host state.
+# NOTE: intentionally does NOT ignore backend/.env or backend/db.sqlite3 --
+# the existing Dockerfile (COPY backend/ .) bakes those in by design.
+.git
+.gitignore
+__pycache__
+*.swp
+*.py[cod]
+.venv
+venv
+node_modules
+dist/
+site/
+output/
+*.egg-info

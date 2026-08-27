@@ -1,0 +1,11 @@
+# Tradiny MCP server -- minimal dependency set (see mcp_plan.md section 6).
+#
+# One-time browser install required for the chart tool:
+#     playwright install chromium
+#
+# fastmcp is pinned to the version the protocol surface was built and
+# verified against (section 9 risk: version drift in the MCP layer).
+fastmcp==3.2.4
+playwright>=1.44
+websockets>=12.0
+python-dotenv>=1.0

@@ -3,6 +3,7 @@ nav:
   - Home: index.md
   - Running on Local Computer: local.md
   - Running on Server: docker.md
+  - Run Everything with Docker Compose: docker-compose.md
   - Development and Customizations:
     - Architecture:
       - Architecture Overview: arch/overview.md

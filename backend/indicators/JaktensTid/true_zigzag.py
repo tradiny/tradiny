@@ -8,7 +8,7 @@ Author: https://github.com/JaktensTid/true-zigzag
 
 from math import floor
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 import numpy as np
 
 from indicators.data.indicator import Indicator
