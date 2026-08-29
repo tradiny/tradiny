@@ -22,10 +22,13 @@ MCP tools:
                          indicator outputs, and literal values; assembles the
                          raw scanner config so callers never deal with anchors,
                          indicator items, or dataMaps
-* ``run_scanner``     -- raw scanner (exact UI config shape); advanced use
-* ``stop_scanner``    -- cooperatively stop the active scanner run
 * ``get_chart_image`` -- render a chart (candles + indicator overlays) using
                          the real frontend in headless Chromium, return the PNG
+
+The raw scanner primitives (``run_scanner`` / ``stop_scanner`` /
+``active_scans``) are internal helpers used by ``scan``; they are
+deliberately **not** exposed as MCP tools (only ``scan`` is), so clients
+don't have to learn the low-level UI-config shape.
 
 Everything is async; configuration comes from the environment (see
 ``tradiny_mcp/config.py`` and ``tradiny_mcp/.env.example``).
@@ -178,16 +181,12 @@ async def search_assets(query: str = "", limit: int = 100) -> list[dict]:
 async def list_indicators(query: str = "", limit: int = 100) -> list[dict]:
     """List indicators with their exact inputs (names + defaults) and outputs.
 
-    Required when building a ``run_scanner`` config with indicator rules, or
-    the ``indicators`` overlay list for ``get_chart_image``. Per indicator:
-    ``details.inputs[].name`` are the input param keys,
-    ``details.inputs[].default[0]`` the fallback value,
-    ``details.outputs[].name`` the allowed ``output1``/``output2`` values in
-    scanner rules (looked up as ``"<indicator item id>-<output>"`` in the
-    candidate's last data point), and
-    ``details.columns`` the exact dataframe columns the indicator consumes in
-    that order (e.g. Donchian ``["high","low"]``) — ``run_scanner`` indicator
-    ``dataMap`` must contain exactly these columns.
+    Use this to pick the ``"name"`` of an indicator for the ``indicators``
+    argument of ``scan`` or ``get_chart_image``, and to read its valid
+    ``params`` keys (``details.inputs[].name``; omitted ones fall back to
+    ``details.inputs[].default[0]``) and valid output names
+    (``details.outputs[].name`` — used as ``"output"`` in ``scan``
+    indicator-reference conditions).
 
     Args:
         query: Substring matched against indicator names; ``""`` lists the
@@ -405,16 +404,15 @@ async def _consume_scan(
     return out
 
 
-@mcp.tool
+# NOTE: not decorated with ``@mcp.tool`` on purpose — ``scan`` (below) is
+# the exposed, agent-facing scanner tool and this is its raw implementation
+# detail (kept callable internally / by tests, never surfaced to MCP clients).
 async def run_scanner(config: dict) -> dict:
     """Execute a Tradiny scanner run and return the matched entities.
 
-    **Advanced tool: if you do not already have a UI config object, use the
-    high-level ``scan`` tool instead** — same capabilities, and it assembles
-    the anchor strings, indicator items, ``dataMap`` and ``outputs`` for you.
-
-    ``config`` is the **same object the Tradiny UI sends** in a ``scan``
-    message. Top-level fields (all required unless noted):
+    Internal low-level runner behind the public ``scan`` tool; ``config`` is
+    the **same object the Tradiny UI sends** in a ``scan`` message. Top-level
+    fields (all required unless noted):
 
     * ``search`` (str): substring selecting the *candidate* entities, e.g.
       ``"BTC"``. The scan iterates all matching entities and substitutes each
@@ -538,9 +536,14 @@ async def _execute_scan(config: dict) -> dict:
             _active_scans.pop(id(state), None)
 
 
-@mcp.tool
+# NOTE: not decorated with ``@mcp.tool`` on purpose — kept as an internal
+# helper (see smoke tests); MCP clients should never need to stop a scan,
+# since ``scan`` (the public tool) runs to completion within one call.
 async def stop_scanner() -> dict:
     """Cooperatively stop the active scanner run (if any).
+
+    Internal helper (see :func:`run_scanner` note) — not exposed to MCP
+    clients.
 
     The candidate currently being processed finishes (up to ~15s), the run
     ends, and the ``run_scanner`` call returns whatever matched so far with
@@ -785,10 +788,11 @@ async def scan(
     within_pct: float = 2.0,
     count: int = 300,
 ) -> dict:
-    """Find assets whose latest candle matches condition(s) — the simple,
-    general scanner. Use this instead of ``run_scanner`` unless you already
-    have a UI config object: anchors, indicator items, ``dataMap``, and
-    ``outputs`` are assembled here from the same ``list_indicators`` data.
+    """Find assets whose latest candle matches condition(s) — the scanner tool.
+
+    Anchors, indicator items, ``dataMap``, and ``outputs`` are assembled
+    internally from the same ``list_indicators`` data, so callers never deal
+    with the low-level scanner config shape directly.
 
     Example — assets whose daily close recently crossed the middle Donchian
     (100) band (``cross.direction`` = "up" if close ended above Mid,
@@ -857,7 +861,7 @@ async def scan(
         indicator index, or zero candidates (it lists the valid options
         where applicable). Note: an indicator rule whose side has no data for
         a candidate silently skips that candidate — zero matches is a valid
-        result; ``stop_scanner`` aborts a running scan.
+        result, not an error.
     """
     if not search or not search.strip():
         raise ToolError("search must be a non-empty substring (entity search)")

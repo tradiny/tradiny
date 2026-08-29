@@ -2,7 +2,8 @@
 
 An async [Model Context Protocol](https://modelcontextprotocol.io) server that
 exposes the Tradiny backend's capabilities as MCP tools: asset & indicator
-lookup, historical candle data, scanner runs (with progress + stop), and real
+lookup, historical candle data, a high-level scanner (progress reported
+server-side; not user-stoppable — there is a hard timeout instead), and real
 frontend chart rendering to PNG (Playwright + headless Chromium).
 
 Design spec: [`mcp_plan.md`](../mcp_plan.md).
@@ -20,9 +21,14 @@ directory became `tradiny_mcp/`).
 | `search_assets(query, limit)` | Discover tradeable entities (`source`/`symbol` pairs + details). |
 | `list_indicators(query, limit)` | Indicator catalog with exact IDs, inputs (names + defaults) and outputs. |
 | `get_candles(source, symbol, interval, count=600)` | Historical OHLCV candles (one-shot, no streaming). |
-| `run_scanner(config)` | Run a server-side scan over every entity matching `config.search`. |
-| `stop_scanner()` | Cooperatively stop the active scanner run. |
+| `scan(search, interval, condition, indicators?, joiners?, within_pct=2, count=300)` | High-level scanner: condition(s) over OHLCV columns, indicator outputs, or literal values — runs to completion (or `SCAN_TIMEOUT_SECONDS`). |
 | `get_chart_image(source, symbol, interval, count=200, indicators, width_px=1280, height_px=720)` | Render a chart in the real frontend and return it as a PNG image (exact `width_px × height_px`), saved under `OUTPUT_DIR`. |
+
+The low-level scanner primitives (`run_scanner`, `stop_scanner`,
+`active_scans`) still exist in `tradiny_mcp/server.py` (and are exercised by
+`smoke.py`) but are intentionally **not** MCP tools — `scan` is the only
+scanner surface exposed to MCP clients, so clients never need to learn the
+UI-shape scanner config directly.
 
 All tools are async; the backend has **no REST API** — this server drives it
 over its WebSocket at `ws(s)://<BACKEND host>/websocket/`, and `get_chart_image`
@@ -100,7 +106,62 @@ One-shot historical fetch (`stream:false`). `no_data` from the backend raises a
 `"<source>-<symbol>-<interval>-<col>"` (e.g. `"Binance-BTCUSDT-5m-close"`,
 value as a string) — the backend's wire format, returned verbatim.
 
-### `run_scanner`
+### `scan`
+`scan(search, interval, condition, indicators=None, joiners=None, within_pct=2, count=300)` —
+the high-level scanner. `condition` is one object (or a list of them) shaped
+`{"left": <side>, "op": "<" | ">" | "near", "right": <side>}` (optional
+`"within"` percent overrides `within_pct`); a `<side>` is an OHLCV column name
+(`open|high|low|close|volume`), a JSON number, or an indicator reference
+`{"indicator": <index into indicators>, "output": <output name or unique
+substring>}` (output names come from `list_indicators` `details.outputs`).
+`indicators` is a list of `{"name": <indicator display name from
+`list_indicators`>, "params": {<inputName>: <value>}}` (omitted inputs fall
+back to the catalog default). `joiners` are `"and"`/`"or"` between
+conditions (defaults to all `"and"`). This assembles the anchor, indicator
+items, `dataMap`, and outputs internally — callers never deal with the raw
+UI-shape scanner config.
+
+**Example:** "every entity matching `BTC` on 1d whose close recently crossed
+the middle Donchian (100) band":
+
+```python
+scan(
+    search="BTC",
+    interval="1d",
+    condition={
+        "left": "close",
+        "op": "near",
+        "right": {"indicator": 0, "output": "Mid"},
+    },
+    indicators=[{
+        "name": "Donchian Channels (DC)",
+        "params": {"lower_length": "100", "upper_length": "100"},
+    }],
+    within_pct=2,
+)
+```
+
+**Completion semantics.** The backend sends `scan_progress`
+(`"Scanning 003/012"`) and `scan_result` frames and **no final "done"** message.
+This server therefore finishes a run when, after the last progress line
+(`Scanning N/N`), it sees silence for `SCAN_QUIESCE_SECONDS` — the same
+heuristic the frontend uses, so it is approximate (a late `scan_result` on the
+final candidate can still be missed in edge cases). `SCAN_TIMEOUT_SECONDS`
+hard-caps the run; there is **no** user-facing "stop" tool — narrow `search`
+to a smaller candidate set if a run is taking too long.
+
+**Returns:**
+`{ "total_scanned": N, "matched": M,
+"assets": [ {source, name, label, values, cross?}, ... ],
+"results": [ { data, data_values }, ... ],
+"progress": [ "Scanning 001/N", ... ], "note"? }` where `values` holds the
+numeric sides of each condition, and `cross.direction` is `"up"` when the
+close ended above the other value (bullish) and `"down"` when below (bearish).
+
+(The low-level `run_scanner(config)` / `stop_scanner()` functions still exist
+in `server.py` for internal use and `smoke.py` testing, but are not MCP tools.)
+
+### `run_scanner` (internal, not an MCP tool)
 `config` is **the exact object the Tradiny UI sends in a `scan` message**.
 Top-level required fields: `search`, `rules`, `operators`,
 `dataProviderConfig`; plus `indicators` whenever any rule side is of type
@@ -241,7 +302,9 @@ This server therefore finishes a run when, after the last progress line
 (`Scanning N/N`), it sees silence for `SCAN_QUIESCE_SECONDS` — this is the same
 heuristic the frontend uses, so it is approximate (a late `scan_result` on the
 final candidate can still be missed in edge cases). `SCAN_TIMEOUT_SECONDS`
-hard-caps the run. `stop_scanner` is the escape hatch for broad searches.
+hard-caps the run. There is no user-facing stop tool for this low-level path
+either — narrow the `search` substring to a smaller candidate set if a run is
+slow.
 
 **Returns:**
 `{ "total_scanned": N, "matched": M, "results": [ { data, data_values }, ... ],
@@ -249,7 +312,7 @@ hard-caps the run. `stop_scanner` is the escape hatch for broad searches.
 (derived from `rules_evaluate`, e.g. `"Exponential Moving Average
 length=20"`, `"close"`) to the numbers compared.
 
-### `stop_scanner`
+### `stop_scanner` (internal, not an MCP tool)
 No parameters. Sends `scan_stop` on the active scanner session; the backend
 finishes the current candidate and stops. Returns `{ "requested": true,
 "runs": <count>, "scanned": ["10/137", ...], "matched": [3, ...] }` — the
@@ -275,9 +338,10 @@ auto-reconnect) talks to the backend's `/websocket/` endpoint.
 - **fastmcp pin.** `requirements.txt` pins the exact `fastmcp` version the
   protocol surface (imports, `run()` signature) was built against — MCP library
   APIs drift between major versions.
-- **Scanner completion is heuristic** (see above); `stop_scanner` is the escape
-  hatch.
-- **Anchor-string discipline** — mismatches cause *silent skips*, not errors
+- **Scanner completion is heuristic** (see `scan` / `run_scanner` notes above);
+  there is no user-facing stop tool — narrow `search` if a run is slow.
+- **Anchor-string discipline** (internal detail of `run_scanner`; `scan`
+  handles this automatically) — mismatches cause *silent skips*, not errors
   (see warning in `run_scanner` above).
 - **Rate limits.** The backend rate-limits per IP (`MAX_DATA_REQUESTS_PER_IP_
   PER_HOUR`); only `WHITELIST_IP` origins are exempt. Heavy scans from a remote
