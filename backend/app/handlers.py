@@ -215,14 +215,13 @@ async def _do_indicator(
 
 
 def _is_fresh(payload, args, kwargs):
-    indicator = args[2]
-    has_update_on_close = (
-        "update_on" in indicator["details"]
-        and indicator["details"]["update_on"] == "close"
-    )
-    if not has_update_on_close:
-        return False
-
+    # A cached indicator is only "fresh" if the last candle date of each
+    # underlying data source matches the one recorded when it was computed.
+    # (The previous guard required details.update_on == "close", but no
+    # indicator declares update_on, so it returned False for every indicator
+    # and the shared cache never hit — forcing a full recompute per candidate
+    # per scan and making two concurrent scans double the CPU load. The
+    # last-date comparison below is the real freshness check.)
     payload_json = json.loads(payload)
     has_cache = payload_json.get("data", None) and len(payload_json["data"]) > 0
     if not has_cache:
@@ -263,7 +262,7 @@ def _is_fresh(payload, args, kwargs):
     return True
 
 
-@cached(maxsize=100, ttl=60 * 20, validator=_is_fresh, shared_dict=indicator_cache)
+@cached(maxsize=2000, ttl=60 * 20, validator=_is_fresh, shared_dict=indicator_cache)
 def send_indicator_data(
     message_type, id, indicator, inputs, data_map, range=None, count=600
 ):

@@ -18,10 +18,10 @@ directory became `tradiny_mcp/`).
 
 | Tool | Purpose |
 |---|---|
-| `search_assets(query, limit)` | Discover tradeable entities (`source`/`symbol` pairs + details). |
+| `search_assets(query, limit, source?)` | Discover tradeable entities (`source`/`symbol` pairs + details). |
 | `list_indicators(query, limit)` | Indicator catalog with exact IDs, inputs (names + defaults) and outputs. |
 | `get_candles(source, symbol, interval, count=600)` | Historical OHLCV candles (one-shot, no streaming). |
-| `scan(search, interval, condition, indicators?, joiners?, within_pct=2, count=300)` | High-level scanner: condition(s) over OHLCV columns, indicator outputs, or literal values — runs to completion (or `SCAN_TIMEOUT_SECONDS`). |
+| `scan(interval, condition, indicators?, joiners?, within_pct=2, count=300, source?, search="")` | High-level scanner: condition(s) over OHLCV columns, indicator outputs, or literal values. `source` scopes to one exchange; leaving `search=""` scans the **whole book of that exchange in one call**. Runs to completion (or `SCAN_TIMEOUT_SECONDS`). |
 | `get_chart_image(source, symbol, interval, count=200, indicators, width_px=1280, height_px=720)` | Render a chart in the real frontend and return it as a PNG image (exact `width_px × height_px`), saved under `OUTPUT_DIR`. |
 
 The low-level scanner primitives (`run_scanner`, `stop_scanner`,
@@ -67,7 +67,7 @@ Environment variables (process env wins over `tradiny_mcp/.env`):
 | `OUTPUT_DIR` | `./output` | Where chart PNGs are saved (created if missing). |
 | `WS_TIMEOUT_SECONDS` | `30` | Per request/response round-trip timeout (search / candles / indicator init). |
 | `CHART_TIMEOUT_SECONDS` | `60` | Page-load + data + render budget for `get_chart_image`. |
-| `SCAN_TIMEOUT_SECONDS` | `300` | Overall scanner run budget. |
+| `SCAN_TIMEOUT_SECONDS` | `180` | Overall scanner run budget. Raise it if the book is very large or you run multiple scans at once. |
 | `SCAN_QUIESCE_SECONDS` | `5` | Silence window after the last progress line before a scan is declared complete. |
 
 ## Running
@@ -107,7 +107,7 @@ One-shot historical fetch (`stream:false`). `no_data` from the backend raises a
 value as a string) — the backend's wire format, returned verbatim.
 
 ### `scan`
-`scan(search, interval, condition, indicators=None, joiners=None, within_pct=2, count=300)` —
+`scan(interval, condition, indicators=None, joiners=None, within_pct=2, count=300, source=None, search="")` —
 the high-level scanner. `condition` is one object (or a list of them) shaped
 `{"left": <side>, "op": "<" | ">" | "near", "right": <side>}` (optional
 `"within"` percent overrides `within_pct`); a `<side>` is an OHLCV column name
@@ -117,16 +117,20 @@ substring>}` (output names come from `list_indicators` `details.outputs`).
 `indicators` is a list of `{"name": <indicator display name from
 `list_indicators`>, "params": {<inputName>: <value>}}` (omitted inputs fall
 back to the catalog default). `joiners` are `"and"`/`"or"` between
-conditions (defaults to all `"and"`). This assembles the anchor, indicator
-items, `dataMap`, and outputs internally — callers never deal with the raw
-UI-shape scanner config.
+conditions (defaults to all `"and"`). **`source` scopes the candidate set to
+one exchange** (case-insensitive), and **`search` is an optional name
+substring** — leave it `""` (default) to scan **every asset on that exchange
+in ONE call**. The anchor, indicator items, `dataMap`, and outputs are
+assembled internally from a seed entity; the backend re-substitutes each
+candidate's source/name, so the anchor does **not** need to come from the
+target exchange. Callers never deal with the raw UI-shape scanner config.
 
-**Example:** "every entity matching `BTC` on 1d whose close recently crossed
-the middle Donchian (100) band":
+**Example (preferred — one whole-exchange scan):** "every Hyperliquid asset
+on 1d whose close recently crossed the middle Donchian (100) band. A single
+call, no per-coin loop":
 
 ```python
 scan(
-    search="BTC",
     interval="1d",
     condition={
         "left": "close",
@@ -138,8 +142,11 @@ scan(
         "params": {"lower_length": "100", "upper_length": "100"},
     }],
     within_pct=2,
+    source="Hyperliquid",   # scope to one exchange; search left empty => whole book
 )
 ```
+
+To narrow by ticker instead, pass `search="BTC"` alongside a `source`.
 
 **Completion semantics.** The backend sends `scan_progress`
 (`"Scanning 003/012"`) and `scan_result` frames and **no final "done"** message.

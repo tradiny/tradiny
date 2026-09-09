@@ -189,8 +189,10 @@ def _sanitize_filename_part(part: str) -> str:
     return cleaned[:64] or "x"
 
 
-def _save_png(png_bytes: bytes, source: str, name: str, interval: str) -> str:
-    out_dir = Config.OUTPUT_DIR
+def _save_png(
+    png_bytes: bytes, source: str, name: str, interval: str, output_dir: str | None = None
+) -> str:
+    out_dir = output_dir or Config.OUTPUT_DIR
     os.makedirs(out_dir, exist_ok=True)
     stamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
     fname = f"{stamp}_{_sanitize_filename_part(source)}_{_sanitize_filename_part(name)}_{_sanitize_filename_part(interval)}.png"
@@ -198,6 +200,157 @@ def _save_png(png_bytes: bytes, source: str, name: str, interval: str) -> str:
     with open(path, "wb") as fh:
         fh.write(png_bytes)
     return path
+
+
+class _BrowserSession:
+    """One shared, long-lived Playwright browser reused across chart renders.
+
+    Launching Chromium is the expensive fixed cost of a single chart (tens of
+    ms to a full second per launch, plus allocator churn). A batch of charts
+    should pay that once. The browser is created lazily on first use and torn
+    down via :meth:`close` (wire it to server shutdown). It is bound to the
+    event loop that first creates it, so it must be used from the server's
+    single loop -- which is the case for every MCP tool in this process.
+    """
+
+    _pw = None
+    _browser = None
+    _lock = None
+
+    @classmethod
+    async def ensure(cls):
+        """Return the shared browser, launching the Playwright runtime +
+        Chromium on first use and reusing them afterwards."""
+        if cls._lock is None:
+            cls._lock = asyncio.Lock()
+        async with cls._lock:
+            if (
+                cls._pw is None
+                or cls._browser is None
+                or not cls._browser.is_connected()
+            ):
+                if cls._pw is None:
+                    cls._pw = await async_playwright().start()
+                cls._browser = await cls._pw.chromium.launch(headless=True)
+            return cls._browser
+
+    @classmethod
+    async def close(cls):
+        """Tear down the shared browser and Playwright runtime (best-effort)."""
+        if cls._lock is None:
+            cls._lock = asyncio.Lock()
+        async with cls._lock:
+            if cls._browser is not None:
+                try:
+                    await cls._browser.close()
+                except Exception:  # noqa: BLE001 - best-effort teardown
+                    logger.exception("Failed to close the shared browser")
+                finally:
+                    cls._browser = None
+            if cls._pw is not None:
+                try:
+                    await cls._pw.stop()
+                except Exception:  # noqa: BLE001 - best-effort teardown
+                    logger.exception("Failed to stop the Playwright runtime")
+                finally:
+                    cls._pw = None
+
+
+async def _ws_rewrite_target() -> str | None:
+    """WebSocket-rewrite target when the frontend and backend are on different
+    hosts, else ``None`` (no rewrite needed)."""
+    frontend_url = frontend_url_required()
+    backend_url = require_backend_url()
+    if not _needs_ws_rewrite(frontend_url, backend_url):
+        return None
+    from .config import backend_ws_url
+
+    target = backend_ws_url()
+    logger.info(
+        "Frontend (%s) and backend (%s) differ; rewriting WS host to %s",
+        _netloc(frontend_url),
+        _netloc(backend_url),
+        target,
+    )
+    return target
+
+
+async def _render_into(
+    output_dir: str,
+    *,
+    source: str,
+    name: str,
+    interval: str,
+    count: int,
+    indicators: list[dict],
+    width_px: int,
+    height_px: int,
+) -> tuple[bytes, str]:
+    """Render one chart and save the PNG into ``output_dir``.
+
+    Navigates the *shared* browser (see :class:`_BrowserSession`) to the
+    frontend deep-link URL, waits for the render to complete
+    (``window.Tradiny1._rendered === true``), and snapshots with the built-in
+    image handler. Raises :class:`ChartRenderError` on any failure.
+    """
+    frontend_url = frontend_url_required()
+    target_url = _build_chart_url(
+        frontend_url, name=name, interval=interval, count=count, indicators=indicators
+    )
+    logger.info("Loading chart via %s", target_url)
+
+    timeout_ms = int(Config.CHART_TIMEOUT_SECONDS * 1000)
+    ws_target = await _ws_rewrite_target()
+
+    browser = await _BrowserSession.ensure()
+    page_errors: list[str] = []
+    context = await browser.new_context(
+        viewport={"width": width_px, "height": height_px},
+        device_scale_factor=1,
+    )
+    if ws_target is not None:
+        await context.add_init_script(
+            _WS_REWRITE_TEMPLATE % ('"' + ws_target.replace('"', '\\"') + '"')
+        )
+    page = await context.new_page()
+    try:
+        page.on("pageerror", lambda exc: page_errors.append(f"pageerror: {exc}"))
+        page.on(
+            "console",
+            lambda msg: (
+                msg.type == "error" and page_errors.append(f"console: {msg.text}")
+            ),
+        )
+
+        try:
+            await page.goto(target_url, wait_until="domcontentloaded", timeout=timeout_ms)
+            await page.wait_for_function(_INSTANCE_READY_JS, timeout=timeout_ms)
+            await page.wait_for_function(_LOADED_JS, timeout=timeout_ms)
+            data_url = await asyncio.wait_for(
+                page.evaluate(_CAPTURE_JS), timeout=timeout_ms / 1000
+            )
+        except (PlaywrightTimeoutError, asyncio.TimeoutError):
+            detail = (
+                f" Last frontend errors: {' | '.join(page_errors[-3:])}"
+                if page_errors
+                else ""
+            )
+            raise ChartRenderError(
+                f"Chart rendering timed out after {Config.CHART_TIMEOUT_SECONDS}s."
+                f"{detail} (The symbol or an indicator may be unknown; verify "
+                f"them with search_assets / list_indicators.)"
+            ) from None
+
+        if not isinstance(data_url, str) or not data_url.startswith("data:image/png"):
+            raise ChartRenderError("imageHandler.getImage did not return a PNG data URL")
+
+        png_bytes = base64.b64decode(data_url.split(",", 1)[1])
+        _check_png(png_bytes, width_px, height_px)
+        path = _save_png(png_bytes, source, name, interval, output_dir)
+        logger.info("Saved chart image to %s", path)
+        return png_bytes, path
+    finally:
+        await context.close()
 
 
 async def render_chart(
@@ -210,93 +363,101 @@ async def render_chart(
     width_px: int,
     height_px: int,
 ) -> tuple[bytes, str]:
-    """Render the requested chart and return ``(png_bytes, saved_path)``.
+    """Render the requested chart into the default output dir and return
+    ``(png_bytes, saved_path)``.
 
-    The chart is loaded by navigating the real frontend to its deep-link URL
-    (``?s=<name>&i=<interval>&c=<count>&indicatorN=...``), which the same
-    ``parseArgs`` path the UI uses handles; we then wait for the load to finish
-    and snapshot with the built-in image handler. Raises
-    :class:`ChartRenderError` with the last frontend error seen on any failure.
+    Backward-compatible single-chart entry point (used by ``get_chart_image``).
+    It reuses the shared browser session, so it no longer launches Chromium per
+    call. See :func:`render_charts_batch` for parallel rendering into a
+    caller-chosen directory.
     """
-    frontend_url = frontend_url_required()
-    target_url = _build_chart_url(
-        frontend_url, name=name, interval=interval, count=count, indicators=indicators
+    return await _render_into(
+        Config.OUTPUT_DIR,
+        source=source,
+        name=name,
+        interval=interval,
+        count=count,
+        indicators=indicators or [],
+        width_px=width_px,
+        height_px=height_px,
     )
-    logger.info("Loading chart via %s", target_url)
 
-    timeout_ms = int(Config.CHART_TIMEOUT_SECONDS * 1000)
 
-    backend_url = require_backend_url()
-    ws_rewrite_target: str | None = None
-    if _needs_ws_rewrite(frontend_url, backend_url):
-        from .config import backend_ws_url
+def _resolve_output_dir(requested: str | None) -> tuple[str, str | None]:
+    """Pick the directory charts are saved into.
 
-        ws_rewrite_target = backend_ws_url()
-        logger.info(
-            "Frontend (%s) and backend (%s) differ; rewriting WS host to %s",
-            _netloc(frontend_url),
-            _netloc(backend_url),
-            ws_rewrite_target,
-        )
-
-    page_errors: list[str] = []
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+    Uses ``requested`` if it exists or can be created and is writable, else
+    falls back to the configured default. Returns ``(dir, warning)`` where
+    ``warning`` is set only when a fallback was forced (e.g. the MCP server runs
+    in a container and the requested host dir is not bind-mounted at that path).
+    """
+    candidate = requested or Config.OUTPUT_DIR
+    if candidate and candidate != Config.OUTPUT_DIR:
         try:
-            context = await browser.new_context(
-                viewport={"width": width_px, "height": height_px},
-                device_scale_factor=1,
-            )
-            if ws_rewrite_target is not None:
-                script = _WS_REWRITE_TEMPLATE % (
-                    '"' + ws_rewrite_target.replace('"', '\\"') + '"'
-                )
-                await context.add_init_script(script)
-            page = await context.new_page()
-            page.on(
-                "pageerror", lambda exc: page_errors.append(f"pageerror: {exc}")
-            )
-            page.on(
-                "console",
-                lambda msg: (
-                    msg.type == "error" and page_errors.append(f"console: {msg.text}")
-                ),
-            )
+            os.makedirs(candidate, exist_ok=True)
+            if os.access(candidate, os.W_OK):
+                return candidate, None
+        except OSError:
+            pass
+        warning = (
+            f"Requested output_dir {requested!r} is not writable by the MCP "
+            f"server; saving into the default {Config.OUTPUT_DIR!r} instead. If the "
+            "MCP server is containerized, bind-mount the requested dir into the "
+            "server container at that same path."
+        )
+        return Config.OUTPUT_DIR, warning
+    return candidate, None
 
+
+async def render_charts_batch(
+    items: list[dict],
+    output_dir: str | None = None,
+    concurrency: int | None = None,
+) -> tuple[str, list[dict]]:
+    """Render many charts in parallel, saving PNGs into ``output_dir``.
+
+    Each item supplies ``source`` and ``symbol``; optional per-item overrides
+    are ``interval``, ``count``, ``indicators``, ``width_px`` and ``height_px``.
+    All renders share one headless browser (launched once, see
+    :class:`_BrowserSession`) and run with at most ``concurrency`` in flight
+    (default :data:`Config.RENDER_CONCURRENCY`).
+
+    Returns ``(resolved_output_dir, results)``. Each result is a dict with
+    ``source``/``symbol``/``ok`` and either ``path`` + ``image_b64``
+    (success — ``image_b64`` is the rendered PNG as base64, the canonical
+    artifact for the caller to persist into its own folder) or ``error``
+    (failure); an individual chart's failure never aborts the batch.
+    """
+    if not items:
+        raise ValueError("render_charts_batch requires at least one chart item")
+
+    resolved_dir, dir_warning = _resolve_output_dir(output_dir)
+    if dir_warning:
+        logger.warning(dir_warning)
+
+    limit = max(1, min(int(concurrency or Config.RENDER_CONCURRENCY), 32))
+    semaphore = asyncio.Semaphore(limit)
+
+    async def _one(item: dict) -> dict:
+        symbol = item.get("symbol") or item.get("name") or ""
+        source = item.get("source")
+        base = {"source": source, "symbol": symbol}
+        async with semaphore:
             try:
-                await page.goto(
-                    target_url, wait_until="domcontentloaded", timeout=timeout_ms
+                png_bytes, path = await _render_into(
+                    resolved_dir,
+                    source=source,
+                    name=symbol,
+                    interval=item.get("interval") or "1d",
+                    count=int(item.get("count") or 500),
+                    indicators=item.get("indicators") or [],
+                    width_px=int(item.get("width_px") or 1280),
+                    height_px=int(item.get("height_px") or 720),
                 )
-                await page.wait_for_function(_INSTANCE_READY_JS, timeout=timeout_ms)
-                await page.wait_for_function(_LOADED_JS, timeout=timeout_ms)
-                # Let the final WebGL/SVG/text paint fully settle before the snap.
-                await page.wait_for_timeout(800)
-                data_url = await asyncio.wait_for(
-                    page.evaluate(_CAPTURE_JS), timeout=timeout_ms / 1000
-                )
-            except (PlaywrightTimeoutError, asyncio.TimeoutError):
-                detail = (
-                    f" Last frontend errors: {' | '.join(page_errors[-3:])}"
-                    if page_errors
-                    else ""
-                )
-                raise ChartRenderError(
-                    f"Chart rendering timed out after {Config.CHART_TIMEOUT_SECONDS}s."
-                    f"{detail} (The symbol or an indicator may be unknown; verify "
-                    f"them with search_assets / list_indicators.)"
-                ) from None
+            except Exception as exc:  # noqa: BLE001 - keep the whole batch going
+                return {**base, "ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {**base, "ok": True, "path": path,
+                "image_b64": base64.b64encode(png_bytes).decode("ascii")}
 
-            if not isinstance(data_url, str) or not data_url.startswith(
-                "data:image/png"
-            ):
-                raise ChartRenderError(
-                    "imageHandler.getImage did not return a PNG data URL"
-                )
-
-            png_bytes = base64.b64decode(data_url.split(",", 1)[1])
-            _check_png(png_bytes, width_px, height_px)
-            path = _save_png(png_bytes, source, name, interval)
-            logger.info("Saved chart image to %s", path)
-            return png_bytes, path
-        finally:
-            await browser.close()
+    results = await asyncio.gather(*(_one(it) for it in items))
+    return resolved_dir, list(results)

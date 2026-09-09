@@ -12,6 +12,7 @@
 
 from datetime import datetime, timedelta, timezone
 import logging
+import random
 import threading
 import json
 import time
@@ -20,6 +21,19 @@ import websocket
 
 from config import Config
 from provider import Provider
+
+# The exchange's /info endpoint rate-limits at high *instantaneous* rates. We do
+# NOT artificially cap our own request rate (pacing) — two concurrent scans
+# should simply run side by side. The only request-level protections are the two
+# things that are *not* rate-capping: (1) a client timeout so a single hung
+# response can never wedge a provider worker thread forever, and (2) a retry,
+# with a little backoff, when we do genuinely get a 429/5xx so a symbol is not
+# silently dropped because it happened to race the limit. (The real win for
+# concurrent full-book scans is the backend's shared indicator cache
+# deduplicating identical work — see app/handlers.py and
+# backend/config.py worker counts.)
+HYPERLIQUID_MAX_ATTEMPTS = 4
+HYPERLIQUID_RETRYABLE_STATUS = {429, 500, 502, 503, 504, 520, 522, 524}
 
 
 class HyperliquidProvider(Provider):
@@ -64,6 +78,9 @@ class HyperliquidProvider(Provider):
                 "Content-Type": "application/json",
                 "User-Agent": "tradiny-bot/1.0",
             },
+            # A slow/hung response must never wedge a worker thread forever;
+            # get_history's retry re-issues the request on a bounded attempt.
+            timeout=10.0,
         )
 
     def get_dataset(self):
@@ -392,24 +409,54 @@ class HyperliquidProvider(Provider):
             start_timestamp = int(start_time_query.timestamp() * 1000)
             end_timestamp = int(end_time_query.timestamp() * 1000)
 
-            # Fetch historical klines using the correct endpoint format
-            response = HyperliquidProvider.client.post(
-                "/info",
-                json={
-                    "type": "candleSnapshot",
-                    "req": {  # Changed from "request" to "req"
-                        "coin": symbol,
-                        "interval": hl_interval,
-                        "startTime": start_timestamp,
-                        "endTime": end_timestamp,
+            # Fetch historical klines using the correct endpoint format. A
+            # genuine transient 429/5xx is retried with a little backoff
+            # (honouring Retry-After when present) so a symbol is never silently
+            # dropped just because it raced the limit. We do not pace ourselves:
+            # two concurrent scans run side by side.
+            response = None
+            for attempt in range(1, HYPERLIQUID_MAX_ATTEMPTS + 1):
+                response = HyperliquidProvider.client.post(
+                    "/info",
+                    json={
+                        "type": "candleSnapshot",
+                        "req": {  # Changed from "request" to "req"
+                            "coin": symbol,
+                            "interval": hl_interval,
+                            "startTime": start_timestamp,
+                            "endTime": end_timestamp,
+                        },
                     },
-                },
-            )
+                )
+                if response.status_code == 200 or (
+                    response.status_code not in HYPERLIQUID_RETRYABLE_STATUS
+                ):
+                    break
+                if attempt == HYPERLIQUID_MAX_ATTEMPTS:
+                    break
+                retry_after = response.headers.get("Retry-After")
+                delay = None
+                if retry_after is not None:
+                    try:
+                        delay = float(retry_after)
+                    except (TypeError, ValueError):
+                        delay = None
+                if delay is None:
+                    delay = min(8.0, 0.5 * (2 ** (attempt - 1)))
+                    delay += random.uniform(0, 0.25)
+                logging.warning(
+                    f"Hyperliquid {response.status_code} fetching {symbol} {interval} "
+                    f"(attempt {attempt}/{HYPERLIQUID_MAX_ATTEMPTS}); "
+                    f"retrying in {delay:.2f}s"
+                )
+                time.sleep(delay)
 
             # Check response status
-            if response.status_code != 200:
+            if response is None or response.status_code != 200:
                 logging.error(
-                    f"Error fetching history: HTTP {response.status_code} - {response.text}"
+                    f"Error fetching history: HTTP "
+                    f"{response.status_code if response else 'no response'} - "
+                    f"{response.text if response else ''}"
                 )
                 return []
 

@@ -101,6 +101,23 @@ async def scan(dbconn, d, client_id, websocket):
     data_entries = search_data_entities(
         dbconn, d.get("search"), type="data", limit=10**6
     )
+
+    # Optional exchange filter: when the caller narrows the scan to one source,
+    # prune the candidate set here — BEFORE the per-candidate candle fetch — so
+    # we never pay the ~1-16s fetch cost for the other exchanges.
+    requested_source = (
+        str(d.get("source")).strip().casefold()
+        if isinstance(d.get("source"), str)
+        else ""
+    )
+    if requested_source:
+        data_entries = [
+            e
+            for e in data_entries
+            if str((e.get("details") or {}).get("source", "")).strip().casefold()
+            == requested_source
+        ]
+
     z = len(str(len(data_entries)))
 
     for i, db_entry in enumerate(data_entries):
@@ -210,9 +227,19 @@ async def scan(dbconn, d, client_id, websocket):
         operators = di["operators"]
         indicators = di["indicators"]
 
-        result, data_values = rules_evaluate(
-            rules, operators, indicators, lastDataPoint
-        )
+        # A single candidate with a dirty value (e.g. a date string where a
+        # number is expected) must never abort a book-wide scan: isolate the
+        # per-candidate evaluation so one bad coin is skipped, not fatal.
+        try:
+            result, data_values = rules_evaluate(
+                rules, operators, indicators, lastDataPoint
+            )
+        except Exception as e:
+            logging.info(
+                f"While scanning {name_label} skipped because rule "
+                f"evaluation failed: {e}"
+            )
+            continue
 
         if result:
             try:
@@ -247,6 +274,24 @@ async def scan(dbconn, d, client_id, websocket):
             if client_id in scanner_status:
                 del scanner_status[client_id]
             return
+
+    # Terminal frame: the candidate loop has finished, so tell the client it
+    # can return immediately instead of waiting out a silence/quiesce window.
+    # Guarded exactly like the scan_progress / scan_result sends above.
+    try:
+        await websocket.send_text(json.dumps({"type": "scan_done"}))
+    except WebSocketDisconnect:
+        logging.error("Attempted to write to a disconnected WebSocket.")
+        logging.info("Scanning stopped because the client is gone")
+        if client_id in scanner_status:
+            del scanner_status[client_id]
+        return
+    except Exception as e:
+        logging.error(f"Error while sending message: {e}")
+        logging.info("Scanning stopped because could not send message to the client")
+        if client_id in scanner_status:
+            del scanner_status[client_id]
+        return
 
 
 # Process new tasks as they arrive

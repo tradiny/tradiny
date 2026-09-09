@@ -59,8 +59,15 @@ class Config:
     OUTPUT_DIR: str = os.path.abspath(_env("OUTPUT_DIR", "./output"))
     WS_TIMEOUT_SECONDS: float = _env_float("WS_TIMEOUT_SECONDS", 30)
     CHART_TIMEOUT_SECONDS: float = _env_float("CHART_TIMEOUT_SECONDS", 60)
-    SCAN_TIMEOUT_SECONDS: float = _env_float("SCAN_TIMEOUT_SECONDS", 300)
+    # A full-book scan is many sequential provider fetches, so give it enough
+    # headroom to finish: default 180 s (raise via SCAN_TIMEOUT_SECONDS if the
+    # book is very large or you run multiple scans at once).
+    SCAN_TIMEOUT_SECONDS: float = _env_float("SCAN_TIMEOUT_SECONDS", 180)
     SCAN_QUIESCE_SECONDS: float = _env_float("SCAN_QUIESCE_SECONDS", 5)
+
+    # How many charts ``render_charts`` renders at once. They all reuse one
+    # shared headless browser; this cap bounds parallel context/page churn.
+    RENDER_CONCURRENCY: int = int(_env("RENDER_CONCURRENCY", "3"))
 
 
 def require_backend_url() -> str:

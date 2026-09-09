@@ -55,8 +55,13 @@ CONFIG_FIELDS = [
         str(60 * 24),
         "Duration in minutes to retain the cache when not accessed by any user",
     ),
-    ("ALERT_WORKERS", "5", "Number of dedicated alert worker threads"),
-    ("INDICATOR_WORKERS", "5", "Number of dedicated indicator worker threads"),
+    ("ALERT_WORKERS", "16", "Number of dedicated alert worker threads"),
+    # Indicator computation is CPU-bound (pandas/pandas_ta) and offloaded to a
+    # process pool. Two concurrent full-book scans each compute an indicator per
+    # candidate; 5 workers made them queue behind each other, so size it for
+    # several concurrent scans. (The shared indicator cache is what dedupes the
+    # redundant work across concurrent scans — see app/handlers.py.)
+    ("INDICATOR_WORKERS", "16", "Number of dedicated indicator worker threads"),
     ("SCANNER_WORKERS", "10", "Number of dedicated scanner worker threads"),
     ("MAX_REQUESTS_PER_IP_PER_HOUR", "100", "Max requests per hour per IP"),
     (

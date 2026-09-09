@@ -50,6 +50,14 @@ def get_change(previous, current):
         return 0.0
 
 
+def _num(value):
+    """Coerce a rule-side or data-side value to float; None if not numeric."""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def evaluate(rules, operators):
     rules = ["True" if rule else "False" for rule in rules]
 
@@ -73,20 +81,29 @@ def rules_evaluate(rules, operators, indicators, lastDataPoint):
 
         if k1 not in ["value"] and k1 not in lastDataPoint:
             logging.info(f"do not have data {k1}; has keys {lastDataPoint.keys()}")
-            return None
+            return (False, {})
         if k2 not in ["value"] and k2 not in lastDataPoint:
             logging.info(f"do not have data {k2}; has keys {lastDataPoint.keys()}")
-            return None
+            return (False, {})
 
         if k1 == "value":
-            v1 = float(f"{rule['value1']}")
+            v1 = _num(rule["value1"])
         else:
-            v1 = float(lastDataPoint[k1])
+            v1 = _num(lastDataPoint[k1])
 
         if k2 == "value":
-            v2 = float(f"{rule['value2']}")
+            v2 = _num(rule["value2"])
         else:
-            v2 = float(lastDataPoint[k2])
+            v2 = _num(lastDataPoint[k2])
+
+        # A non-numeric side value is a clean non-match, never a raise that
+        # would abort the surrounding scan.
+        if v1 is None or v2 is None:
+            logging.info(
+                f"skip rule: non-numeric value ({v1!r} / {v2!r}) for "
+                f"{l1!r} / {l2!r}"
+            )
+            return (False, {})
 
         if l1:
             data_values[l1] = v1

@@ -26,7 +26,14 @@ from config import Config
 from app.globals import providers
 from app.handlers import handle_message_from_provider
 
-HANDLER_WORKERS = 5
+# Per-provider request worker pool. These are plain I/O-bound HTTP calls, and a
+# full-book scan for one source is ~228 fetches; when two concurrent scans share
+# the same provider they interleave on this pool. 5 threads made two scans queue
+# behind each other (one starved past the scan budget), so size the pool for
+# several concurrent full-book scans instead of capping their parallelism. It is
+# also the restart threshold in MonitoringThread (HANDLER_WORKERS + 1), which
+# stays sane at this value.
+HANDLER_WORKERS = 32
 
 
 class MonitoringThread(Thread):

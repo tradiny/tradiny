@@ -24,6 +24,9 @@ MCP tools:
                          indicator items, or dataMaps
 * ``get_chart_image`` -- render a chart (candles + indicator overlays) using
                          the real frontend in headless Chromium, return the PNG
+* ``render_charts``   -- render many charts in parallel (one shared headless
+                         browser), straight into a caller-chosen ``output_dir``,
+                         returning the list of saved file paths
 
 The raw scanner primitives (``run_scanner`` / ``stop_scanner`` /
 ``active_scans``) are internal helpers used by ``scan``; they are
@@ -152,8 +155,23 @@ async def _search(query: str, kind: str, expect_type: str) -> list[dict]:
     return res.get("results") or []
 
 
+def _filter_by_source(results: list[dict], source: str | None) -> list[dict]:
+    """Keep only entities whose ``details.source`` matches ``source``
+    (case-insensitive) when a source is requested; otherwise return unchanged."""
+    if not source or not str(source).strip():
+        return results
+    want = str(source).strip().casefold()
+    kept = [
+        r for r in results
+        if str((r.get("details") or {}).get("source", "")).strip().casefold() == want
+    ]
+    return kept
+
+
 @mcp.tool
-async def search_assets(query: str = "", limit: int = 100) -> list[dict]:
+async def search_assets(
+    query: str = "", limit: int = 100, source: str | None = None
+) -> list[dict]:
     """Find tradeable entities (data-provider source + asset name pairs).
 
     Use this first: the returned ``details.source`` / ``details.name`` pair is
@@ -165,13 +183,19 @@ async def search_assets(query: str = "", limit: int = 100) -> list[dict]:
             server-side; the backend caps the result set at 100 rows). ``""``
             returns up to the first 100 entities.
         limit: Max rows to return (<= 100).
+        source: Restrict to one data-provider source, e.g. ``"Hyperliquid"``.
+            Matched case-insensitively against ``details.source``. Pass it to
+            lock a search to a single exchange (recommended when a ticker
+            exists on multiple sources, so ``"BTC"`` resolves to the
+            Hyperliquid coin and not ``"BTCUSDT"`` elsewhere).
 
     Returns:
         A list of entities, e.g. ``[{"id", "name", "type": "data",
-        "details": {"source": "Binance", "name": "BTCUSDT", ...}}, ...]``.
+        "details": {"source": "Hyperliquid", "name": "BTC", ...}}, ...]``.
     """
     try:
         results = await _search(query, "search_data", "search_data_done")
+        results = _filter_by_source(results, source)
         return results[:limit] if limit > 0 else results
     except _CLIENT_ERRORS as exc:
         raise _client_error_to_tool_error(exc) from exc
@@ -385,6 +409,13 @@ async def _consume_scan(
                 state.total = int(m.group(2))
         elif mtype == "scan_result":
             results.append(msg)
+        elif mtype == "scan_done":
+            # Backend finished the candidate loop — it has sent every
+            # scan_result it will, so complete now instead of waiting out the
+            # quiesce window (a fast, filtered scan shouldn't pay the ~16s
+            # silence tail). Older backends without this frame fall through to
+            # the quiesce heuristic below.
+            break
         elif mtype == "notification":
             logger.warning("Scan notification: %s", msg.get("message"))
             if state.note is None:
@@ -514,12 +545,27 @@ async def run_scanner(config: dict) -> dict:
 
 
 async def _execute_scan(config: dict) -> dict:
-    """Validate ``config`` and run one scanner session to completion."""
+    """Validate ``config`` and run one scanner session to completion.
+
+    Each scan opens its own ``scan_session`` websocket (``TradinyClient``), so
+    concurrent ``scan`` calls are not serialized at this layer — the backend
+    serves them in parallel and the Hyperliquid provider paces and retries its
+    requests so two full-book scans don't trip the exchange's rate limit.
+    """
     cfg = _prepare_scan_config(config)
     state = _ScanState()
     async with _scans_lock:
         _active_scans[id(state)] = state
     try:
+        if state.stop_requested.is_set():
+            state.note = "stopped before start (stop_scanner requested)"
+            return {
+                "total_scanned": 0,
+                "matched": 0,
+                "results": [],
+                "progress": [],
+                "note": state.note,
+            }
         async with get_client().scan_session() as ws:
             state.ws = ws
             await ws.send(json.dumps([{"type": "scan", **cfg}]))
@@ -780,13 +826,14 @@ def _summarize_match(result: dict) -> dict:
 
 @mcp.tool
 async def scan(
-    search: str,
     interval: str,
     condition: dict | list,
     indicators: list[dict] | None = None,
     joiners: list[str] | None = None,
     within_pct: float = 2.0,
     count: int = 300,
+    source: str | None = None,
+    search: str = "",
 ) -> dict:
     """Find assets whose latest candle matches condition(s) — the scanner tool.
 
@@ -796,11 +843,12 @@ async def scan(
 
     Example — assets whose daily close recently crossed the middle Donchian
     (100) band (``cross.direction`` = "up" if close ended above Mid,
-    "down" if below):
+    "down" if below). ``source`` scopes the candidates to one exchange and
+    ``search`` optionally narrows by name, so ONE call scans the whole book:
 
     ```
+    # Every Hyperliquid asset that recently crossed the mid Donchian (100):
     scan(
-        search="BTC",
         interval="1d",
         condition={
             "left": "close",
@@ -812,12 +860,11 @@ async def scan(
             "params": {"lower_length": "100", "upper_length": "100"}
         }],
         within_pct=2,
+        source="Hyperliquid",   # one call, one exchange — no per-coin loop
     )
     ```
 
     Args:
-        search: Substring selecting the candidate entities (e.g. ``"BTC"``
-            scans every BTC pair). Must match at least one entity.
         interval: Candle interval, e.g. ``"1d"``, ``"1h"``, ``"5m"``.
         condition: One condition object, or a list for several. Each object:
             ``{"left": <side>, "op": "<" | ">" | "near", "right": <side>}``
@@ -847,6 +894,16 @@ async def scan(
             longest indicator warm-up (Donchian 100 needs ≥ 101) — raise it
             only when the task requires long indicators. Too few candles and
             every candidate silently 0-matches.
+        source: Restrict the candidate scan to one data source (exchange) by
+            name, case-insensitive — e.g. ``"Hyperliquid"``. This is the main
+            way to scope a whole-exchange scan: set ``source`` (and leave
+            ``search`` empty) to scan every asset on that exchange in ONE
+            call. Omitted (empty) means no restriction.
+        search: Optional substring narrowing the candidate entities by name
+            (e.g. ``"BTC"`` → every BTC pair). Defaults to the empty string,
+            which selects ALL entities on the exchange (the whole book). Use
+            it to narrow a large exchange down to a few tickers, not as a
+            required per-coin key.
 
     Returns:
         ``{"total_scanned": N, "matched": M,
@@ -863,8 +920,10 @@ async def scan(
         a candidate silently skips that candidate — zero matches is a valid
         result, not an error.
     """
-    if not search or not search.strip():
-        raise ToolError("search must be a non-empty substring (entity search)")
+    # ``search`` is optional: the empty string means "every entity" (scoped to
+    # the exchange when ``source`` is set). We no longer require a per-coin
+    # substring, because a single call should be able to cover a whole exchange.
+    search = str(search or "").strip()
     if not interval or not str(interval).strip():
         raise ToolError("interval must be a non-empty string (e.g. \"1d\")")
 
@@ -900,17 +959,26 @@ async def scan(
     if indicators and len(ind_specs) != len(indicators):
         raise ToolError("each indicators entry must be an object with a \"name\"")
 
-    anchors = await _search(search, "search_data", "search_data_done")
+    # The anchor is only a configuration *template*: the backend scan()
+    # re-derives the candidate list from the FULL entity table (limit=10**6),
+    # applies the ``source`` filter there, and substitutes the anchor's
+    # source/name per candidate. So we must NOT pre-filter the anchor by
+    # ``source`` — the target exchange is often absent from the top-100 name
+    # search (Binance dominates the first ~1500 ids, Hyperliquid sits past them),
+    # even when it clearly has tradeable entities. Picking any valid entity to
+    # seed the rule/dataMap fields still works because the backend replaces it.
+    anchor_matches = await _search(search, "search_data", "search_data_done")
     anchor = None
-    for e in anchors:
+    for e in anchor_matches:
         det = e.get("details") or {}
         if det.get("source") and det.get("name"):
             anchor = (det["source"], det["name"])
             break
     if anchor is None:
         raise ToolError(
-            f"No tradeable entity matches {search!r}; call search_assets to "
-            "see available names"
+            f"No tradeable entity to seed the scan"
+            + (f" matching {search!r}." if search else " (entity table appears empty).")
+            + " Call search_assets to inspect available names."
         )
 
     entities: list[dict] = []
@@ -1009,6 +1077,10 @@ async def scan(
     }
     if indicators_cfg:
         config["indicators"] = indicators_cfg
+    # Narrow the scan candidate set to one exchange (see backend scanner: it
+    # prunes candidates to this source BEFORE the expensive per-candle fetch).
+    if source and str(source).strip():
+        config["source"] = str(source).strip()
 
     result = await _execute_scan(config)
     result["assets"] = [
@@ -1105,6 +1177,159 @@ async def get_chart_image(
         ]
     except _CLIENT_ERRORS as exc:
         raise _client_error_to_tool_error(exc) from exc
+
+
+def _clean_indicator_list(indicators: list[dict] | None, field: str = "indicators") -> list[dict]:
+    """Normalize indicator entries to ``{"name", "params": {str: str}}``."""
+    cleaned: list[dict] = []
+    for ind in indicators or []:
+        if not isinstance(ind, dict) or not ind.get("name"):
+            raise ToolError(
+                f"`{field}` entries must be objects with a 'name' (and an "
+                "optional 'params' object)"
+            )
+        params = ind.get("params") or {}
+        if not isinstance(params, dict):
+            raise ToolError(f"`{field}[].params` must be an object")
+        cleaned.append(
+            {"name": str(ind["name"]), "params": {str(k): str(v) for k, v in params.items()}}
+        )
+    return cleaned
+
+
+@mcp.tool
+async def render_charts(
+    charts: list[dict],
+    interval: str = "1d",
+    count: int = 500,
+    indicators: list[dict] | None = None,
+    width_px: int = 1280,
+    height_px: int = 720,
+    concurrency: int | None = None,
+) -> dict:
+    """Render many charts in **parallel**. Each PNG is saved on the server and
+    served back via its ``chart_path`` -- no copy step, and the image bytes
+    never travel through your output. Returns the saved ``chart_path`` per chart
+    (plus any per-chart failures) so you can persist them.
+
+    All charts reuse ONE shared headless browser (launched once), so a batch of
+    dozens renders far faster than calling ``get_chart_image`` per asset. They
+    run with at most ``concurrency`` in flight.
+
+    Args:
+        charts: Non-empty list of assets to render. Each item:
+            ``{"source": "<from search_assets>", "symbol": "<exact name>"}``
+            (``"name"`` also accepted as an alias for ``symbol``). Optional
+            per-item overrides: ``interval``, ``count``, ``indicators``,
+            ``width_px``, ``height_px``.
+        output_dir: (removed) Charts are saved on the server; use each returned
+            ``chart_path`` to fetch them.
+        interval: Shared default candle interval (e.g. ``"1d"``); per-item
+            overrides win.
+        count: Shared default number of candles (positive).
+        indicators: Shared default overlays (see ``get_chart_image`` for the
+            shape: ``[{"name": ..., "params": {...}}]``); a per-item
+            ``indicators`` overrides this for that chart.
+        width_px: Shared default image width (default 1280).
+        height_px: Shared default image height (default 720).
+        concurrency: Max charts rendered at once (1..32). Defaults to the
+            server's ``RENDER_CONCURRENCY`` (3).
+
+    Returns:
+        ``{"output_dir", "total", "saved_count", "failed_count",
+           "saved": [{"symbol","source","path","chart_path","image_base64"}],
+           "failed": [{"symbol","source","error"}]}``.
+
+        Each saved chart's ``chart_path`` (e.g. ``"/charts/<name>.png"``) is the
+        canonical fetch reference. Persist the whole batch into the same dated
+        folder as your report with a single ``wiki_write_charts`` call (pass each
+        one as ``{"filename": ..., "chart_path": ...}``). ``image_base64`` is
+        also provided for one-off use; prefer ``chart_path``.
+    """
+    if not isinstance(charts, list) or not charts:
+        raise ToolError("`charts` must be a non-empty list of {\"source\",\"symbol\"} items")
+    if concurrency is not None and (int(concurrency) < 1 or int(concurrency) > 32):
+        raise ToolError("`concurrency` must be between 1 and 32")
+    if count <= 0 or width_px < 64 or height_px < 64:
+        raise ToolError("count must be positive; width_px/height_px must be at least 64")
+
+    shared_indicators = _clean_indicator_list(indicators)
+    items: list[dict] = []
+    for c in charts:
+        if not isinstance(c, dict) or not c.get("source") or not (c.get("symbol") or c.get("name")):
+            raise ToolError(
+                "each chart item needs a 'source' and a 'symbol' (or 'name')"
+            )
+        items.append(
+            {
+                "source": str(c["source"]),
+                "symbol": str(c.get("symbol") or c.get("name")),
+                "interval": str(c.get("interval", interval)),
+                "count": int(c.get("count", count)),
+                "indicators": _clean_indicator_list(c.get("indicators"), "indicators")
+                if c.get("indicators")
+                else shared_indicators,
+                "width_px": int(c.get("width_px", width_px)),
+                "height_px": int(c.get("height_px", height_px)),
+            }
+        )
+
+    try:
+        resolved_dir, results = await chart_renderer.render_charts_batch(
+            items,
+            concurrency=concurrency,
+        )
+    except ValueError as exc:
+        raise ToolError(str(exc)) from exc
+
+    def _chart_path(full_path: str) -> str:
+        name = str(full_path or "").replace("\\", "/").rsplit("/", 1)[-1]
+        return f"/charts/{name}" if name else ""
+
+    saved = [
+        {
+            "symbol": r["symbol"],
+            "source": r["source"],
+            "path": r["path"],
+            "chart_path": _chart_path(r.get("path", "")),
+            "image_base64": r.get("image_b64", ""),
+        }
+        for r in results
+        if r.get("ok")
+    ]
+    failed = [
+        {"symbol": r["symbol"], "source": r["source"], "error": r.get("error")}
+        for r in results
+        if not r.get("ok")
+    ]
+    return {
+        "output_dir": resolved_dir,
+        "total": len(results),
+        "saved_count": len(saved),
+        "failed_count": len(failed),
+        "saved": saved,
+        "failed": failed,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Chart fetch endpoint: serve a rendered PNG by name. render_charts returns a
+# chart_path like "/charts/<name>.png"; wiki_write_charts fetches it from here,
+# so multi-MB images never travel through the model's output.
+# --------------------------------------------------------------------------- #
+from pathlib import Path
+from starlette.requests import Request
+from starlette.responses import FileResponse, PlainTextResponse
+
+
+@mcp.custom_route("/charts/{name}", methods=["GET"])
+async def get_chart_png(request: Request):
+    name = Path(request.path_params.get("name", "")).name  # sanitize: no path traversal
+    base = Path(Config.OUTPUT_DIR).resolve()
+    full = (base / name).resolve()
+    if not full.is_file() or not str(full).startswith(str(base)):
+        return PlainTextResponse("chart not found", status_code=404)
+    return FileResponse(str(full), media_type="image/png", filename=name)
 
 
 # --------------------------------------------------------------------------- #
